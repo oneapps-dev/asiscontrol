@@ -3057,6 +3057,175 @@ function Reports({ data, apiOnline }: { data: AppData; apiOnline: boolean }) {
   );
 }
 
+function BusinessStructurePanel({ sites, apiOnline }: { sites: any[]; apiOnline: boolean }) {
+  const [nodes, setNodes] = useState<any[]>([]);
+  const [staff, setStaff] = useState<any[]>([]);
+  const [assignments, setAssignments] = useState<any[]>([]);
+  const [selectedNode, setSelectedNode] = useState('');
+  const [selectedPerson, setSelectedPerson] = useState('');
+  const [relationship, setRelationship] = useState('employee');
+  const [editingId, setEditingId] = useState('');
+  const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [form, setForm] = useState({
+    site_id: '', parent_id: '', node_type: 'building', code: '', name: ''
+  });
+
+  const loadNodes = async () => {
+    const result = await api.organizationNodes();
+    setNodes(result.data || []);
+  };
+  useEffect(() => {
+    if (!apiOnline) return;
+    void loadNodes().catch((issue) => setError(issue instanceof Error ? issue.message : 'No se pudo cargar la estructura.'));
+    void api.people().then((result) => {
+      setStaff((result.data || []).filter((person: any) => ['empleado', 'contratista'].includes(String(person.person_type))));
+    }).catch(() => setStaff([])); // Limited-site operators are not given tenant-wide people exports.
+  }, [apiOnline]);
+
+  useEffect(() => {
+    if (!apiOnline || !selectedNode) { setAssignments([]); return; }
+    let active = true;
+    void api.organizationPeople(selectedNode).then((result) => {
+      if (active) setAssignments(result.data || []);
+    }).catch((issue) => { if (active) setError(issue instanceof Error ? issue.message : 'Error consultando personal.'); });
+    return () => { active = false; };
+  }, [selectedNode, apiOnline]);
+
+  const submit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!apiOnline || !form.site_id) return;
+    setBusy(true); setError(''); setNotice('');
+    try {
+      const payload = {
+        site_id: Number(form.site_id),
+        parent_id: form.parent_id ? Number(form.parent_id) : null,
+        node_type: form.node_type,
+        name: form.name.trim(),
+        code: form.code.trim().toUpperCase()
+      };
+      if (editingId) await api.updateOrganizationNode(editingId, payload);
+      else await api.createOrganizationNode(payload);
+      await loadNodes();
+      setForm({ ...form, parent_id: '', node_type: 'building', name: '', code: '' });
+      setEditingId('');
+      setNotice('Estructura actualizada correctamente.');
+    } catch (issue) {
+      setError(issue instanceof Error ? issue.message : 'No fue posible guardar la dependencia.');
+    } finally { setBusy(false); }
+  };
+  const edit = (node: any) => {
+    setForm({
+      site_id: String(node.site_id),
+      parent_id: node.parent_id ? String(node.parent_id) : '',
+      node_type: String(node.node_type), code: String(node.code), name: String(node.name)
+    });
+    setEditingId(String(node.id));
+  };
+  const deactivate = async (node: any) => {
+    setError(''); setNotice('');
+    try {
+      await api.disableOrganizationNode(String(node.id));
+      if (selectedNode === String(node.id)) setSelectedNode('');
+      await loadNodes();
+      setNotice('Dependencia desactivada sin eliminar su historial.');
+    } catch (issue) {
+      setError(issue instanceof Error ? issue.message : 'No se pudo desactivar la dependencia.');
+    }
+  };
+  const addPerson = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!selectedNode || !selectedPerson) return;
+    setError('');
+    try {
+      await api.assignOrganizationPerson({
+        node_id: Number(selectedNode), person_id: Number(selectedPerson), relationship
+      });
+      const result = await api.organizationPeople(selectedNode);
+      setAssignments(result.data || []);
+      setSelectedPerson('');
+    } catch (issue) {
+      setError(issue instanceof Error ? issue.message : 'No se pudo asignar el personal.');
+    }
+  };
+  const removePerson = async (assignment: any) => {
+    try {
+      await api.removeOrganizationPerson(String(assignment.id));
+      const result = await api.organizationPeople(selectedNode);
+      setAssignments(result.data || []);
+    } catch (issue) {
+      setError(issue instanceof Error ? issue.message : 'No se pudo retirar la asignación.');
+    }
+  };
+  return <section className="panel xl:col-span-2">
+    <PageTitle title="Estructura industrial y corporativa" subtitle="Configura edificios, pisos, áreas, departamentos y oficinas por sede. No modifica apartamentos ni residentes." />
+    {!apiOnline && <Alert tone="warning">Conecta la API para gestionar esta estructura.</Alert>}
+    {error && <Alert tone="danger">{error}</Alert>}
+    {notice && <Alert tone="success">{notice}</Alert>}
+    <form className="mb-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3" onSubmit={submit}>
+      <select className="field" required aria-label="Sede" value={form.site_id}
+        onChange={(e) => setForm({ ...form, site_id: e.target.value, parent_id: '' })} disabled={Boolean(editingId)}>
+        <option value="">Selecciona una sede</option>
+        {sites.map((site) => <option key={site.id} value={String(site.id)}>{site.name}</option>)}
+      </select>
+      <select className="field" aria-label="Tipo de dependencia" value={form.node_type}
+        onChange={(e) => setForm({ ...form, node_type: e.target.value })}>
+        {['building','floor','area','department','office','section','other'].map((type) =>
+          <option key={type} value={type}>{humanizeCode(type)}</option>)}
+      </select>
+      <select className="field" aria-label="Dependencia superior" value={form.parent_id}
+        onChange={(e) => setForm({ ...form, parent_id: e.target.value })}>
+        <option value="">Directamente en la sede</option>
+        {nodes.filter((node) => String(node.site_id) === form.site_id && node.status === 'active' && String(node.id) !== editingId).map((node) =>
+          <option key={node.id} value={String(node.id)}>{node.code} · {node.name}</option>)}
+      </select>
+      <input className="field" required placeholder="Código único (ej. EDIF-A)" value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })}/>
+      <input className="field" required placeholder="Nombre de dependencia" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}/>
+      <div className="flex gap-2">
+        <button className="btn-primary" disabled={busy || !apiOnline || !form.site_id} type="submit">{editingId ? 'Guardar cambios' : 'Crear dependencia'}</button>
+        {editingId && <button className="btn-ghost" type="button" onClick={() => { setEditingId(''); setForm({ site_id: '', parent_id: '', node_type: 'building', code: '', name: '' }); }}>Cancelar</button>}
+      </div>
+    </form>
+    <div className="overflow-x-auto">
+      <table className="w-full min-w-[680px] text-left text-sm">
+        <thead><tr><th className="p-2">Código</th><th className="p-2">Tipo</th><th className="p-2">Dependencia</th><th className="p-2">Superior</th><th className="p-2">Estado / acciones</th></tr></thead>
+        <tbody>{nodes.map((node) => <tr key={node.id} className="border-t border-border">
+          <td className="p-2 font-semibold">{node.code}</td>
+          <td className="p-2">{humanizeCode(node.node_type)}</td>
+          <td className="p-2">{node.name}</td>
+          <td className="p-2">{nodes.find((parent) => String(parent.id) === String(node.parent_id))?.name || 'Sede'}</td>
+          <td className="p-2">
+            <Badge tone={node.status === 'active' ? 'success' : 'muted'}>{humanizeCode(node.status)}</Badge>
+            <button className="btn-small ml-2" type="button" onClick={() => edit(node)}>Editar</button>
+            {node.status === 'active' && <button className="btn-small ml-2" type="button" onClick={() => void deactivate(node)}>Desactivar</button>}
+            <button className="btn-small ml-2" type="button" onClick={() => setSelectedNode(String(node.id))}>Personal</button>
+          </td>
+        </tr>)}
+        {nodes.length === 0 && <tr><td className="p-3 text-on-surface-variant" colSpan={5}>No hay dependencias configuradas.</td></tr>}
+        </tbody>
+      </table>
+    </div>
+    {selectedNode && <div className="mt-5 rounded-lg border border-border p-4">
+      <h3 className="font-semibold">Personal de {nodes.find((node) => String(node.id) === selectedNode)?.name || 'la dependencia'}</h3>
+      {staff.length > 0 && <form className="mt-3 flex flex-wrap gap-2" onSubmit={addPerson}>
+        <select required className="field" value={selectedPerson} onChange={(e) => setSelectedPerson(e.target.value)}>
+          <option value="">Seleccionar empleado / contratista</option>
+          {staff.map((person) => <option key={person.id} value={String(person.id)}>{person.full_name}</option>)}
+        </select>
+        <select className="field" value={relationship} onChange={(e) => setRelationship(e.target.value)}>
+          {['employee','contractor','supervisor','other'].map((type) => <option key={type} value={type}>{humanizeCode(type)}</option>)}
+        </select>
+        <button className="btn-primary" type="submit">Asignar</button>
+      </form>}
+      <div className="mt-3 space-y-2">{assignments.map((assignment) => <div key={assignment.id} className="flex items-center justify-between gap-2 text-sm">
+        <span>{assignment.full_name} · {humanizeCode(assignment.relationship)} · {humanizeCode(assignment.status)}</span>
+        {assignment.status === 'active' && <button className="btn-small" type="button" onClick={() => void removePerson(assignment)}>Retirar</button>}
+      </div>)}</div>
+    </div>}
+  </section>;
+}
+
 function Settings({
   data,
   setData,
@@ -3073,12 +3242,13 @@ function Settings({
   const [sites, setSites] = useState<any[]>([]);
   const [units, setUnits] = useState<any[]>([]);
   const [residents, setResidents] = useState<any[]>([]);
+  const [clientType, setClientType] = useState('custom');
   const [accessPoints, setAccessPoints] = useState<any[]>([]);
   const [devices, setDevices] = useState<any[]>([]);
   const [permissionMatrix, setPermissionMatrix] = useState<{ permissions: any[]; roles: Record<string, string[]> }>({ permissions: [], roles: {} });
   const [adminError, setAdminError] = useState('');
   const [siteForm, setSiteForm] = useState({ name: '', address: '', timezone: 'America/Bogota' });
-  const [userForm, setUserForm] = useState({ name: '', email: '', password: 'demo1234', role: 'guard', site_id: '' });
+  const [userForm, setUserForm] = useState({ name: '', email: '', password: '', role: 'guard', site_id: '' });
   const [unitForm, setUnitForm] = useState({ site_id: '', tower: '', unit_code: '', floor: '' });
   const [residentForm, setResidentForm] = useState({ unit_id: '', document_type: 'CC', document_number: '', full_name: '', phone: '', email: '', password: '', relationship: 'residente', is_primary: true });
   const [accessPointForm, setAccessPointForm] = useState({ site_id: '', code: '', name: '', mode: 'con_vigilancia', latitude: '', longitude: '', geofence_radius_m: '150', allowed_networks: '' });
@@ -3097,15 +3267,24 @@ function Settings({
     if (!apiOnline || (!canAdmin && !canManageDevices)) return;
 
     const load = async () => {
+      const response = await api.myContext();
+      const type = response.data.tenant?.client_type || 'custom';
+      setClientType(type);
       if (canAdmin) {
-        const [userResponse, siteResponse, unitResponse, residentResponse, permissionResponse, accessPointResponse, deviceResponse] = await Promise.all([api.users(), api.sites(), api.units(), api.residents(), api.permissions(), api.accessPoints(), api.devices()]);
+        const [userResponse, siteResponse, permissionResponse, accessPointResponse, deviceResponse] = await Promise.all([api.users(), api.sites(), api.permissions(), api.accessPoints(), api.devices()]);
         setUsers(userResponse.data);
         setSites(siteResponse.data);
-        setUnits(unitResponse.data);
-        setResidents(residentResponse.data);
         setPermissionMatrix(permissionResponse.data);
         setAccessPoints(accessPointResponse.data);
         setDevices(deviceResponse.data);
+        if (!['industrial','corporate'].includes(type)) {
+          const [unitResponse, residentResponse] = await Promise.all([api.units(),api.residents()]);
+          setUnits(unitResponse.data);
+          setResidents(residentResponse.data);
+        } else {
+          setUnits([]);
+          setResidents([]);
+        }
       } else {
         const [siteResponse, accessPointResponse, deviceResponse] = await Promise.all([api.sites(), api.accessPoints(), api.devices()]);
         setSites(siteResponse.data);
@@ -3191,7 +3370,7 @@ function Settings({
     });
     const response = await api.users();
     setUsers(response.data);
-    setUserForm({ name: '', email: '', password: 'demo1234', role: 'guard', site_id: '' });
+    setUserForm({ name: '', email: '', password: '', role: 'guard', site_id: '' });
   };
 
   const addAccessPoint = async (event: React.FormEvent) => {
@@ -3412,6 +3591,7 @@ function Settings({
               </div>
             )}
           </section>
+          {!['industrial','corporate'].includes(clientType) && <>
           <section className="panel">
             <PageTitle title="Unidades" subtitle="Torres, apartamentos, oficinas o destinos autorizables." />
             <form className="mb-4 grid gap-3 sm:grid-cols-2" onSubmit={addUnit}>
@@ -3466,6 +3646,7 @@ function Settings({
               ))}
             </DataTable>
           </section>
+          </>}
           <section className="panel xl:col-span-2">
             <PageTitle title="Importaciones CSV" subtitle="Carga masiva para restricciones, personas y usuarios." />
             <div className="grid gap-3 sm:grid-cols-[220px_1fr]">
@@ -3490,6 +3671,8 @@ function Settings({
           </section>
         </>
       )}
+      {apiOnline && canAdmin && ['industrial','corporate'].includes(clientType) &&
+        <BusinessStructurePanel sites={sites} apiOnline={apiOnline} />}
       {apiOnline && canManageBackups && <section className="panel xl:col-span-2"><PageTitle title="Política de backups" subtitle="Configuración aprobada: ejecución mensual y retención de 365 días. El cifrado es opcional y depende de la configuración segura del servidor." /><form className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" onSubmit={saveBackupPolicy}><Select label="Frecuencia" value={backupPolicy.schedule} onChange={(value) => setBackupPolicy({ ...backupPolicy, schedule: value })} options={['manual', 'daily', 'weekly', 'monthly']} /><Input label="Retención (días)" type="number" value={backupPolicy.retention_days} onChange={(value) => setBackupPolicy({ ...backupPolicy, retention_days: value })} required /><Input label="Destino (opcional)" value={backupPolicy.destination_path} onChange={(value) => setBackupPolicy({ ...backupPolicy, destination_path: value })} /><label className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm"><input type="checkbox" checked={backupPolicy.encryption_required} onChange={(event) => setBackupPolicy({ ...backupPolicy, encryption_required: event.target.checked })} /> Exigir cifrado</label><label className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm"><input type="checkbox" checked={backupPolicy.enabled} onChange={(event) => setBackupPolicy({ ...backupPolicy, enabled: event.target.checked })} /> Política activa</label><button className="btn-primary sm:col-span-2 lg:col-span-4"><Icon name="save" /> Guardar política</button></form></section>}
     </div>
   );
