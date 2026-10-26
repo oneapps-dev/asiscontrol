@@ -1872,6 +1872,7 @@ try {
 
     if ($method === 'GET' && $path === '/audit.csv') {
         require_permission('audit.view');
+        require_tenant_wide_scope();
         $rows = audit_for_tenant(tenant_id(), [
             'from' => $_GET['from'] ?? null,
             'to' => $_GET['to'] ?? null,
@@ -1893,6 +1894,7 @@ try {
 
     if ($method === 'GET' && $path === '/audit.html') {
         require_permission('audit.view');
+        require_tenant_wide_scope();
         html_audit_report(tenant_id(), [
             'from' => $_GET['from'] ?? null,
             'to' => $_GET['to'] ?? null,
@@ -1902,6 +1904,7 @@ try {
 
     if ($method === 'GET' && $path === '/jobs/imports') {
         require_permission('reports.view');
+        require_tenant_wide_scope();
         json_response(['data' => list_rows(
             'SELECT id, job_type, file_name, status, total_rows, processed_rows, error_message, created_at, finished_at
              FROM import_jobs
@@ -1914,6 +1917,7 @@ try {
 
     if ($method === 'GET' && $path === '/jobs/exports') {
         require_permission('reports.view');
+        require_tenant_wide_scope();
         json_response(['data' => list_rows(
             'SELECT id, report_type, filters_json, file_path, status, created_at, finished_at
              FROM export_jobs
