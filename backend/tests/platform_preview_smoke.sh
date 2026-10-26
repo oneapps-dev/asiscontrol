@@ -22,7 +22,7 @@ status=$(curl -sS -o /tmp/guard-start-denied.json -w '%{http_code}' \
 test "$status" = "403" || { echo "Guard attempted preview: $status"; exit 1; }
 
 status=$(curl -sS -o /tmp/preview-start.json -w '%{http_code}' \
-  -b /tmp/owner.cookies -H "X-CSRF-Token: $owner_csrf" \
+  -b /tmp/owner.cookies -c /tmp/owner.cookies -H "X-CSRF-Token: $owner_csrf" \
   -H 'Content-Type: application/json' -d '{"tenant_id":1,"user_id":2,"reason":"Verificar permisos de vigilante en QA"}' \
   "$base/platform/impersonation/start")
 test "$status" = "201" || { cat /tmp/preview-start.json; echo "Preview start status $status"; exit 1; }
