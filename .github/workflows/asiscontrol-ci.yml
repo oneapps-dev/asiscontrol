@@ -119,3 +119,4 @@ jobs:
           bash backend/tests/structured_audit_smoke.sh
           bash backend/tests/multi_tenant_membership_smoke.sh
           bash backend/tests/sector_dashboard_smoke.sh
+          bash backend/tests/offline_context_smoke.sh
