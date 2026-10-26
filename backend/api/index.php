@@ -8,6 +8,7 @@ require __DIR__ . '/plan_limits.php';
 require __DIR__ . '/tenant_hierarchy.php';
 require __DIR__ . '/platform_support.php';
 require __DIR__ . '/organization.php';
+require __DIR__ . '/tenant_features.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
 $apiStage = 'router';
@@ -30,12 +31,14 @@ if (!in_array($method, ['GET', 'HEAD', 'OPTIONS'], true) && !$isPublicPost) {
 
 try {
     platform_preview_readonly_guard($method,$path);
+    enforce_residential_api_route($method,$path);
     enforce_legacy_scope_gate($method,$path);
     handle_multitenant_routes($method, $path);
     handle_plan_routes($method, $path);
     handle_tenant_hierarchy_routes($method, $path);
     handle_platform_preview_routes($method, $path);
     handle_organization_routes($method, $path);
+    handle_tenant_feature_routes($method,$path);
     if ($method === 'GET' && $path === '/health') {
         $apiStage = 'health.database';
         try {
@@ -482,6 +485,7 @@ try {
         $isResident = (string) ($bootstrapUser['role'] ?? '') === 'resident';
         $residentProfile = $isResident ? portal_resident_by_id((int) ($bootstrapUser['resident_id'] ?? 0), $tenantId) : null;
         $residentDestination = $residentProfile ? portal_resident_destination($residentProfile) : '';
+        $residentialEnabled = residential_modules_enabled($tenantId);
         $bootstrapSites = $isResident && $residentProfile
             ? list_rows('SELECT * FROM sites WHERE tenant_id = :tenant_id AND id = :site_id', ['tenant_id' => $tenantId, 'site_id' => $residentProfile['site_id']])
             : list_rows('SELECT * FROM sites WHERE tenant_id = :tenant_id ORDER BY name', ['tenant_id' => $tenantId]);
@@ -510,8 +514,8 @@ try {
                 'booking_resources' => booking_resources_for_tenant($tenantId),
                 'bookings' => $bootstrapBookings,
                 'packages' => $isResident ? [] : packages_for_tenant($tenantId),
-                'units' => $isResident && $residentProfile ? list_rows('SELECT u.*, s.name AS site_name FROM units u INNER JOIN sites s ON s.id = u.site_id WHERE u.tenant_id = :tenant_id AND u.id = :unit_id', ['tenant_id' => $tenantId, 'unit_id' => $residentProfile['unit_id']]) : units_for_tenant($tenantId),
-                'residents' => $isResident && $residentProfile ? [$residentProfile] : residents_for_tenant($tenantId),
+                'units' => !$residentialEnabled ? [] : ($isResident && $residentProfile ? list_rows('SELECT u.*, s.name AS site_name FROM units u INNER JOIN sites s ON s.id = u.site_id WHERE u.tenant_id = :tenant_id AND u.id = :unit_id', ['tenant_id' => $tenantId, 'unit_id' => $residentProfile['unit_id']]) : units_for_tenant($tenantId)),
+                'residents' => !$residentialEnabled ? [] : ($isResident && $residentProfile ? [$residentProfile] : residents_for_tenant($tenantId)),
                 'parking' => $isResident ? [] : list_rows('SELECT * FROM parking_assignments WHERE tenant_id = :tenant_id AND status = "active" ORDER BY space_code', ['tenant_id' => $tenantId]),
                 'permissions' => $bootstrapPermissions,
                 'invitations' => $bootstrapInvitations,
