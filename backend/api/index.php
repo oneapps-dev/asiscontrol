@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 require __DIR__ . '/bootstrap.php';
 require __DIR__ . '/multitenant.php';
+require __DIR__ . '/plan_limits.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
 $apiStage = 'router';
@@ -26,6 +27,7 @@ if (!in_array($method, ['GET', 'HEAD', 'OPTIONS'], true) && !$isPublicPost) {
 
 try {
     handle_multitenant_routes($method, $path);
+    handle_plan_routes($method, $path);
     if ($method === 'GET' && $path === '/health') {
         $apiStage = 'health.database';
         try {
@@ -517,6 +519,7 @@ try {
         require_permission('settings.manage');
         $data = request_json();
         require_fields($data, ['name']);
+        start_plan_capacity_guard(tenant_id(),'sites');
         $stmt = db()->prepare(
             'INSERT INTO sites (tenant_id, name, address, timezone)
              VALUES (:tenant_id, :name, :address, :timezone)'
@@ -527,8 +530,10 @@ try {
             'address' => $data['address'] ?? null,
             'timezone' => $data['timezone'] ?? 'America/Bogota',
         ]);
+        $createdSiteId=(int)db()->lastInsertId();
+        finish_plan_capacity_guard();
         audit('sede.creada', 'Sede creada: ' . $data['name']);
-        json_response(['id' => db()->lastInsertId()], 201);
+        json_response(['id' => $createdSiteId], 201);
     }
 
     if ($method === 'PATCH' && preg_match('#^/sites/(\d+)$#', $path, $matches)) {
@@ -566,6 +571,8 @@ try {
         if (!$site) {
             json_response(['error' => 'Sede no encontrada'], 404);
         }
+        require_tenant_scope('site',(int)$data['site_id']);
+        start_plan_capacity_guard((int)$user['tenant_id'],'access_points');
         $stmt = db()->prepare(
             'INSERT INTO access_points (tenant_id, site_id, code, name, mode, capabilities_json, latitude, longitude, geofence_radius_m, allowed_networks_json, status)
              VALUES (:tenant_id, :site_id, :code, :name, :mode, :capabilities_json, :latitude, :longitude, :geofence_radius_m, :allowed_networks_json, "active")'
@@ -582,8 +589,10 @@ try {
             'geofence_radius_m' => !empty($data['geofence_radius_m']) ? max(25, (int) $data['geofence_radius_m']) : (int) ($config['geofence']['default_radius_m'] ?? 150),
             'allowed_networks_json' => json_encode(array_values(array_filter(array_map('trim', is_array($data['allowed_networks'] ?? null) ? $data['allowed_networks'] : []))), JSON_UNESCAPED_UNICODE),
         ]);
+        $createdAccessPointId=(int)db()->lastInsertId();
+        finish_plan_capacity_guard();
         audit('punto_acceso.creado', 'Punto de acceso ' . $data['code']);
-        json_response(['id' => db()->lastInsertId()], 201);
+        json_response(['id' => $createdAccessPointId], 201);
     }
 
     if ($method === 'PATCH' && preg_match('#^/access-points/(\d+)$#', $path, $matches)) {
@@ -695,6 +704,7 @@ try {
         if (in_array((string)$data['role'],['guard','supervisor','coordinator','tech_operator'],true) && empty($data['site_id'])) {
             json_response(['error'=>'Se requiere sede para un usuario operativo'],422);
         }
+        start_plan_capacity_guard(tenant_id(),'users');
         $stmt = db()->prepare(
             'INSERT INTO users (tenant_id, site_id, name, email, password_hash, role, is_active)
              VALUES (:tenant_id, :site_id, :name, :email, :password_hash, :role, :is_active)'
@@ -712,6 +722,7 @@ try {
         $newScope=empty($data['site_id']) ? ['type'=>'tenant','id'=>tenant_id()] : ['type'=>'site','id'=>(int)$data['site_id']];
         db()->prepare('INSERT INTO user_scopes(tenant_id,user_id,scope_type,scope_id,granted_by) VALUES(:tenant,:user,:type,:scope_id,:actor)')
             ->execute(['tenant'=>tenant_id(),'user'=>$createdId,'type'=>$newScope['type'],'scope_id'=>$newScope['id'],'actor'=>require_auth()['id']]);
+        finish_plan_capacity_guard();
         audit('usuario.creado', 'Usuario creado: ' . $data['email']);
         json_response(['id' => $createdId], 201);
     }
@@ -1307,6 +1318,8 @@ try {
         require_permission('settings.manage');
         $data = request_json();
         require_fields($data, ['site_id', 'unit_code']);
+        require_tenant_scope('site',(int)$data['site_id']);
+        start_plan_capacity_guard(tenant_id(),'units');
         $stmt = db()->prepare(
             'INSERT INTO units (tenant_id, site_id, tower, unit_code, floor, status)
              VALUES (:tenant_id, :site_id, :tower, :unit_code, :floor, :status)'
@@ -1319,8 +1332,10 @@ try {
             'floor' => $data['floor'] ?? null,
             'status' => $data['status'] ?? 'active',
         ]);
+        $createdUnitId=(int)db()->lastInsertId();
+        finish_plan_capacity_guard();
         audit('unidad.creada', 'Unidad ' . trim(($data['tower'] ?? '') . ' ' . $data['unit_code']));
-        json_response(['id' => db()->lastInsertId()], 201);
+        json_response(['id' => $createdUnitId], 201);
     }
 
     if ($method === 'GET' && $path === '/residents') {
@@ -3710,6 +3725,7 @@ function import_rows(int $tenantId, int $userId, string $jobType, string $fileNa
     $errors = [];
     $pdo = db();
     $pdo->beginTransaction();
+    if ($jobType==='users') lock_plan_tenant($tenantId);
     $jobId = create_import_job($tenantId, $userId, $jobType, $fileName);
 
     foreach ($rows as $row) {
@@ -3813,6 +3829,7 @@ function import_csv_row(PDO $pdo, int $tenantId, string $jobType, array $data): 
             }
         }
         validate_role_assignment(require_auth(), $tenantId, (string)$data['role']);
+        assert_plan_capacity($tenantId,'users');
         if (in_array((string)$data['role'],['guard','supervisor','coordinator','tech_operator'],true) && empty($data['site_id'])) {
             throw new RuntimeException('Se requiere sede para un usuario operativo');
         }
