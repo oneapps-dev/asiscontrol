@@ -1185,7 +1185,8 @@ try {
         if (!empty($_GET['from'])) { $where[] = 'ar.occurred_at >= :from_date'; $params['from_date'] = $_GET['from'] . ' 00:00:00'; }
         if (!empty($_GET['to'])) { $where[] = 'ar.occurred_at <= :to_date'; $params['to_date'] = $_GET['to'] . ' 23:59:59'; }
         if (!empty($_GET['employee_id'])) { $where[] = 'ar.person_id = :employee_id'; $params['employee_id'] = (int) $_GET['employee_id']; }
-        json_response(['data' => list_rows('SELECT ar.*, p.full_name, p.document_number, ep.employee_code, s.name AS site_name FROM attendance_records ar INNER JOIN people p ON p.id = ar.person_id INNER JOIN employee_profiles ep ON ep.id = ar.employee_profile_id LEFT JOIN sites s ON s.id = ar.site_id WHERE ' . implode(' AND ', $where) . ' ORDER BY ar.occurred_at DESC LIMIT 500', $params)]);
+        $where[]=sql_site_scope(actor_visible_site_ids(require_auth()),'ar.site_id','attendance_list_site_',$params);
+        json_response(['data' => list_rows('SELECT ar.*, p.full_name, p.document_number, ep.employee_code, s.name AS site_name FROM attendance_records ar INNER JOIN people p ON p.id = ar.person_id AND p.tenant_id=ar.tenant_id INNER JOIN employee_profiles ep ON ep.id = ar.employee_profile_id AND ep.tenant_id=ar.tenant_id LEFT JOIN sites s ON s.id = ar.site_id AND s.tenant_id=ar.tenant_id WHERE ' . implode(' AND ', $where) . ' ORDER BY ar.occurred_at DESC LIMIT 500', $params)]);
     }
 
     if ($method === 'POST' && $path === '/kiosk/attendance') {
@@ -1897,7 +1898,7 @@ try {
             'from' => $_GET['from'] ?? null,
             'to' => $_GET['to'] ?? null,
             'status' => $_GET['status'] ?? null,
-        ]);
+        ],actor_visible_site_ids(require_auth()));
         csv_response(
             'asiscontrol-visitas.csv',
             ['id', 'persona', 'tipo_documento', 'documento', 'destino', 'autoriza', 'motivo', 'placa', 'ingreso', 'salida', 'estado'],
@@ -1923,7 +1924,7 @@ try {
             'from' => $_GET['from'] ?? null,
             'to' => $_GET['to'] ?? null,
             'status' => $_GET['status'] ?? null,
-        ]);
+        ],actor_visible_site_ids(require_auth()));
         $headers = ['id', 'persona', 'tipo_documento', 'documento', 'destino', 'autoriza', 'motivo', 'placa', 'ingreso', 'salida', 'estado'];
         $exportRows = array_map(static fn (array $row): array => [$row['id'], $row['full_name'], $row['document_type'], $row['document_number'], $row['destination'], $row['host'], $row['reason'], $row['vehicle_plate'], $row['entered_at'], $row['exited_at'], humanize_code_label((string) $row['status'])], $rows);
         xlsx_response('asiscontrol-visitas.xlsx', $headers, $exportRows);
@@ -1935,7 +1936,7 @@ try {
             'from' => $_GET['from'] ?? null,
             'to' => $_GET['to'] ?? null,
             'status' => $_GET['status'] ?? null,
-        ]);
+        ],actor_visible_site_ids(require_auth()));
     }
 
     if ($method === 'POST' && $path === '/imports') {
@@ -2296,7 +2297,8 @@ try {
         $params = ['tenant_id' => tenant_id()];
         if (!empty($_GET['from'])) { $where[] = 'ar.occurred_at >= :attendance_from'; $params['attendance_from'] = $_GET['from'] . ' 00:00:00'; }
         if (!empty($_GET['to'])) { $where[] = 'ar.occurred_at <= :attendance_to'; $params['attendance_to'] = $_GET['to'] . ' 23:59:59'; }
-        $rows = list_rows('SELECT ar.id, p.full_name, p.document_number, ep.employee_code, ar.event_type, ar.occurred_at, ar.status, ar.identification_method, ar.source, ar.notes FROM attendance_records ar INNER JOIN people p ON p.id = ar.person_id INNER JOIN employee_profiles ep ON ep.id = ar.employee_profile_id WHERE ' . implode(' AND ', $where) . ' ORDER BY ar.occurred_at DESC LIMIT 5000', $params);
+        $where[]=sql_site_scope(actor_visible_site_ids(require_auth()),'ar.site_id','attendance_export_site_',$params);
+        $rows = list_rows('SELECT ar.id, p.full_name, p.document_number, ep.employee_code, ar.event_type, ar.occurred_at, ar.status, ar.identification_method, ar.source, ar.notes FROM attendance_records ar INNER JOIN people p ON p.id = ar.person_id AND p.tenant_id=ar.tenant_id INNER JOIN employee_profiles ep ON ep.id = ar.employee_profile_id AND ep.tenant_id=ar.tenant_id WHERE ' . implode(' AND ', $where) . ' ORDER BY ar.occurred_at DESC LIMIT 5000', $params);
         csv_response('asiscontrol-asistencia.csv', ['id', 'empleado', 'documento', 'codigo', 'evento', 'fecha', 'estado', 'metodo', 'origen', 'notas'], array_map(static fn (array $row): array => [$row['id'], $row['full_name'], $row['document_number'], $row['employee_code'], $row['event_type'], $row['occurred_at'], humanize_code_label((string) $row['status']), humanize_code_label((string) $row['identification_method']), humanize_code_label((string) $row['source']), $row['notes']], $rows));
     }
 
@@ -2306,7 +2308,8 @@ try {
         $params = ['tenant_id' => tenant_id()];
         if (!empty($_GET['from'])) { $where[] = 'ar.occurred_at >= :attendance_from_xlsx'; $params['attendance_from_xlsx'] = $_GET['from'] . ' 00:00:00'; }
         if (!empty($_GET['to'])) { $where[] = 'ar.occurred_at <= :attendance_to_xlsx'; $params['attendance_to_xlsx'] = $_GET['to'] . ' 23:59:59'; }
-        $rows = list_rows('SELECT ar.id, p.full_name, p.document_number, ep.employee_code, ar.event_type, ar.occurred_at, ar.status, ar.identification_method, ar.source, ar.notes FROM attendance_records ar INNER JOIN people p ON p.id = ar.person_id INNER JOIN employee_profiles ep ON ep.id = ar.employee_profile_id WHERE ' . implode(' AND ', $where) . ' ORDER BY ar.occurred_at DESC LIMIT 5000', $params);
+        $where[]=sql_site_scope(actor_visible_site_ids(require_auth()),'ar.site_id','attendance_export_site_',$params);
+        $rows = list_rows('SELECT ar.id, p.full_name, p.document_number, ep.employee_code, ar.event_type, ar.occurred_at, ar.status, ar.identification_method, ar.source, ar.notes FROM attendance_records ar INNER JOIN people p ON p.id = ar.person_id AND p.tenant_id=ar.tenant_id INNER JOIN employee_profiles ep ON ep.id = ar.employee_profile_id AND ep.tenant_id=ar.tenant_id WHERE ' . implode(' AND ', $where) . ' ORDER BY ar.occurred_at DESC LIMIT 5000', $params);
         $headers = ['id', 'empleado', 'documento', 'codigo', 'evento', 'fecha', 'estado', 'metodo', 'origen', 'notas'];
         $exportRows = array_map(static fn (array $row): array => [$row['id'], $row['full_name'], $row['document_number'], $row['employee_code'], $row['event_type'], $row['occurred_at'], humanize_code_label((string) $row['status']), humanize_code_label((string) $row['identification_method']), humanize_code_label((string) $row['source']), $row['notes']], $rows);
         xlsx_response('asiscontrol-asistencia.xlsx', $headers, $exportRows);
@@ -2743,7 +2746,7 @@ function portal_resident_by_email(string $email): ?array
             'from' => $_GET['from'] ?? null,
             'to' => $_GET['to'] ?? null,
             'employee_id' => $_GET['employee_id'] ?? null,
-        ]);
+        ],actor_visible_site_ids(require_auth()));
     }
 
 function portal_resident_by_id(int $residentId, int $tenantId): ?array
@@ -2891,7 +2894,7 @@ function one_row(string $sql, array $params = []): ?array
     return $row ?: null;
 }
 
-function visits_for_tenant(int $tenantId, array $filters = []): array
+function visits_for_tenant(int $tenantId, array $filters = [], ?array $siteIds = null): array
 {
     $where = ['v.tenant_id = :tenant_id'];
     $params = ['tenant_id' => $tenantId];
@@ -2911,11 +2914,13 @@ function visits_for_tenant(int $tenantId, array $filters = []): array
         $params['status'] = $filters['status'];
     }
 
+    $where[]=sql_site_scope($siteIds,'COALESCE(v.site_id,gs.site_id)','visit_export_site_',$params);
     [$limit, $offset] = pagination_from_request();
     return list_rows(
         'SELECT v.*, p.person_type, p.full_name, p.document_type, p.document_number, p.phone, p.company
          FROM visits v
-         INNER JOIN people p ON p.id = v.person_id
+         LEFT JOIN guard_shifts gs ON gs.id=v.shift_id AND gs.tenant_id=v.tenant_id
+         INNER JOIN people p ON p.id = v.person_id AND p.tenant_id=v.tenant_id
          WHERE ' . implode(' AND ', $where) . '
          ORDER BY v.entered_at DESC
          LIMIT ' . $limit . ' OFFSET ' . $offset,
@@ -3584,9 +3589,9 @@ function download_attachment(int $tenantId, int $fileId): void
     exit;
 }
 
-function html_visits_report(int $tenantId, array $filters = []): void
+function html_visits_report(int $tenantId, array $filters = [], ?array $siteIds = null): void
 {
-    $rows = visits_for_tenant($tenantId, $filters);
+    $rows = visits_for_tenant($tenantId, $filters, $siteIds);
     header_remove('Content-Type');
     header('Content-Type: text/html; charset=utf-8');
     echo '<!doctype html><html lang="es"><head><meta charset="utf-8">';
@@ -3611,7 +3616,7 @@ function html_visits_report(int $tenantId, array $filters = []): void
     exit;
 }
 
-function html_attendance_report(int $tenantId, array $filters = []): void
+function html_attendance_report(int $tenantId, array $filters = [], ?array $siteIds = null): void
 {
     $where = ['ar.tenant_id = :tenant_id'];
     $params = ['tenant_id' => $tenantId];
@@ -3627,12 +3632,13 @@ function html_attendance_report(int $tenantId, array $filters = []): void
         $where[] = 'ar.person_id = :employee_id';
         $params['employee_id'] = (int) $filters['employee_id'];
     }
+    $where[]=sql_site_scope($siteIds,'ar.site_id','attendance_html_site_',$params);
     $rows = list_rows(
         'SELECT ar.*, p.full_name, p.document_number, ep.employee_code, s.name AS site_name
          FROM attendance_records ar
-         INNER JOIN people p ON p.id = ar.person_id
-         INNER JOIN employee_profiles ep ON ep.id = ar.employee_profile_id
-         LEFT JOIN sites s ON s.id = ar.site_id
+         INNER JOIN people p ON p.id = ar.person_id AND p.tenant_id=ar.tenant_id
+         INNER JOIN employee_profiles ep ON ep.id = ar.employee_profile_id AND ep.tenant_id=ar.tenant_id
+         LEFT JOIN sites s ON s.id = ar.site_id AND s.tenant_id=ar.tenant_id
          WHERE ' . implode(' AND ', $where) . '
          ORDER BY ar.occurred_at DESC LIMIT 2000',
         $params

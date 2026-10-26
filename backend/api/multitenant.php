@@ -620,7 +620,9 @@ function enforce_legacy_scope_gate(string $method,string $path): void
         '/dashboard/contextual',
         '/sites','/visits','/vehicles','/packages','/units','/invitations',
         '/incidents','/shifts','/access-points','/devices','/booking-resources',
-        '/bookings','/parking','/access-events','/files'
+        '/bookings','/parking','/access-events','/files','/attendance',
+        '/reports/visits.csv','/reports/visits.xlsx','/reports/visits.html',
+        '/reports/attendance.csv','/reports/attendance.xlsx','/reports/attendance.html'
     ];
     if ($method==='GET' && in_array($path,$reads,true)) return;
     if ($method==='POST' && in_array($path,[
@@ -638,6 +640,21 @@ function enforce_legacy_scope_gate(string $method,string $path): void
         'error_code'=>'SITE_SCOPE_ROUTE_NOT_ENABLED'],403);
 }
 
+
+
+/** SQL-side site filtering: empty/revoked scope returns zero rows before LIMIT. */
+function sql_site_scope(?array $sites,string $column,string $prefix,array &$params): string
+{
+    if ($sites===null) return '1=1';
+    if ($sites===[]) return '1=0';
+    $keys=[];
+    foreach(array_values(array_unique(array_map('intval',$sites))) as $index=>$siteId) {
+        $param=$prefix.$index;
+        $params[$param]=$siteId;
+        $keys[]=':'.$param;
+    }
+    return $column.' IN ('.implode(',',$keys).')';
+}
 
 /** Context-specific counts run against MySQL, never against truncated React arrays. */
 function contextual_metric_count(int $tenantId,?array $sites,string $resource): int
