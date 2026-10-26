@@ -28,10 +28,18 @@ function handle_tenant_hierarchy_routes(string $method,string $path): void
     }
     if ($method==='GET') {
         json_response(['data'=>list_rows(
-            'SELECT t.id,t.name,t.status,t.created_at,ct.code AS client_type
+            'SELECT t.id,t.name,t.status,t.created_at,ct.code AS client_type,
+                CASE WHEN t.parent_tenant_id=:parent_for_type
+                     THEN "secondary_of" ELSE "managed_by" END AS relationship_type
              FROM tenants t JOIN client_types ct ON ct.id=t.client_type_id
-             WHERE t.parent_tenant_id=:parent ORDER BY t.name',
-            ['parent'=>$parentId]
+             WHERE t.parent_tenant_id=:parent OR EXISTS (
+                 SELECT 1 FROM tenant_relationships tr
+                  WHERE tr.owner_tenant_id=t.id AND tr.operator_tenant_id=:operator
+                    AND tr.relationship_type IN ("managed_by","secondary_of")
+                    AND tr.status="active"
+                    AND (tr.ends_at IS NULL OR tr.ends_at>NOW())
+             ) ORDER BY t.name',
+            ['parent'=>$parentId,'operator'=>$parentId,'parent_for_type'=>$parentId]
         )]);
     }
 
