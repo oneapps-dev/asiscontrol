@@ -46,3 +46,55 @@ jobs:
           test -f dist/.htaccess
           test ! -f dist/backend/.env
           test ! -d dist/backend/storage
+
+  database:
+    name: Fresh database integration
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: test_only
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "mysqladmin ping -h 127.0.0.1 -ptest_only"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      MYSQL_PWD: test_only
+      DB_HOST: 127.0.0.1
+      DB_PORT: '3306'
+      DB_NAME: vzwquesv_app
+      DB_USER: root
+      DB_PASS: test_only
+      APP_ENV: local
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install MySQL client
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq default-mysql-client
+      - name: Install fresh schema
+        run: |
+          mysql -h 127.0.0.1 -u root < backend/database/install.sql
+          php backend/scripts/run_migrations.php
+      - name: Load isolated multitenant QA data
+        run: |
+          mysql -h 127.0.0.1 -u root vzwquesv_app < backend/database/testing/multitenant_demo.sql
+          mysql -h 127.0.0.1 -u root vzwquesv_app -e "SELECT code FROM client_types; SELECT COUNT(*) AS role_count FROM master_roles; SELECT COUNT(*) AS qa_count FROM tenants WHERE name LIKE 'QA %';"
+      - name: API health and role isolation
+        run: |
+          php -S 127.0.0.1:8765 backend/api/index.php >/tmp/asiscontrol-api.log 2>&1 &
+          for i in $(seq 1 20); do
+            if curl -fsS http://127.0.0.1:8765/api/health > /tmp/health.json; then break; fi
+            sleep 1
+          done
+          grep -q '"ok":true' /tmp/health.json || (cat /tmp/asiscontrol-api.log; exit 1)
+          curl -fsS -c /tmp/guard.cookies -H 'Content-Type: application/json' -d '{"email":"guardia@asiscontrol.local","password":"demo1234"}' http://127.0.0.1:8765/api/auth/login > /tmp/guard.json
+          grep -q '"user"' /tmp/guard.json
+          curl -fsS -b /tmp/guard.cookies http://127.0.0.1:8765/api/me/context > /tmp/context.json
+          grep -q '"scopes"' /tmp/context.json
+          status=$(curl -sS -o /tmp/restricted.json -w '%{http_code}' -b /tmp/guard.cookies http://127.0.0.1:8765/api/platform/me)
+          test "$status" = "403"
