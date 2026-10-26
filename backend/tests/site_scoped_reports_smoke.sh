@@ -33,20 +33,25 @@ FROM employee_profiles ep JOIN people p ON p.id=ep.person_id
 WHERE ep.tenant_id=1 AND p.document_number='QA-ATT-SECURED';
 SQL
 
+echo 'QA REPORT REQUEST 1'
 curl -fsS -c /tmp/scoped-reports.cookies -H 'Content-Type: application/json' \
  -d '{"email":"qa-site-reports-supervisor@asiscontrol.local","password":"demo1234"}' \
  "$base/auth/login" >/tmp/scoped-reports-login.json
 
+echo 'QA REPORT REQUEST 2'
 curl -fsS -c /tmp/scoped-attendance.cookies -H 'Content-Type: application/json' \
  -d '{"email":"qa-site-fileadmin@asiscontrol.local","password":"demo1234"}' \
  "$base/auth/login" >/tmp/scoped-attendance-login.json
 
+echo 'QA REPORT REQUEST 3'
 curl -fsS -b /tmp/scoped-reports.cookies "$base/reports/visits.csv" >/tmp/scoped-visit.csv
 grep -q VISITA_EVIDENCIA_PERMITIDA_QA /tmp/scoped-visit.csv
 ! grep -q VISITA_NO_AUTORIZADA_QA /tmp/scoped-visit.csv
+echo 'QA REPORT REQUEST 4'
 curl -fsS -b /tmp/scoped-reports.cookies "$base/reports/visits.html" >/tmp/scoped-visit.html
 grep -q 'Sede permitida QA' /tmp/scoped-visit.html
 ! grep -q 'Sede restringida' /tmp/scoped-visit.html
+echo 'QA REPORT REQUEST 5'
 curl -fsS -b /tmp/scoped-reports.cookies "$base/reports/visits.xlsx" >/tmp/scoped-visit.xlsx
 python3 - <<'PY'
 from zipfile import ZipFile
@@ -57,6 +62,7 @@ assert 'VISITA_EVIDENCIA_PERMITIDA_QA' in content
 assert 'VISITA_NO_AUTORIZADA_QA' not in content
 PY
 
+echo 'QA REPORT REQUEST 6'
 curl -fsS -b /tmp/scoped-attendance.cookies "$base/attendance" >/tmp/scoped-attendance.json
 python3 - <<'PY'
 import json
@@ -65,12 +71,15 @@ notes={str(x.get('notes','')) for x in rows}
 assert 'QA_ATTENDANCE_ALLOWED_SITE' in notes
 assert 'QA_ATTENDANCE_DENIED_SITE' not in notes
 PY
+echo 'QA REPORT REQUEST 7'
 curl -fsS -b /tmp/scoped-attendance.cookies "$base/reports/attendance.csv" >/tmp/scoped-attendance.csv
 grep -q QA_ATTENDANCE_ALLOWED_SITE /tmp/scoped-attendance.csv
 ! grep -q QA_ATTENDANCE_DENIED_SITE /tmp/scoped-attendance.csv
+echo 'QA REPORT REQUEST 8'
 curl -fsS -b /tmp/scoped-attendance.cookies "$base/reports/attendance.html" >/tmp/scoped-attendance.html
 grep -q QA_ATTENDANCE_ALLOWED_SITE /tmp/scoped-attendance.html
 ! grep -q QA_ATTENDANCE_DENIED_SITE /tmp/scoped-attendance.html
+echo 'QA REPORT REQUEST 9'
 curl -fsS -b /tmp/scoped-attendance.cookies "$base/reports/attendance.xlsx" >/tmp/scoped-attendance.xlsx
 python3 - <<'PY'
 from zipfile import ZipFile
@@ -81,13 +90,17 @@ assert 'QA_ATTENDANCE_ALLOWED_SITE' in content
 assert 'QA_ATTENDANCE_DENIED_SITE' not in content
 PY
 # All previously allowed tenant-wide views must still include the other site.
+echo 'QA REPORT REQUEST 10'
 curl -fsS -c /tmp/reports-tenant-admin.cookies -H 'Content-Type: application/json' \
  -d '{"email":"admin@asiscontrol.local","password":"demo1234"}' \
  "$base/auth/login" >/tmp/reports-tenant-admin.json
+echo 'QA REPORT REQUEST 11'
 curl -fsS -c /tmp/reports-tenant-supervisor.cookies -H 'Content-Type: application/json' \
  -d '{"email":"qa-tenant-reports-supervisor@asiscontrol.local","password":"demo1234"}' \
  "$base/auth/login" >/tmp/reports-tenant-supervisor.json
+echo 'QA REPORT REQUEST 12'
 curl -fsS -b /tmp/reports-tenant-supervisor.cookies "$base/reports/visits.csv" >/tmp/reports-full-visits.csv
+echo 'QA REPORT REQUEST 13'
 curl -fsS -b /tmp/reports-tenant-admin.cookies "$base/reports/attendance.csv" >/tmp/reports-full-attendance.csv
 grep -q VISITA_NO_AUTORIZADA_QA /tmp/reports-full-visits.csv
 grep -q QA_ATTENDANCE_DENIED_SITE /tmp/reports-full-attendance.csv
