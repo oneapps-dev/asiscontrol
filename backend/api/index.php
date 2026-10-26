@@ -2509,6 +2509,15 @@ try {
         json_response(['data' => $counts]);
     }
 
+    if ($method === 'GET' && $path === '/reports/attendance.html') {
+        require_permission('attendance.view');
+        html_attendance_report(tenant_id(), [
+            'from' => $_GET['from'] ?? null,
+            'to' => $_GET['to'] ?? null,
+            'employee_id' => $_GET['employee_id'] ?? null,
+        ],actor_visible_site_ids(require_auth()));
+    }
+
     json_response(['error' => 'Ruta no encontrada', 'path' => $path], 404);
 } catch (Throwable $exception) {
     if (isset($pdo) && $pdo instanceof PDO && $pdo->inTransaction()) {
@@ -2738,15 +2747,6 @@ function portal_resident_by_email(string $email): ?array
          LIMIT 1',
         ['email' => trim($email)]
         );
-    }
-
-    if ($method === 'GET' && $path === '/reports/attendance.html') {
-        require_permission('attendance.view');
-        html_attendance_report(tenant_id(), [
-            'from' => $_GET['from'] ?? null,
-            'to' => $_GET['to'] ?? null,
-            'employee_id' => $_GET['employee_id'] ?? null,
-        ],actor_visible_site_ids(require_auth()));
     }
 
 function portal_resident_by_id(int $residentId, int $tenantId): ?array
