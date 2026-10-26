@@ -716,7 +716,7 @@ try {
         if (in_array((string)$data['role'],['guard','supervisor','coordinator','tech_operator'],true) && empty($data['site_id'])) {
             json_response(['error'=>'Se requiere sede para un usuario operativo'],422);
         }
-        start_plan_capacity_guard(tenant_id(),'users');
+        start_user_capacity_guard(tenant_id(),(string)$data['role'],!isset($data['is_active']) || (bool)$data['is_active']);
         $stmt = db()->prepare(
             'INSERT INTO users (tenant_id, site_id, name, email, password_hash, role, is_active)
              VALUES (:tenant_id, :site_id, :name, :email, :password_hash, :role, :is_active)'
@@ -764,8 +764,29 @@ try {
             $fields['password_hash'] = password_hash((string) $data['password'], PASSWORD_DEFAULT);
         }
         $sql .= ' WHERE id = :id AND tenant_id = :tenant_id';
+        $newRole=(string)$fields['role'];
+        $newActive=(bool)$fields['is_active'];
+        if (in_array($newRole,['guard','supervisor','coordinator','tech_operator'],true)
+            && empty($fields['site_id'])) {
+            json_response(['error'=>'Se requiere sede para un usuario operativo'],422);
+        }
+        start_user_capacity_guard(tenant_id(),$newRole,$newActive,
+            (string)$currentUser['role'],(bool)$currentUser['is_active']);
         $stmt = db()->prepare($sql);
         $stmt->execute($fields);
+        if ($newRole!==(string)$currentUser['role']
+            && in_array($newRole,['guard','supervisor','coordinator','tech_operator'],true)) {
+            // A former tenant-wide administrator must not retain their old tenant grant.
+            db()->prepare('DELETE FROM user_scopes WHERE user_id=:user AND tenant_id=:tenant AND scope_type="tenant"')
+                ->execute(['user'=>$matches[1],'tenant'=>tenant_id()]);
+        }
+        if ($newActive && in_array($newRole,['guard','supervisor','coordinator','tech_operator'],true)) {
+            db()->prepare('INSERT IGNORE INTO user_scopes(tenant_id,user_id,scope_type,scope_id,granted_by)
+                VALUES(:tenant,:user,"site",:site,:actor)')
+                ->execute(['tenant'=>tenant_id(),'user'=>$matches[1],'site'=>$fields['site_id'],
+                    'actor'=>require_auth()['id']]);
+        }
+        finish_plan_capacity_guard();
         audit('usuario.actualizado', 'Usuario #' . $matches[1] . ' actualizado');
         json_response(['ok' => true]);
     }
@@ -3876,7 +3897,7 @@ function import_csv_row(PDO $pdo, int $tenantId, string $jobType, array $data): 
             }
         }
         validate_role_assignment(require_auth(), $tenantId, (string)$data['role']);
-        assert_plan_capacity($tenantId,'users');
+        assert_plan_user_transition($tenantId,(string)$data['role'],true);
         if (in_array((string)$data['role'],['guard','supervisor','coordinator','tech_operator'],true) && empty($data['site_id'])) {
             throw new RuntimeException('Se requiere sede para un usuario operativo');
         }

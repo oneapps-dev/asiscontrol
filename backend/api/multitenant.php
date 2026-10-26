@@ -186,14 +186,31 @@ function handle_multitenant_routes(string $method,string $path): void
         $tenantId=(int)$actor['tenant_id'];
         $targetId=(int)$match[1];
         if (is_platform_admin_target($targetId)) json_response(['error'=>'Cuenta global protegida'],403);
-        $target=one_row('SELECT id,role FROM users WHERE id=:id AND tenant_id=:tenant',
+        $target=one_row('SELECT id,role,site_id,is_active FROM users WHERE id=:id AND tenant_id=:tenant',
             ['id'=>$targetId,'tenant'=>$tenantId]);
         if (!$target) json_response(['error'=>'Usuario no encontrado'],404);
         $payload=request_json();
         $role=(string)($payload['role']??'');
         validate_role_assignment($actor,$tenantId,$role);
+        $operational=in_array($role,['guard','supervisor','coordinator','tech_operator'],true);
+        if ($operational && empty($target['site_id'])) {
+            json_response(['error'=>'El usuario requiere una sede asignada'],422);
+        }
+        start_user_capacity_guard($tenantId,$role,(bool)$target['is_active'],
+            (string)$target['role'],(bool)$target['is_active']);
         db()->prepare('UPDATE users SET role=:role WHERE id=:id AND tenant_id=:tenant')
             ->execute(['role'=>$role,'id'=>$targetId,'tenant'=>$tenantId]);
+        if ($operational && $role!==$target['role']) {
+            db()->prepare('DELETE FROM user_scopes WHERE user_id=:user AND tenant_id=:tenant AND scope_type="tenant"')
+                ->execute(['user'=>$targetId,'tenant'=>$tenantId]);
+        }
+        if ($operational) {
+            db()->prepare('INSERT IGNORE INTO user_scopes(tenant_id,user_id,scope_type,scope_id,granted_by)
+                VALUES(:tenant,:user,"site",:site,:actor)')
+                ->execute(['tenant'=>$tenantId,'user'=>$targetId,
+                    'site'=>$target['site_id'],'actor'=>$actor['id']]);
+        }
+        finish_plan_capacity_guard();
         platform_audit($actor,$tenantId,'rol.actualizado','Cambio de rol para usuario #'.$targetId,
             ['previous'=>$target['role'],'new'=>$role]);
         json_response(['ok'=>true]);

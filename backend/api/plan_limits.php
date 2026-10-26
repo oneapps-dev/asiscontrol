@@ -121,3 +121,46 @@ function handle_plan_routes(string $method,string $path): void
         json_response(['ok'=>true]);
     }
 }
+
+
+/** A role consumes exactly one optional user-category capacity. */
+function plan_user_category(string $role): ?string
+{
+    if (in_array($role,['admin','auditor'],true)) return 'users_administrative';
+    if (in_array($role,['guard','supervisor','coordinator','tech_operator'],true)) return 'users_operational';
+    return null;
+}
+
+/** Must execute under the tenant row lock for changes affecting active users. */
+function assert_plan_user_transition(
+    int $tenantId,string $newRole,bool $newActive,
+    ?string $oldRole=null,bool $oldActive=false
+): void {
+    if (!$newActive) return;
+    if (!$oldActive) assert_plan_capacity($tenantId,'users');
+    $newCategory=plan_user_category($newRole);
+    $oldCategory=$oldActive?plan_user_category($oldRole??''):null;
+    if ($newCategory!==null && $newCategory!==$oldCategory) {
+        assert_plan_capacity($tenantId,$newCategory);
+    }
+}
+
+function start_user_capacity_guard(
+    int $tenantId,string $role,bool $active,
+    ?string $oldRole=null,bool $oldActive=false
+): void {
+    $pdo=db();
+    if ($pdo->inTransaction()) throw new LogicException('Nested user transaction');
+    $pdo->beginTransaction();
+    try {
+        lock_plan_tenant($tenantId);
+        assert_plan_user_transition($tenantId,$role,$active,$oldRole,$oldActive);
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) $pdo->rollBack();
+        if ($e instanceof DomainException) {
+            json_response(['error'=>'Se alcanzó el cupo de usuarios del plan',
+                'error_code'=>'PLAN_LIMIT_REACHED'],409);
+        }
+        throw $e;
+    }
+}
