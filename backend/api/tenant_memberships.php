@@ -1,6 +1,18 @@
 <?php
 declare(strict_types=1);
 
+/** Role changes in the principal identity must not resurrect an older grant. */
+function member_role_allowed(string $homeRole,string $delegatedRole): bool
+{
+    return match ($homeRole) {
+        'coordinator'=>in_array($delegatedRole,['coordinator','supervisor','guard'],true),
+        'supervisor'=>in_array($delegatedRole,['supervisor','guard'],true),
+        'guard'=>$delegatedRole==='guard',
+        'auditor'=>$delegatedRole==='auditor',
+        default=>false
+    };
+}
+
 /**
  * Cross-tenant assignments are separate from user identities and from CREAMOX
  * support previews. A delegated assignment must remain attached to an active
@@ -11,6 +23,7 @@ function member_target_row(int $userId,int $tenantId): ?array
     return one_row(
         'SELECT m.id,m.user_id,m.tenant_id,m.role_code,m.site_id,m.origin,
                 m.operator_tenant_id,m.status,m.expires_at,
+                home.role AS home_role,home.is_active AS home_active,
                 t.name AS tenant_name,t.status AS tenant_status,t.commercial_status,
                 s.tenant_id AS site_tenant_id,
                 (SELECT ts.status FROM tenant_subscriptions ts WHERE ts.tenant_id=t.id
@@ -24,6 +37,7 @@ function member_target_row(int $userId,int $tenantId): ?array
                    AND tr.status="active"
                    AND (tr.ends_at IS NULL OR tr.ends_at>NOW())) AS active_relation
            FROM tenant_user_memberships m
+           JOIN users home ON home.id=m.user_id
            JOIN tenants t ON t.id=m.tenant_id
            JOIN sites s ON s.id=m.site_id
           WHERE m.user_id=:user AND m.tenant_id=:tenant LIMIT 1',
@@ -33,7 +47,9 @@ function member_target_row(int $userId,int $tenantId): ?array
 
 function member_target_valid(?array $row): bool
 {
-    if (!$row || $row['status']!=='active' || $row['tenant_status']!=='active'
+    if (!$row || $row['status']!=='active' || !(int)$row['home_active']
+        || !member_role_allowed((string)$row['home_role'],(string)$row['role_code'])
+        || $row['tenant_status']!=='active'
         || $row['commercial_status']!=='active'
         || (int)$row['site_tenant_id']!==(int)$row['tenant_id']
         || !in_array((string)$row['role_code'],['coordinator','supervisor','guard','auditor'],true)
@@ -95,7 +111,8 @@ function member_allowed_targets(array $actor): array
     $userId=(int)$actor['id'];
     $members=list_rows(
         'SELECT m.id,m.tenant_id,m.role_code,m.site_id,m.origin,m.operator_tenant_id,
-                m.status,m.expires_at,t.name AS tenant_name,t.status AS tenant_status,
+                m.status,m.expires_at,home.role AS home_role,home.is_active AS home_active,
+                t.name AS tenant_name,t.status AS tenant_status,
                 t.commercial_status,s.tenant_id AS site_tenant_id,
                 (SELECT ts.status FROM tenant_subscriptions ts WHERE ts.tenant_id=t.id
                    ORDER BY ts.id DESC LIMIT 1) AS subscription_status,
@@ -106,8 +123,8 @@ function member_allowed_targets(array $actor): array
                   AND tr.relationship_type IN ("managed_by","secondary_of")
                   AND tr.status="active"
                   AND (tr.ends_at IS NULL OR tr.ends_at>NOW())) AS active_relation
-         FROM tenant_user_memberships m JOIN tenants t ON t.id=m.tenant_id
-         JOIN sites s ON s.id=m.site_id WHERE m.user_id=:user ORDER BY t.name',
+         FROM tenant_user_memberships m JOIN users home ON home.id=m.user_id
+         JOIN tenants t ON t.id=m.tenant_id JOIN sites s ON s.id=m.site_id WHERE m.user_id=:user ORDER BY t.name',
         ['user'=>$userId]
     );
     return array_values(array_map(static fn($r)=>[
@@ -314,7 +331,7 @@ function handle_member_routes(string $method,string $path): void
         $user=one_row('SELECT id,tenant_id,role,is_active FROM users WHERE id=:id LIMIT 1',
             ['id'=>$userId]);
         if (!$user || !(int)$user['is_active'] || is_platform_admin_target((int)$userId)
-            || $user['role']==='resident' || $user['role']==='superadmin'
+            || !member_role_allowed((string)$user['role'],$role)
             || (int)$user['tenant_id']===$tenantId ||
             ($origin==='delegated' && (int)$user['tenant_id']!==$operatorId)) {
             json_response(['error'=>'Usuario principal no habilitado para la delegación',
