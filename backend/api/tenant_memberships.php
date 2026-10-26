@@ -31,6 +31,10 @@ function member_target_row(int $userId,int $tenantId): ?array
                 (SELECT ts.ends_on FROM tenant_subscriptions ts WHERE ts.tenant_id=t.id
                    ORDER BY ts.id DESC LIMIT 1) AS subscription_ends_on,
                 (SELECT COUNT(*) FROM tenant_relationships tr
+                   JOIN tenants operator_t ON operator_t.id=tr.operator_tenant_id
+                     AND operator_t.status="active" AND operator_t.commercial_status="active"
+                   JOIN client_types operator_type ON operator_type.id=operator_t.client_type_id
+                     AND operator_type.code="security_company"
                    WHERE tr.owner_tenant_id=t.id
                    AND tr.operator_tenant_id=m.operator_tenant_id
                    AND tr.relationship_type IN ("managed_by","secondary_of")
@@ -119,6 +123,10 @@ function member_allowed_targets(array $actor): array
                 (SELECT ts.ends_on FROM tenant_subscriptions ts WHERE ts.tenant_id=t.id
                    ORDER BY ts.id DESC LIMIT 1) AS subscription_ends_on,
                 (SELECT COUNT(*) FROM tenant_relationships tr
+                  JOIN tenants operator_t ON operator_t.id=tr.operator_tenant_id
+                    AND operator_t.status="active" AND operator_t.commercial_status="active"
+                  JOIN client_types operator_type ON operator_type.id=operator_t.client_type_id
+                    AND operator_type.code="security_company"
                   WHERE tr.owner_tenant_id=t.id AND tr.operator_tenant_id=m.operator_tenant_id
                   AND tr.relationship_type IN ("managed_by","secondary_of")
                   AND tr.status="active"
