@@ -2094,6 +2094,11 @@ try {
         $user = require_permission('access_events.register');
         $data = request_json();
         require_fields($data, ['event_uuid', 'idempotency_key', 'action']);
+        if ((array_key_exists('tenant_id',$data) && (int)$data['tenant_id']!==(int)$user['tenant_id'])
+            || (array_key_exists('actor_user_id',$data) && (int)$data['actor_user_id']!==(int)$user['id'])) {
+            json_response(['error'=>'Evento offline registrado bajo otra identidad o cliente',
+                'error_code'=>'OFFLINE_CONTEXT_MISMATCH'],403);
+        }
         $offlineEventUuid = strtolower(trim((string) $data['event_uuid']));
         if (!preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i', $offlineEventUuid)) {
             json_response(['error' => 'event_uuid debe ser un UUID valido'], 422);
