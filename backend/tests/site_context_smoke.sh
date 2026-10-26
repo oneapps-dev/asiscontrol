@@ -40,6 +40,11 @@ patch_status=$(curl -sS -o /tmp/site-user-edit-blocked.json -w '%{http_code}' -b
 test "$patch_status" = "403" || { echo "Selected-site user update returned $patch_status"; exit 1; }
 create_status=$(curl -sS -o /tmp/site-user-create-blocked.json -w '%{http_code}' -b /tmp/context-admin.cookies -H "X-CSRF-Token: $admin_csrf" -H 'Content-Type: application/json' -d '{}' "$base/users")
 test "$create_status" = "403" || { echo "Selected-site user create returned $create_status"; exit 1; }
+# Tenant-wide audit exports and queued job metadata must not leak through a site selection.
+for endpoint in audit.csv audit.html jobs/imports jobs/exports; do
+  code=$(curl -sS -o /tmp/site-wide-denied.json -w '%{http_code}' -b /tmp/context-admin.cookies "$base/$endpoint")
+  test "$code" = "403" || { echo "Site context leaked $endpoint: $code"; exit 1; }
+done
 curl -fsS -b /tmp/context-admin.cookies "$base/visits" > /tmp/site-context-visits.json
 curl -fsS -b /tmp/context-admin.cookies "$base/bootstrap" > /tmp/site-context-bootstrap.json
 curl -fsS -b /tmp/context-admin.cookies "$base/dashboard/contextual" > /tmp/site-context-metrics.json
