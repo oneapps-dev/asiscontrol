@@ -11,6 +11,14 @@ status=$(curl -sS -o /tmp/shift-scope-denied.json -w '%{http_code}' -b /tmp/shif
 test "$status" = "403" || { echo "Cross-site close returned $status"; exit 1; }
 still_open=$(mysql -h 127.0.0.1 -u root vzwquesv_app -N -e "SELECT COUNT(*) FROM guard_shifts WHERE id=$shift_id AND ended_at IS NULL")
 test "$still_open" = "1"
+# A supervisor scoped to the allowed site must retain the legitimate force-close action.
+mysql -h 127.0.0.1 -u root vzwquesv_app -e "INSERT INTO guard_shifts (tenant_id,site_id,user_id,checkpoint,started_at) SELECT 1,$site_a,id,'QA_ALLOWED_FORCE_CLOSE',NOW() FROM users WHERE email='guardia@asiscontrol.local'"
+force_shift_id=$(mysql -h 127.0.0.1 -u root vzwquesv_app -N -e "SELECT MAX(id) FROM guard_shifts WHERE checkpoint='QA_ALLOWED_FORCE_CLOSE'")
+force_status=$(curl -sS -o /tmp/shift-force-allowed.json -w '%{http_code}' -b /tmp/shift-scope.cookies -H "X-CSRF-Token: $csrf" -H 'Content-Type: application/json' -d '{"reason":"QA authorized supervisory closure"}' "$base/shifts/$force_shift_id/force-close")
+test "$force_status" = "200" || { echo "Allowed forced close returned $force_status"; cat /tmp/shift-force-allowed.json; exit 1; }
+force_closed=$(mysql -h 127.0.0.1 -u root vzwquesv_app -N -e "SELECT COUNT(*) FROM guard_shifts WHERE id=$force_shift_id AND ended_at IS NOT NULL")
+test "$force_closed" = "1"
+
 # A guard cannot close their own shift outside the selected site either.
 mysql -h 127.0.0.1 -u root vzwquesv_app -e "INSERT INTO guard_shifts (tenant_id,site_id,user_id,checkpoint,started_at) SELECT 1,$site_b,id,'QA_CROSS_SITE_SELF_CLOSE',NOW() FROM users WHERE email='guardia@asiscontrol.local'"
 self_shift_id=$(mysql -h 127.0.0.1 -u root vzwquesv_app -N -e "SELECT MAX(id) FROM guard_shifts WHERE checkpoint='QA_CROSS_SITE_SELF_CLOSE'")
