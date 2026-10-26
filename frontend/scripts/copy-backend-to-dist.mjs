@@ -7,13 +7,10 @@ const frontendRoot = resolve(currentDir, '..');
 const projectRoot = resolve(frontendRoot, '..');
 const distRoot = resolve(frontendRoot, 'dist');
 
+// Operational code only. Keep product and architecture docs in GitHub, not in the public web root.
 const copies = [
   ['backend', 'backend'],
-  ['docs/phases', 'docs/phases'],
-  ['docs/visitor_access_management_system_specification.md', 'docs/visitor_access_management_system_specification.md'],
-  ['docs/qa-implementation-questions.md', 'docs/qa-implementation-questions.md'],
-  ['02 AsisControl/Para entregar a Programación/00_README', 'docs/asiscontrol'],
-  ['02 AsisControl/Para entregar a Programación/01_PRODUCT_FOUNDATION', 'docs/asiscontrol/01_PRODUCT_FOUNDATION'],
+
 ];
 
 await mkdir(distRoot, { recursive: true });
