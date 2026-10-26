@@ -333,13 +333,18 @@ try {
     }
 
     if ($method === 'GET' && $path === '/shifts') {
-        require_permission('shifts.monitor');
-        json_response(['data' => scope_filter_rows('shifts',list_rows(
+        $actor=require_permission('shifts.monitor');
+        $params=['tenant_id'=>(int)$actor['tenant_id']];
+        $scope=sql_site_scope(actor_visible_site_ids($actor),'gs.site_id','shift_list_site_',$params);
+        json_response(['data'=>scope_filter_rows('shifts',list_rows(
             'SELECT gs.*, u.name AS user_name, s.name AS site_name
-             FROM guard_shifts gs INNER JOIN users u ON u.id = gs.user_id INNER JOIN sites s ON s.id = gs.site_id
-             WHERE gs.tenant_id = :tenant_id ORDER BY gs.ended_at IS NULL DESC, gs.started_at DESC LIMIT 200',
-            ['tenant_id' => tenant_id()]
-        ),require_auth())]);
+             FROM guard_shifts gs
+             INNER JOIN users u ON u.id=gs.user_id AND u.tenant_id=gs.tenant_id
+             INNER JOIN sites s ON s.id=gs.site_id AND s.tenant_id=gs.tenant_id
+             WHERE gs.tenant_id=:tenant_id AND '.$scope.'
+             ORDER BY gs.ended_at IS NULL DESC, gs.started_at DESC LIMIT 200',
+            $params
+        ),$actor)]);
     }
 
     if ($method === 'POST' && preg_match('#^/shifts/(\d+)/force-close$#', $path, $matches)) {
@@ -499,7 +504,7 @@ try {
             : bookings_for_tenant($tenantId,[],$bootstrapSitesAllowed);
         $bootstrapInvitations = $isResident && $residentProfile
             ? list_rows('SELECT * FROM invitations WHERE tenant_id = :tenant_id AND destination = :destination AND host = :host ORDER BY created_at DESC LIMIT 100', ['tenant_id' => $tenantId, 'destination' => $residentDestination, 'host' => $residentProfile['full_name']])
-            : list_rows('SELECT * FROM invitations WHERE tenant_id = :tenant_id ORDER BY created_at DESC LIMIT 200', ['tenant_id' => $tenantId]);
+            : scoped_invitations_for_tenant($tenantId,$bootstrapSitesAllowed);
         $bootstrapPayload = [
             'csrf_token' => csrf_token(),
             'platform_admin' => is_platform_admin($bootstrapUser),
@@ -834,17 +839,19 @@ try {
     }
 
     if ($method === 'GET' && $path === '/parking') {
+        $actor=require_auth();
         $query = trim((string) ($_GET['q'] ?? ''));
-        $params = ['tenant_id' => tenant_id()];
+        $params = ['tenant_id' => (int)$actor['tenant_id']];
         $where = 'tenant_id = :tenant_id';
         if ($query !== '') {
             $where .= ' AND (space_code LIKE :query OR assigned_to LIKE :query OR plate LIKE :query)';
             $params['query'] = '%' . $query . '%';
         }
+        $where.=' AND '.sql_site_scope(actor_visible_site_ids($actor),'site_id','parking_list_site_',$params);
         json_response(['data' => scope_filter_rows('parking',list_rows(
             'SELECT * FROM parking_assignments WHERE ' . $where . ' ORDER BY space_code LIMIT 200',
             $params
-        ),require_auth())]);
+        ),$actor)]);
     }
 
     if ($method === 'POST' && $path === '/parking') {
@@ -1652,7 +1659,10 @@ try {
     }
 
     if ($method === 'GET' && $path === '/invitations') {
-        json_response(['data' => scope_filter_rows('invitations',list_rows('SELECT * FROM invitations WHERE tenant_id = :tenant_id ORDER BY created_at DESC LIMIT 200', ['tenant_id' => tenant_id()]),require_auth())]);
+        $actor=require_auth();
+        json_response(['data'=>scope_filter_rows('invitations',scoped_invitations_for_tenant(
+            (int)$actor['tenant_id'],actor_visible_site_ids($actor)
+        ),$actor)]);
     }
 
     if ($method === 'GET' && $path === '/approvals') {
@@ -2954,6 +2964,18 @@ function visits_for_tenant(int $tenantId, array $filters = [], ?array $siteIds =
          WHERE ' . implode(' AND ', $where) . '
          ORDER BY v.entered_at DESC
          LIMIT ' . $limit . ' OFFSET ' . $offset,
+        $params
+    );
+}
+
+function scoped_invitations_for_tenant(int $tenantId, ?array $sites): array
+{
+    $params=['tenant_id'=>$tenantId];
+    $siteFilter=sql_site_scope($sites,'site_id','invitation_list_site_',$params);
+    return list_rows(
+        'SELECT * FROM invitations
+         WHERE tenant_id=:tenant_id AND '.$siteFilter.'
+         ORDER BY created_at DESC LIMIT 200',
         $params
     );
 }
