@@ -5,6 +5,7 @@ declare(strict_types=1);
 require __DIR__ . '/bootstrap.php';
 require __DIR__ . '/multitenant.php';
 require __DIR__ . '/plan_limits.php';
+require __DIR__ . '/tenant_hierarchy.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
 $apiStage = 'router';
@@ -28,6 +29,7 @@ if (!in_array($method, ['GET', 'HEAD', 'OPTIONS'], true) && !$isPublicPost) {
 try {
     handle_multitenant_routes($method, $path);
     handle_plan_routes($method, $path);
+    handle_tenant_hierarchy_routes($method, $path);
     if ($method === 'GET' && $path === '/health') {
         $apiStage = 'health.database';
         try {
@@ -2324,16 +2326,21 @@ try {
         $email = strtolower(trim((string) $data['admin_email']));
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) json_response(['error' => 'Correo de administrador inválido'], 422);
         $planCode = trim((string) ($data['plan_code'] ?? 'starter')) ?: 'starter';
+        $clientTypeCode=(string)($data['client_type']??'custom');
+        $clientType=one_row('SELECT id FROM client_types WHERE code=:code',['code'=>$clientTypeCode]);
+        if (!$clientType) json_response(['error'=>'Tipo de cliente no reconocido'],422);
         $pdo = db();
         $pdo->beginTransaction();
         try {
-            $stmt = $pdo->prepare('INSERT INTO tenants (name, legal_name, document_number, status) VALUES (:name, :legal_name, :document_number, "active")');
+            $stmt = $pdo->prepare('INSERT INTO tenants (name, legal_name, document_number, status,client_type_id) VALUES (:name, :legal_name, :document_number, "active",:client_type_id)');
             $stmt->execute([
                 'name' => trim((string) $data['name']),
                 'legal_name' => trim((string) ($data['legal_name'] ?? '')) ?: null,
                 'document_number' => trim((string) ($data['document_number'] ?? '')) ?: null,
+                'client_type_id'=>$clientType['id'],
             ]);
             $tenantId = (int) $pdo->lastInsertId();
+            $pdo->prepare('UPDATE tenants SET root_tenant_id=:id WHERE id=:id')->execute(['id'=>$tenantId]);
             $stmt = $pdo->prepare('INSERT INTO sites (tenant_id, name, address, timezone) VALUES (:tenant_id, :name, :address, :timezone)');
             $stmt->execute([
                 'tenant_id' => $tenantId,
@@ -2346,6 +2353,8 @@ try {
             $stmt = $pdo->prepare('INSERT INTO users (tenant_id, site_id, name, email, password_hash, role, is_active) VALUES (:tenant_id, :site_id, :name, :email, :password_hash, "admin", 1)');
             $stmt->execute(['tenant_id' => $tenantId, 'site_id' => $siteId, 'name' => trim((string) $data['admin_name']), 'email' => $email, 'password_hash' => $temporaryHash]);
             $userId = (int) $pdo->lastInsertId();
+            $pdo->prepare('INSERT INTO user_scopes(tenant_id,user_id,scope_type,scope_id,granted_by) VALUES(:tenant,:user,"tenant",:scope,:actor)')
+                ->execute(['tenant'=>$tenantId,'user'=>$userId,'scope'=>$tenantId,'actor'=>$actor['id']]);
             // Copy the approved tenant-1 permission baseline to every new client.
             $pdo->prepare('INSERT INTO role_permissions (tenant_id, role, permission_code, granted) SELECT :new_tenant_id, role, permission_code, granted FROM role_permissions WHERE tenant_id = 1 ON DUPLICATE KEY UPDATE granted = VALUES(granted)')->execute(['new_tenant_id' => $tenantId]);
             $plan = one_row('SELECT id, billing_period FROM subscription_plans WHERE code = :code AND status = "active" ORDER BY id LIMIT 1', ['code' => $planCode]);

@@ -1269,3 +1269,18 @@ FROM subscription_plans WHERE JSON_EXTRACT(limits_json,'$.units') IS NOT NULL
 ON DUPLICATE KEY UPDATE capacity=capacity;
 
 INSERT INTO schema_migrations (migration) VALUES ('2026_10_26_017_plan_entitlements_and_limits.sql') ON DUPLICATE KEY UPDATE applied_at=applied_at;
+
+-- Security company delegated client management.
+-- Migration 018: a dedicated non-global permission for security operators.
+INSERT INTO permissions (code,name,description)
+VALUES ('clients.manage','Administrar clientes secundarios','Gestionar solo clientes subordinados y autorizados')
+ON DUPLICATE KEY UPDATE name=VALUES(name),description=VALUES(description);
+
+INSERT IGNORE INTO master_role_permissions (role_code,permission_code)
+VALUES ('tech_operator','clients.manage'),('superadmin','clients.manage');
+
+INSERT INTO role_permissions (tenant_id,role,permission_code,granted)
+SELECT t.id,'tech_operator','clients.manage',1 FROM tenants t
+ON DUPLICATE KEY UPDATE granted=VALUES(granted);
+
+INSERT INTO schema_migrations (migration) VALUES ('2026_10_26_018_security_operator_clients.sql') ON DUPLICATE KEY UPDATE applied_at=applied_at;
