@@ -116,6 +116,7 @@ jobs:
           bash backend/tests/industrial_structure_smoke.sh
           bash backend/tests/user_quota_smoke.sh
           bash backend/tests/site_scoped_reports_smoke.sh
+          bash backend/tests/shift_force_close_scope_smoke.sh
           bash backend/tests/site_scoped_bookings_smoke.sh
           bash backend/tests/legacy_created_ids_smoke.sh
           bash backend/tests/client_type_gate_smoke.sh
