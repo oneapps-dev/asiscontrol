@@ -1239,6 +1239,7 @@ function SiteContextSelector({ tenantId, apiOnline, onChange }: {
 function ContextDashboard({ tenantId, role, refreshKey }: { tenantId?: string; role: Role; refreshKey: number }) {
   const [context, setContext] = useState<{
     tenant_name: string;
+    client_type: string;
     client_type_name: string;
     role: string;
     scope: string;
@@ -1254,11 +1255,27 @@ function ContextDashboard({ tenantId, role, refreshKey }: { tenantId?: string; r
   }, [tenantId, role, refreshKey]);
 
   if (!context) return null;
-  const extra = context.client_type_name === 'Empresa de seguridad'
-    ? [['Clientes administrados', context.metrics.managed_clients || 0]]
-    : context.client_type_name === 'Propiedad horizontal'
-      ? [['Unidades activas', context.metrics.units_active || 0]]
-      : [['Turnos activos', context.metrics.active_shifts || 0]];
+  const industry = ['industrial','corporate'].includes(context.client_type);
+  const residential = context.client_type === 'residential' || 'residents_active' in context.metrics;
+  const security = context.client_type === 'security_company';
+  const sectorMetrics: Array<[string, number]> = industry ? [
+    ['Empleados en sitio', context.metrics.employee_present || 0],
+    ['Contratistas en sitio', context.metrics.contractors_inside || 0],
+    ['Entradas de empleados hoy', context.metrics.attendance_entries_today || 0],
+    ['Entradas tardías hoy', context.metrics.attendance_late_today || 0],
+  ] : residential ? [
+    ['Unidades activas', context.metrics.units_active || 0],
+    ['Residentes activos', context.metrics.residents_active || 0],
+    ['Reservas pendientes', context.metrics.bookings_pending || 0],
+  ] : security ? [
+    ['Puestos activos', context.metrics.active_access_points || 0],
+    ['Clientes administrados', context.metrics.managed_clients || 0],
+    ['Turnos activos', context.metrics.active_shifts || 0],
+  ] : [['Turnos activos', context.metrics.active_shifts || 0]];
+  const roleMetrics: Array<[string, number]> = context.role === 'guard'
+    ? [['Turnos activos', context.metrics.active_shifts || 0]]
+    : [['Ingresos registrados hoy', context.metrics.visits_today || 0],
+       ['Puestos activos', context.metrics.active_access_points || 0]];
   return <section className="panel">
     <div className="panel-head">
       <h3>Indicadores del contexto autorizado</h3>
@@ -1268,7 +1285,7 @@ function ContextDashboard({ tenantId, role, refreshKey }: { tenantId?: string; r
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
       {[['Personas dentro', context.metrics.people_inside], ['Vehículos dentro', context.metrics.vehicles_inside],
         ['Paquetes pendientes', context.metrics.packages_pending], ['Incidentes abiertos', context.metrics.incidents_open],
-        ...extra].map(([label, value]) => <div key={String(label)} className="rounded-lg border border-border bg-surface-container-low p-3">
+        ...roleMetrics, ...sectorMetrics].map(([label, value]) => <div key={String(label)} className="rounded-lg border border-border bg-surface-container-low p-3">
           <p className="text-xs uppercase text-on-surface-variant">{label}</p>
           <p className="mt-1 text-2xl font-black text-primary">{Number(value || 0).toLocaleString('es-CO')}</p>
         </div>)}

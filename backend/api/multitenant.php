@@ -612,7 +612,28 @@ function contextual_metric_count(int $tenantId,?array $sites,string $resource): 
         'packages_pending'=>['packages p','p','LEFT JOIN guard_shifts gs ON gs.id=p.shift_id AND gs.tenant_id=p.tenant_id','p.status="pending"','gs.site_id'],
         'incidents_open'=>['incidents i','i','LEFT JOIN guard_shifts gs ON gs.id=i.shift_id AND gs.tenant_id=i.tenant_id','i.status="open"','gs.site_id'],
         'active_shifts'=>['guard_shifts gs','gs','','gs.ended_at IS NULL','gs.site_id'],
-        'units_active'=>['units u','u','','u.status="active"','u.site_id']
+        'units_active'=>['units u','u','','u.status="active"','u.site_id'],
+        'visits_today'=>['visits v','v','LEFT JOIN guard_shifts gs ON gs.id=v.shift_id AND gs.tenant_id=v.tenant_id',
+            'v.entered_at>=CURRENT_DATE AND v.entered_at<DATE_ADD(CURRENT_DATE,INTERVAL 1 DAY)',
+            'COALESCE(v.site_id,gs.site_id)'],
+        'active_access_points'=>['access_points ap','ap','','ap.status="active"','ap.site_id'],
+        'residents_active'=>['residents r','r','JOIN units u ON u.id=r.unit_id AND u.tenant_id=r.tenant_id',
+            'r.status="active"','u.site_id'],
+        'bookings_pending'=>['bookings b','b',
+            'JOIN booking_resources br ON br.id=b.resource_id AND br.tenant_id=b.tenant_id',
+            'b.status IN ("pending","pre_reservation")','br.site_id'],
+        'employee_present'=>['visits v','v',
+            'JOIN people p ON p.id=v.person_id AND p.tenant_id=v.tenant_id LEFT JOIN guard_shifts gs ON gs.id=v.shift_id AND gs.tenant_id=v.tenant_id',
+            'v.status="inside" AND p.person_type="empleado"','COALESCE(v.site_id,gs.site_id)'],
+        'contractors_inside'=>['visits v','v',
+            'JOIN people p ON p.id=v.person_id AND p.tenant_id=v.tenant_id LEFT JOIN guard_shifts gs ON gs.id=v.shift_id AND gs.tenant_id=v.tenant_id',
+            'v.status="inside" AND p.person_type="contratista"','COALESCE(v.site_id,gs.site_id)'],
+        'attendance_entries_today'=>['attendance_records a','a','',
+            'a.event_type="entrada" AND a.occurred_at>=CURRENT_DATE AND a.occurred_at<DATE_ADD(CURRENT_DATE,INTERVAL 1 DAY)',
+            'a.site_id'],
+        'attendance_late_today'=>['attendance_records a','a','',
+            'a.event_type="entrada" AND a.status="tarde" AND a.occurred_at>=CURRENT_DATE AND a.occurred_at<DATE_ADD(CURRENT_DATE,INTERVAL 1 DAY)',
+            'a.site_id']
     ];
     if (!isset($sources[$resource])) throw new InvalidArgumentException('Unknown metric');
     [$table,$alias,$join,$condition,$siteExpr]=$sources[$resource];
@@ -649,9 +670,35 @@ function handle_contextual_dashboard(string $method,string $path): void
     foreach(['people_inside','vehicles_inside','packages_pending','incidents_open','active_shifts','units_active'] as $key) {
         $metrics[$key]=contextual_metric_count($tenantId,$sites,$key);
     }
-    if ($tenant['client_type']==='security_company' && in_array((string)$actor['role'],['tech_operator','admin','superadmin'],true)) {
-        $children=one_row('SELECT COUNT(*) AS n FROM tenants WHERE parent_tenant_id=:id AND status="active"',
-            ['id'=>$tenantId]);
+    $clientType=(string)($tenant['client_type']??'custom');
+    if (in_array((string)$actor['role'],['admin','supervisor','coordinator','auditor','tech_operator'],true)) {
+        $metrics['visits_today']=contextual_metric_count($tenantId,$sites,'visits_today');
+        $metrics['active_access_points']=contextual_metric_count($tenantId,$sites,'active_access_points');
+    }
+    if (in_array($clientType,['industrial','corporate'],true)) {
+        foreach(['employee_present','contractors_inside','attendance_entries_today','attendance_late_today'] as $key) {
+            $metrics[$key]=contextual_metric_count($tenantId,$sites,$key);
+        }
+    }
+    if (residential_modules_enabled($tenantId)) {
+        foreach(['residents_active','bookings_pending'] as $key) {
+            $metrics[$key]=contextual_metric_count($tenantId,$sites,$key);
+        }
+    }
+    if ($clientType==='security_company' && in_array((string)$actor['role'],['tech_operator','admin','superadmin'],true)) {
+        $children=one_row(
+            'SELECT COUNT(DISTINCT t.id) AS n FROM tenants t
+             WHERE t.status="active" AND (
+                t.parent_tenant_id=:parent
+                OR EXISTS(SELECT 1 FROM tenant_relationships tr
+                    WHERE tr.owner_tenant_id=t.id
+                      AND tr.operator_tenant_id=:operator
+                      AND tr.relationship_type IN ("secondary_of","managed_by")
+                      AND tr.status="active"
+                      AND (tr.ends_at IS NULL OR tr.ends_at>NOW()))
+             )',
+            ['parent'=>$tenantId,'operator'=>$tenantId]
+        );
         $metrics['managed_clients']=(int)($children['n']??0);
     }
     json_response(['data'=>[
