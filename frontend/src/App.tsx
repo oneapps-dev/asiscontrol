@@ -3751,6 +3751,8 @@ function PlatformAdmin({ data, apiOnline }: { data: AppData; apiOnline: boolean 
   const [preview, setPreview] = useState<any | null>(null);
   const [previewAudit, setPreviewAudit] = useState<any[]>([]);
   const [previewBusy, setPreviewBusy] = useState(false);
+  const [featureTarget, setFeatureTarget] = useState<{ id: string; name: string; allowed: boolean; builtIn: boolean } | null>(null);
+  const [featureBusy, setFeatureBusy] = useState(false);
 
   const [platformNotifications, setPlatformNotifications] = useState<any[]>([]);
   const [platformAudit, setPlatformAudit] = useState<any[]>([]);
@@ -3861,6 +3863,31 @@ function PlatformAdmin({ data, apiOnline }: { data: AppData; apiOnline: boolean 
     } catch (createError) {
       setError(createError instanceof Error ? createError.message : 'No fue posible crear el cliente.');
     }
+  };
+
+  const openTenantFeatures = async (tenant: any) => {
+    setError('');
+    try {
+      const result = await api.platformTenantFeatures(String(tenant.id));
+      setFeatureTarget({
+        id: String(tenant.id), name: String(tenant.name),
+        allowed: Boolean(result.data.residential_modules),
+        builtIn: Boolean(result.data.built_in_residential),
+      });
+    } catch (issue) {
+      setError(issue instanceof Error ? issue.message : 'No se pudieron consultar los módulos.');
+    }
+  };
+  const saveTenantFeatures = async () => {
+    if (!featureTarget) return;
+    setFeatureBusy(true); setError('');
+    try {
+      await api.updatePlatformTenantFeatures(featureTarget.id, featureTarget.allowed);
+      setNotice('Módulos del cliente actualizados por CREAMOX.');
+      setFeatureTarget(null);
+    } catch (issue) {
+      setError(issue instanceof Error ? issue.message : 'No fue posible cambiar el módulo.');
+    } finally { setFeatureBusy(false); }
   };
 
   const toggleTenant = async (tenant: any) => {
@@ -4006,12 +4033,30 @@ function PlatformAdmin({ data, apiOnline }: { data: AppData; apiOnline: boolean 
         <PageTitle title="Clientes registrados" subtitle="Suspende cuentas, revisa límites y actualiza el periodo de suscripción." />
         <div className="overflow-x-auto rounded-lg border border-border">
           <table className="w-full min-w-[900px] text-left text-sm"><thead className="bg-surface-container-low text-xs uppercase tracking-[0.08em] text-on-surface-variant"><tr><th className="p-3">Cliente</th><th className="p-3">Administrador</th><th className="p-3">Plan</th><th className="p-3">Uso</th><th className="p-3">Estado</th><th className="p-3">Acciones</th></tr></thead><tbody>
-            {tenants.map((tenant) => <tr key={tenant.id} className="border-t border-border"><td className="p-3"><strong>{tenant.name}</strong><span className="block text-xs text-on-surface-variant">{tenant.site_name || 'Sin sede'}</span></td><td className="p-3">{tenant.admin_name || '—'}<span className="block text-xs text-on-surface-variant">{tenant.admin_email || '—'}</span></td><td className="p-3">{tenant.plan_name || 'Sin plan'}<span className="block text-xs text-on-surface-variant">{humanizeCode(tenant.subscription_status)}</span></td><td className="p-3">{tenant.active_users || 0} usuarios · {tenant.active_units || 0} unidades</td><td className="p-3"><Badge tone={tenant.status === 'active' ? 'success' : 'danger'}>{humanizeCode(tenant.status)}</Badge></td><td className="p-3"><div className="flex flex-wrap gap-2"><button className="btn-small" onClick={() => toggleTenant(tenant)}><Icon name={tenant.status === 'active' ? 'pause_circle' : 'play_circle'} /> {tenant.status === 'active' ? 'Suspender' : 'Activar'}</button><button className="btn-small" onClick={() => setSubscription({ tenantId: String(tenant.id), plan_code: tenant.plan_code || 'starter', status: tenant.subscription_status === 'suspended' ? 'active' : (tenant.subscription_status || 'active'), starts_on: tenant.starts_on || new Date().toISOString().slice(0, 10), ends_on: tenant.ends_on || '', auto_renew: Boolean(tenant.auto_renew), notes: '' })}><Icon name="edit_calendar" /> Suscripción</button></div></td></tr>)}
+            {tenants.map((tenant) => <tr key={tenant.id} className="border-t border-border"><td className="p-3"><strong>{tenant.name}</strong><span className="block text-xs text-on-surface-variant">{tenant.site_name || 'Sin sede'}</span></td><td className="p-3">{tenant.admin_name || '—'}<span className="block text-xs text-on-surface-variant">{tenant.admin_email || '—'}</span></td><td className="p-3">{tenant.plan_name || 'Sin plan'}<span className="block text-xs text-on-surface-variant">{humanizeCode(tenant.subscription_status)}</span></td><td className="p-3">{tenant.active_users || 0} usuarios · {tenant.active_units || 0} unidades</td><td className="p-3"><Badge tone={tenant.status === 'active' ? 'success' : 'danger'}>{humanizeCode(tenant.status)}</Badge></td><td className="p-3"><div className="flex flex-wrap gap-2"><button className="btn-small" onClick={() => void openTenantFeatures(tenant)}>Módulos</button><button className="btn-small" onClick={() => toggleTenant(tenant)}><Icon name={tenant.status === 'active' ? 'pause_circle' : 'play_circle'} /> {tenant.status === 'active' ? 'Suspender' : 'Activar'}</button><button className="btn-small" onClick={() => setSubscription({ tenantId: String(tenant.id), plan_code: tenant.plan_code || 'starter', status: tenant.subscription_status === 'suspended' ? 'active' : (tenant.subscription_status || 'active'), starts_on: tenant.starts_on || new Date().toISOString().slice(0, 10), ends_on: tenant.ends_on || '', auto_renew: Boolean(tenant.auto_renew), notes: '' })}><Icon name="edit_calendar" /> Suscripción</button></div></td></tr>)}
             {tenants.length === 0 && <tr><td className="p-4 text-on-surface-variant" colSpan={6}>{loading ? 'Cargando…' : 'No hay clientes registrados.'}</td></tr>}
           </tbody></table>
         </div>
       </section>
 
+      {featureTarget && <section className="panel">
+        <PageTitle title={`Módulos de ${featureTarget.name}`} subtitle="CREAMOX controla las excepciones explícitas al tipo de cliente." />
+        <label className="flex items-center gap-3 rounded-lg border border-border p-3 text-sm">
+          <input type="checkbox" checked={featureTarget.allowed}
+            disabled={featureTarget.builtIn}
+            onChange={(event) => setFeatureTarget({ ...featureTarget, allowed: event.target.checked })} />
+          Habilitar módulos residenciales para este cliente
+        </label>
+        <p className="mt-2 text-xs text-on-surface-variant">
+          {featureTarget.builtIn
+            ? 'El tipo residencial o personalizado los tiene habilitados por defecto.'
+            : 'Un cliente industrial, corporativo o de seguridad no accede a residentes ni unidades hasta que CREAMOX los habilite.'}
+        </p>
+        <div className="mt-3 flex gap-2">
+          <button className="btn-primary" type="button" disabled={featureBusy || featureTarget.builtIn} onClick={() => void saveTenantFeatures()}>Guardar módulos</button>
+          <button className="btn-ghost" type="button" onClick={() => setFeatureTarget(null)}>Cerrar</button>
+        </div>
+      </section>}
       {subscription.tenantId && <section className="panel"><PageTitle title="Actualizar suscripción" subtitle="La pasarela de pago queda desacoplada; registra aquí el estado confirmado por administración." /><form onSubmit={saveSubscription} className="grid gap-3 md:grid-cols-2 xl:grid-cols-4"><select className="field" value={subscription.plan_code} onChange={(event) => setSubscription({ ...subscription, plan_code: event.target.value })}>{plans.map((plan) => <option key={plan.code} value={plan.code}>{plan.name}</option>)}</select><select className="field" value={subscription.status} onChange={(event) => setSubscription({ ...subscription, status: event.target.value })}>{['trial', 'active', 'past_due', 'suspended', 'cancelled', 'expired'].map((status) => <option key={status} value={status}>{humanizeCode(status)}</option>)}</select><input className="field" type="date" value={subscription.starts_on} onChange={(event) => setSubscription({ ...subscription, starts_on: event.target.value })} required /><input className="field" type="date" value={subscription.ends_on} onChange={(event) => setSubscription({ ...subscription, ends_on: event.target.value })} /><textarea className="field md:col-span-2" placeholder="Notas administrativas" value={subscription.notes} onChange={(event) => setSubscription({ ...subscription, notes: event.target.value })} /><label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={subscription.auto_renew} onChange={(event) => setSubscription({ ...subscription, auto_renew: event.target.checked })} /> Renovación automática configurada</label><div className="flex gap-2"><button className="btn-primary" type="submit"><Icon name="save" /> Guardar</button><button className="btn-ghost" type="button" onClick={() => setSubscription({ ...subscription, tenantId: '' })}>Cerrar</button></div></form></section>}
       <div className="grid gap-4 xl:grid-cols-2">
         <section className="panel"><div className="panel-head"><h3>Notificaciones del sistema</h3><Badge tone="primary">{platformNotifications.length}</Badge></div><div className="space-y-2">{platformNotifications.slice(0, 12).map((item) => <div key={item.id} className="rounded-lg border border-border bg-surface-container-low p-3"><div className="flex items-center justify-between gap-2"><strong className="text-sm">{item.subject || 'Notificación'}</strong><Badge tone={item.status === 'sent' ? 'success' : item.status === 'failed' ? 'danger' : 'warning'}>{humanizeCode(item.status || 'pending')}</Badge></div><p className="mt-1 text-xs text-on-surface-variant">{item.tenant_name || 'Plataforma'} · {item.recipient || 'Sin destinatario'}</p><p className="mt-1 text-xs text-on-surface-variant">{item.created_at}</p></div>)}{platformNotifications.length === 0 && <p className="text-sm text-on-surface-variant">No hay notificaciones registradas.</p>}</div></section>

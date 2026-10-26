@@ -333,6 +333,9 @@ export const api = {
   platformAudit: () => request<{ data: any[] }>('/platform/audit'),
   platformTenants: () => request<{ data: any[] }>('/platform/tenants'),
   platformClientTypes: () => request<{ data: any[] }>('/platform/client-types'),
+  platformTenantFeatures: (id: string) => request<{ data: { client_type: string; residential_modules: boolean; residential_modules_override: boolean | null; built_in_residential: boolean } }>(`/platform/tenants/${id}/features`),
+  updatePlatformTenantFeatures: (id: string, residential_modules: boolean) => request<{ ok: true; residential_modules: boolean }>(`/platform/tenants/${id}/features`, { method: 'PUT', body: JSON.stringify({ residential_modules }) }),
+
   platformChildren: (parentId: string) => request<{ data: any[] }>(`/platform/tenants/${parentId}/children`),
   createPlatformChildTenant: (parentId: string, payload: any) => request<{ id: string; setup_token: string }>(`/platform/tenants/${parentId}/children`, { method: 'POST', body: JSON.stringify(payload) }),
   platformTenantLimits: (tenantId: string) => request<{ data: any[] }>(`/platform/tenants/${tenantId}/limits`),
