@@ -3830,6 +3830,157 @@ function Phases() {
   );
 }
 
+function CrossTenantMembershipManager({ targetTenants, sourceTenants, sourceTenantId, isPlatformAdmin, apiOnline }: {
+  targetTenants: any[];
+  sourceTenants: any[];
+  sourceTenantId: string;
+  isPlatformAdmin: boolean;
+  apiOnline: boolean;
+}) {
+  const [targetId, setTargetId] = useState('');
+  const [originId, setOriginId] = useState(sourceTenantId);
+  const [options, setOptions] = useState<{
+    source_users: Array<{ id: number; name: string; email: string; role: string }>;
+    sites: Array<{ id: number; name: string }>;
+    assignable_roles: string[];
+  }>({ source_users: [], sites: [], assignable_roles: [] });
+  const [existing, setExisting] = useState<any[]>([]);
+  const [form, setForm] = useState({ user_id: '', site_id: '', role: 'guard', expires_on: '' });
+  const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState('');
+  const [error, setError] = useState('');
+  useEffect(() => {
+    if (!apiOnline || !targetId) { setExisting([]); return; }
+    let alive = true;
+    void api.tenantMemberships(targetId).then((result) => {
+      if (alive) setExisting(result.data || []);
+    }).catch((issue) => { if (alive) setError(issue instanceof Error ? issue.message : 'No fue posible consultar asignaciones.'); });
+    return () => { alive = false; };
+  }, [apiOnline, targetId]);
+  useEffect(() => {
+    setForm({ user_id: '', site_id: '', role: 'guard', expires_on: '' });
+    if (!apiOnline || !targetId || !originId) {
+      setOptions({ source_users: [], sites: [], assignable_roles: [] });
+      return;
+    }
+    let alive = true;
+    void api.tenantMembershipOptions(targetId, originId).then((result) => {
+      if (alive) { setOptions(result.data); setError(''); }
+    }).catch((issue) => {
+      if (alive) { setOptions({ source_users: [], sites: [], assignable_roles: [] });
+        setError(issue instanceof Error ? issue.message : 'No fue posible consultar los usuarios y sedes.'); }
+    });
+    return () => { alive = false; };
+  }, [apiOnline, targetId, originId]);
+
+  const selectedUser = options.source_users.find((person) => String(person.id) === form.user_id);
+  const permittedRoles = options.assignable_roles.filter((role) => {
+    if (!selectedUser) return false;
+    if (selectedUser.role === 'coordinator') return ['coordinator','supervisor','guard'].includes(role);
+    if (selectedUser.role === 'supervisor') return ['supervisor','guard'].includes(role);
+    return role === selectedUser.role;
+  });
+  const assign = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!targetId || !form.user_id || !form.site_id || !permittedRoles.includes(form.role)) return;
+    setBusy(true); setError(''); setNotice('');
+    try {
+      await api.grantTenantMembership(targetId, {
+        user_id: Number(form.user_id), site_id: Number(form.site_id), role: form.role,
+        ...(form.expires_on ? { expires_on: form.expires_on } : {})
+      });
+      const response = await api.tenantMemberships(targetId);
+      setExisting(response.data || []);
+      setForm({ user_id: '', site_id: '', role: 'guard', expires_on: '' });
+      setNotice('Acceso concedido al cliente y sede seleccionados. El usuario conserva su cuenta principal.');
+    } catch (issue) {
+      setError(issue instanceof Error ? issue.message : 'No se pudo asignar el usuario.');
+    } finally { setBusy(false); }
+  };
+  const revoke = async (member: any) => {
+    if (!window.confirm('¿Revocar el acceso de este usuario a este cliente?')) return;
+    setBusy(true); setError(''); setNotice('');
+    try {
+      await api.revokeTenantMembership(targetId, String(member.id));
+      const response = await api.tenantMemberships(targetId);
+      setExisting(response.data || []);
+      setNotice('Asignación revocada. Cualquier sesión activa en este cliente pierde acceso.');
+    } catch (issue) {
+      setError(issue instanceof Error ? issue.message : 'No se pudo revocar la asignación.');
+    } finally { setBusy(false); }
+  };
+  const availableTargets = targetTenants.filter((item) => item.status === 'active');
+  return <section className="panel">
+    <PageTitle title="Usuarios asignados a varios clientes"
+      subtitle="Los colaboradores conservan una única cuenta. Cada cliente les concede un rol y una sede independientes, validados por la API." />
+    {error && <Alert tone="danger">{error}</Alert>}
+    {notice && <Alert tone="success">{notice}</Alert>}
+    <div className="mb-4 grid gap-3 md:grid-cols-2">
+      <select aria-label="Cliente de destino" className="field" value={targetId}
+        onChange={(event) => { setTargetId(event.target.value); setForm({ user_id: '', site_id: '', role: 'guard', expires_on: '' }); }}>
+        <option value="">Selecciona el cliente destinatario</option>
+        {availableTargets.map((item) => <option key={item.id} value={String(item.id)}>{item.name}</option>)}
+      </select>
+      {isPlatformAdmin
+        ? <select aria-label="Cliente de origen" className="field" value={originId}
+            onChange={(event) => setOriginId(event.target.value)}>
+            <option value="">Selecciona el cliente de origen</option>
+            {sourceTenants.filter((item) => item.status === 'active' && String(item.id) !== targetId)
+              .map((item) => <option key={item.id} value={String(item.id)}>{item.name}</option>)}
+          </select>
+        : <p className="rounded border border-border p-3 text-sm text-on-surface-variant">
+            Personal de tu empresa de seguridad
+          </p>}
+    </div>
+    {targetId && originId && targetId !== originId && <form onSubmit={assign}
+      className="mb-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+      <select className="field" aria-label="Colaborador de origen" required value={form.user_id}
+        onChange={(event) => {
+          const person = options.source_users.find((entry) => String(entry.id) === event.target.value);
+          setForm({ ...form, user_id: event.target.value, role: person?.role === 'auditor' ? 'auditor' : 'guard' });
+        }}>
+        <option value="">Selecciona un colaborador</option>
+        {options.source_users.map((person) =>
+          <option key={person.id} value={String(person.id)}>{person.name} · {humanizeCode(person.role)}</option>)}
+      </select>
+      <select className="field" aria-label="Sede de destino" required value={form.site_id}
+        onChange={(event) => setForm({ ...form, site_id: event.target.value })}>
+        <option value="">Selecciona sede autorizada</option>
+        {options.sites.map((site) => <option key={site.id} value={String(site.id)}>{site.name}</option>)}
+      </select>
+      <select className="field" aria-label="Rol delegado" required value={form.role}
+        onChange={(event) => setForm({ ...form, role: event.target.value })}>
+        {permittedRoles.map((role) => <option key={role} value={role}>{humanizeCode(role)}</option>)}
+      </select>
+      <input type="date" className="field" aria-label="Vencimiento opcional"
+        value={form.expires_on} onChange={(event) => setForm({ ...form, expires_on: event.target.value })} />
+      <button type="submit" className="btn-primary md:col-span-2 xl:col-span-4"
+        disabled={busy || !form.user_id || !form.site_id || !permittedRoles.includes(form.role)}>
+        Asignar colaborador al cliente
+      </button>
+    </form>}
+    {targetId && <div className="overflow-x-auto">
+      <table className="w-full min-w-[680px] text-left text-sm">
+        <thead><tr><th className="p-2">Colaborador</th><th className="p-2">Rol</th>
+          <th className="p-2">Sede</th><th className="p-2">Estado / vigencia</th><th className="p-2">Acción</th></tr></thead>
+        <tbody>{existing.map((member) => <tr key={member.id} className="border-t border-border">
+          <td className="p-2">{member.user_name}<span className="block text-xs text-on-surface-variant">{member.user_email}</span></td>
+          <td className="p-2">{humanizeCode(member.role_code)}</td>
+          <td className="p-2">{member.site_name}</td>
+          <td className="p-2"><Badge tone={member.status === 'active' ? 'success' : 'muted'}>{humanizeCode(member.status)}</Badge>
+            <span className="block text-xs text-on-surface-variant">{member.expires_at || 'Sin vencimiento programado'}</span></td>
+          <td className="p-2">{member.status === 'active' &&
+            <button className="btn-small" type="button" disabled={busy} onClick={() => void revoke(member)}>Revocar</button>}</td>
+        </tr>)}
+        {existing.length === 0 && <tr><td className="p-3 text-on-surface-variant" colSpan={5}>
+          Sin asignaciones registradas para este cliente.
+        </td></tr>}
+        </tbody>
+      </table>
+    </div>}
+  </section>;
+}
+
 function ManagedClients({ data, apiOnline }: { data: AppData; apiOnline: boolean }) {
   const [children, setChildren] = useState<any[]>([]);
   const [error, setError] = useState('');
@@ -3852,7 +4003,7 @@ function ManagedClients({ data, apiOnline }: { data: AppData; apiOnline: boolean
       await reload();
     } catch (err) { setError(err instanceof Error ? err.message : 'No fue posible crear el cliente secundario'); }
   };
-  return <section className="panel space-y-4">
+  return <div className="space-y-6"><section className="panel space-y-4">
     <PageTitle title="Clientes administrados" subtitle="Solo puedes crear y consultar clientes secundarios de tu empresa de seguridad." />
     {!apiOnline && <Alert tone="warning">Requiere conexión con la API.</Alert>}
     {!tenantId && <Alert tone="warning">No se ha identificado el cliente de la sesión.</Alert>}
@@ -3874,7 +4025,10 @@ function ManagedClients({ data, apiOnline }: { data: AppData; apiOnline: boolean
     <div className="space-y-2">{children.map((child:any) => <div key={child.id} className="rounded border border-border p-3">
       <strong>{child.name}</strong><span className="ml-2 text-xs text-on-surface-variant">{humanizeCode(child.client_type)} · {humanizeCode(child.status)}</span>
     </div>)}</div>
-  </section>;
+  </section>
+    <CrossTenantMembershipManager targetTenants={children} sourceTenants={[]}
+      sourceTenantId={tenantId} isPlatformAdmin={false} apiOnline={apiOnline} />
+  </div>;
 }
 
 function PlatformAdmin({ data, apiOnline }: { data: AppData; apiOnline: boolean }) {
@@ -4181,6 +4335,8 @@ function PlatformAdmin({ data, apiOnline }: { data: AppData; apiOnline: boolean 
         </div>
       </section>
 
+      <CrossTenantMembershipManager targetTenants={tenants} sourceTenants={tenants}
+        sourceTenantId="" isPlatformAdmin={true} apiOnline={apiOnline} />
       {featureTarget && <section className="panel">
         <PageTitle title={`Módulos de ${featureTarget.name}`} subtitle="CREAMOX controla las excepciones explícitas al tipo de cliente." />
         <label className="flex items-center gap-3 rounded-lg border border-border p-3 text-sm">

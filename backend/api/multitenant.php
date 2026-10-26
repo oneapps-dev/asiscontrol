@@ -574,7 +574,7 @@ function enforce_legacy_scope_gate(string $method,string $path): void
     if (str_starts_with($path,'/organization/') && in_array($method,['GET','POST','PATCH','DELETE'],true)) return;
     if (in_array($path,['/me/tenants','/me/tenant/select','/me/tenant/clear'],true)) return;
     if (($actor['role']??'')==='tech_operator' &&
-        preg_match('#^/platform/tenants/[0-9]+/memberships(?:/[0-9]+)?$#',$path) &&
+        preg_match('#^/platform/tenants/[0-9]+/(?:memberships(?:/[0-9]+)?|membership-options)$#',$path) &&
         in_array($method,['GET','POST','DELETE'],true)) return;
     if (($actor['role']??'')==='tech_operator' &&
         preg_match('#^/platform/tenants/[0-9]+/children$#',$path) &&

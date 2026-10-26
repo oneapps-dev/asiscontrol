@@ -322,6 +322,14 @@ export const api = {
   clearTenantContext: () => request<{ user: any; current_tenant_id: number; csrf_token?: string }>('/me/tenant/clear', {
     method: 'POST', body: '{}'
   }).then(captureCsrf),
+  tenantMembershipOptions: (tenantId: string, sourceTenantId: string) =>
+    request<{ data: {
+      source_tenant_id: number;
+      source_users: Array<{ id: number; name: string; email: string; role: string }>;
+      sites: Array<{ id: number; name: string }>;
+      assignable_roles: string[];
+    } }>('/platform/tenants/' + encodeURIComponent(tenantId) +
+      '/membership-options?source_tenant_id=' + encodeURIComponent(sourceTenantId)),
   tenantMemberships: (tenantId: string) => request<{ data: any[] }>(`/platform/tenants/${tenantId}/memberships`),
   grantTenantMembership: (tenantId: string, payload: { user_id: number; site_id: number; role: string; expires_on?: string }) =>
     request<{ ok: true }>(`/platform/tenants/${tenantId}/memberships`, {
