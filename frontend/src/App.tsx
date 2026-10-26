@@ -1981,7 +1981,7 @@ function People({
       if (/^\d+$/.test(String(exitTarget.id))) {
         queueOfflineAccessEvent('visit_exit', {
           event_type: 'salida',
-          person_id: Number(exitTarget.id),
+          visit_id: Number(exitTarget.id),
           observations: payload.observations || '',
           reason: payload.reason || '',
           exit_type: adminExit ? 'administrativa' : 'normal',
@@ -2107,6 +2107,7 @@ function Vehicles({
       }
       queueOfflineAccessEvent('vehicle_exit', {
         event_type: 'salida',
+        vehicle_id: Number(exitTarget.id),
         plate: exitTarget.plate,
         observations: payload.observations || '',
         reason: payload.reason || '',

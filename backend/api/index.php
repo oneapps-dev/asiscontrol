@@ -2010,6 +2010,13 @@ try {
         if ($accessPointId && !one_row('SELECT id FROM access_points WHERE id = :id AND tenant_id = :tenant_id LIMIT 1', ['id' => $accessPointId, 'tenant_id' => $user['tenant_id']])) {
             json_response(['error' => 'Punto de acceso no encontrado'], 404);
         }
+        if ($siteId) require_tenant_scope('site',$siteId);
+        elseif (actor_visible_site_ids($user)!==null) json_response(['error'=>'Sede requerida'],422);
+        if ($accessPointId) {
+            $point=one_row('SELECT site_id FROM access_points WHERE id=:id AND tenant_id=:tenant',
+                ['id'=>$accessPointId,'tenant'=>$user['tenant_id']]);
+            if (!$point || (int)$point['site_id']!==(int)$siteId) json_response(['error'=>'Punto de acceso fuera de la sede'],422);
+        }
         $contextCheck = evaluate_access_context($accessPointId, $data);
         $eventMetadata = array_merge(is_array($data['metadata'] ?? null) ? $data['metadata'] : [], $contextCheck['metadata']);
         $deviceId = !empty($data['device_id']) && is_numeric($data['device_id']) ? (int) $data['device_id'] : null;
@@ -2049,6 +2056,8 @@ try {
         if (!preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i', $offlineEventUuid)) {
             json_response(['error' => 'event_uuid debe ser un UUID valido'], 422);
         }
+        $payload = is_array($data['payload'] ?? null) ? $data['payload'] : [];
+        $payload = normalize_offline_scope($user,$data,$payload);
         $existing = one_row(
             'SELECT id, status, event_uuid FROM offline_queue WHERE tenant_id = :tenant_id AND idempotency_key = :idempotency_key LIMIT 1',
             ['tenant_id' => $user['tenant_id'], 'idempotency_key' => $data['idempotency_key']]
@@ -2056,7 +2065,6 @@ try {
         if ($existing) {
             json_response(['id' => $existing['id'], 'status' => $existing['status'], 'duplicate' => true]);
         }
-        $payload = is_array($data['payload'] ?? null) ? $data['payload'] : [];
         $stmt = db()->prepare(
             'INSERT INTO offline_queue (tenant_id, device_id, event_uuid, action, payload_json, client_occurred_at, server_received_at, idempotency_key, status)
              VALUES (:tenant_id, :device_id, :event_uuid, :action, :payload_json, :client_occurred_at, NOW(), :idempotency_key, "pending")'
@@ -4093,14 +4101,21 @@ function apply_offline_access_event(array $user, array $envelope, array $payload
         }
     }
     if ((string) ($envelope['action'] ?? '') === 'visit_exit' && $eventType === 'salida' && $personId) {
-        $visit = one_row('SELECT id FROM visits WHERE tenant_id = :tenant_id AND person_id = :person_id AND status = "inside" ORDER BY entered_at DESC, id DESC LIMIT 1', ['tenant_id' => $tenantId, 'person_id' => $personId]);
+        $visit = !empty($payload['visit_id'])
+            ? one_row('SELECT id FROM visits WHERE id=:id AND tenant_id=:tenant_id AND person_id=:person_id AND status="inside" LIMIT 1', ['id'=>(int)$payload['visit_id'],'tenant_id'=>$tenantId,'person_id'=>$personId])
+            : one_row('SELECT id FROM visits WHERE tenant_id = :tenant_id AND person_id = :person_id AND status = "inside" ORDER BY entered_at DESC, id DESC LIMIT 1', ['tenant_id' => $tenantId, 'person_id' => $personId]);
+        if ($visit) require_scoped_record('visits',(int)$visit['id']);
         if ($visit) {
             $exitType = in_array(($payload['exit_type'] ?? ''), ['administrative', 'administrativa'], true) ? 'administrativa' : 'normal';
             $pdo->prepare('UPDATE visits SET status = "exited", exited_at = :exited_at, exit_observations = :observations, exit_type = :exit_type, exit_reason = :reason, exit_by = :exit_by WHERE id = :id AND tenant_id = :tenant_id')->execute(['exited_at' => $occurredAt, 'observations' => trim((string) ($payload['observations'] ?? '')) ?: null, 'exit_type' => $exitType, 'reason' => trim((string) ($payload['reason'] ?? '')) ?: null, 'exit_by' => $user['id'], 'id' => $visit['id'], 'tenant_id' => $tenantId]);
         }
     }
     if ((string) ($envelope['action'] ?? '') === 'vehicle_exit' && $eventType === 'salida' && trim((string) ($payload['plate'] ?? '')) !== '') {
-        $vehicle = one_row('SELECT id FROM vehicles WHERE tenant_id = :tenant_id AND plate = :plate AND status = "inside" ORDER BY entered_at DESC, id DESC LIMIT 1', ['tenant_id' => $tenantId, 'plate' => strtoupper(trim((string) $payload['plate']))]);
+        $vehicle = !empty($payload['vehicle_id'])
+            ? one_row('SELECT id FROM vehicles WHERE id=:id AND tenant_id=:tenant_id AND plate=:plate AND status="inside" LIMIT 1',
+                ['id'=>(int)$payload['vehicle_id'],'tenant_id'=>$tenantId,'plate'=>strtoupper(trim((string)$payload['plate']))])
+            : one_row('SELECT id FROM vehicles WHERE tenant_id = :tenant_id AND plate = :plate AND status = "inside" ORDER BY entered_at DESC, id DESC LIMIT 1', ['tenant_id' => $tenantId, 'plate' => strtoupper(trim((string) $payload['plate']))]);
+        if ($vehicle) require_scoped_record('vehicles',(int)$vehicle['id']);
         if ($vehicle) {
             $exitType = in_array(($payload['exit_type'] ?? ''), ['administrative', 'administrativa'], true) ? 'administrativa' : 'normal';
             $pdo->prepare('UPDATE vehicles SET status = "exited", exited_at = :exited_at, exit_observations = :observations, exit_type = :exit_type, exit_reason = :reason, exit_by = :exit_by WHERE id = :id AND tenant_id = :tenant_id')->execute(['exited_at' => $occurredAt, 'observations' => trim((string) ($payload['observations'] ?? '')) ?: null, 'exit_type' => $exitType, 'reason' => trim((string) ($payload['reason'] ?? '')) ?: null, 'exit_by' => $user['id'], 'id' => $vehicle['id'], 'tenant_id' => $tenantId]);

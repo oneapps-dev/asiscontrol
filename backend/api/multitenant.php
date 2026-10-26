@@ -358,3 +358,71 @@ function require_tenant_wide_scope(): void
             'error_code'=>'TENANT_WIDE_SCOPE_REQUIRED'],403);
     }
 }
+
+
+/** Normalize legacy offline IDs and verify authorized site before queueing. */
+function normalize_offline_scope(array $actor,array $envelope,array $payload): array
+{
+    $tenantId=(int)$actor['tenant_id'];
+    $action=(string)($envelope['action']??'');
+    $row=null;
+    $resource='';
+    if ($action==='visit_exit') {
+        $visitId=(int)($payload['visit_id']??0);
+        if (!$visitId && !empty($payload['person_id'])) {
+            // Historic React clients queued visit.id under person_id.
+            $legacy=(int)$payload['person_id'];
+            $test=one_row('SELECT id FROM visits WHERE id=:id AND tenant_id=:tenant AND status="inside"',
+                ['id'=>$legacy,'tenant'=>$tenantId]);
+            if ($test) $visitId=$legacy;
+        }
+        if ($visitId) {
+            $row=require_scoped_record('visits',$visitId);
+            $payload['visit_id']=$visitId;
+            $payload['person_id']=(int)$row['person_id'];
+            $resource='visits';
+        }
+    } elseif ($action==='vehicle_exit') {
+        $vehicleId=(int)($payload['vehicle_id']??0);
+        if (!$vehicleId && trim((string)($payload['plate']??''))!=='') {
+            $vehicle=one_row('SELECT id FROM vehicles WHERE tenant_id=:tenant AND plate=:plate AND status="inside" ORDER BY entered_at DESC,id DESC LIMIT 1',
+                ['tenant'=>$tenantId,'plate'=>strtoupper(trim((string)$payload['plate']))]);
+            $vehicleId=(int)($vehicle['id']??0);
+        }
+        if ($vehicleId) {
+            $row=require_scoped_record('vehicles',$vehicleId);
+            $payload['vehicle_id']=$vehicleId;
+            $payload['plate']=(string)$row['plate'];
+            $resource='vehicles';
+        }
+    } elseif ($action==='visit' && !empty($payload['shift_id'])) {
+        $site=validated_shift_site((int)$payload['shift_id'],$actor);
+        $resource='shift';
+        $row=['site_id'=>$site];
+    }
+    $derived=$row?($resource==='shift'?(int)$row['site_id']:scoped_row_site($resource,$row,$tenantId)):0;
+    $siteId=(int)($payload['site_id']??0);
+    if ($derived && $siteId && $derived!==$siteId) {
+        json_response(['error'=>'Inconsistencia de sede offline','error_code'=>'SHIFT_SITE_MISMATCH'],422);
+    }
+    $siteId=$derived?:$siteId;
+    if ($siteId) {
+        require_tenant_scope('site',$siteId);
+        $payload['site_id']=$siteId;
+    } elseif (actor_visible_site_ids($actor)!==null) {
+        json_response(['error'=>'Evento offline sin sede verificable','error_code'=>'SCOPE_DENIED'],403);
+    }
+    if (!empty($payload['access_point_id'])) {
+        $point=one_row('SELECT site_id FROM access_points WHERE id=:id AND tenant_id=:tenant',
+            ['id'=>(int)$payload['access_point_id'],'tenant'=>$tenantId]);
+        if (!$point || $siteId!==(int)$point['site_id']) {
+            json_response(['error'=>'Punto offline fuera de la sede','error_code'=>'SCOPE_DENIED'],403);
+        }
+    }
+    if (!empty($payload['person_id'])) {
+        $person=one_row('SELECT id FROM people WHERE id=:id AND tenant_id=:tenant',
+            ['id'=>(int)$payload['person_id'],'tenant'=>$tenantId]);
+        if (!$person) json_response(['error'=>'Persona fuera del cliente','error_code'=>'SCOPE_DENIED'],403);
+    }
+    return $payload;
+}
