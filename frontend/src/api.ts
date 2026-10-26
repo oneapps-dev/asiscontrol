@@ -312,6 +312,23 @@ export const api = {
   exportAttendanceCsv: (params?: { from?: string; to?: string }) => download('/reports/attendance.csv', params),
   exportAttendanceXlsx: (params?: { from?: string; to?: string }) => download('/reports/attendance.xlsx', params),
   openAttendanceReport: (params?: { from?: string; to?: string; employee_id?: string }) => download('/reports/attendance.html', params),
+  myTenantContexts: () => request<{ data: {
+    current_tenant_id: number; home_tenant_id: number;
+    tenants: Array<{ tenant_id: number; tenant_name: string; role: string; site_id?: number | null; home?: boolean }>;
+  } }>('/me/tenants'),
+  selectTenantContext: (tenant_id: number) => request<{ user: any; current_tenant_id: number; csrf_token?: string }>('/me/tenant/select', {
+    method: 'POST', body: JSON.stringify({ tenant_id })
+  }).then(captureCsrf),
+  clearTenantContext: () => request<{ user: any; current_tenant_id: number; csrf_token?: string }>('/me/tenant/clear', {
+    method: 'POST', body: '{}'
+  }).then(captureCsrf),
+  tenantMemberships: (tenantId: string) => request<{ data: any[] }>(`/platform/tenants/${tenantId}/memberships`),
+  grantTenantMembership: (tenantId: string, payload: { user_id: number; site_id: number; role: string; expires_on?: string }) =>
+    request<{ ok: true }>(`/platform/tenants/${tenantId}/memberships`, {
+      method: 'POST', body: JSON.stringify(payload)
+    }),
+  revokeTenantMembership: (tenantId: string, memberId: string) =>
+    request<{ ok: true }>(`/platform/tenants/${tenantId}/memberships/${memberId}`, { method: 'DELETE' }),
   mySiteContexts: () => request<{ data: {
     tenant: { id: number; name: string; parent_tenant_id: number | null; parent_name: string | null };
     scope: 'tenant' | 'sites'; sites: Array<{ id: number; name: string; timezone: string }>;

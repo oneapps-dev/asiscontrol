@@ -60,7 +60,8 @@ function member_effective_user(array $principal): array
         json_response(['error'=>'Contexto de cliente inválido','error_code'=>'TENANT_CONTEXT_REVOKED'],403);
     }
     $path=(string)parse_url((string)($_SERVER['REQUEST_URI']??''),PHP_URL_PATH);
-    if (str_ends_with(rtrim($path,'/'),'/me/tenant/clear')) return $principal;
+    if (str_ends_with(rtrim($path,'/'),'/me/tenant/clear')
+        || str_ends_with(rtrim($path,'/'),'/auth/logout')) return $principal;
     if (time()>=(int)($context['expires_ts']??0)) {
         // Do NOT silently fall back to the home tenant on a pending write.
         json_response(['error'=>'El contexto seleccionado ha vencido. Restablécelo primero.',

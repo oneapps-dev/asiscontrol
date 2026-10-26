@@ -1109,6 +1109,73 @@ function Shell({
   );
 }
 
+function TenantContextSelector({ tenantId, apiOnline, onChange }: {
+  tenantId?: string; apiOnline: boolean; onChange: (user: any) => Promise<void>;
+}) {
+  const [contexts, setContexts] = useState<{
+    current_tenant_id: number; home_tenant_id: number;
+    tenants: Array<{ tenant_id: number; tenant_name: string; role: string; home?: boolean }>;
+  } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  useEffect(() => {
+    if (!apiOnline || !tenantId) { setContexts(null); return; }
+    let alive = true;
+    void api.myTenantContexts().then((response) => {
+      if (alive) { setContexts(response.data); setError(''); }
+    }).catch((issue) => { if (alive) setError(issue instanceof Error ? issue.message : 'No se pudieron consultar los clientes.'); });
+    return () => { alive = false; };
+  }, [apiOnline, tenantId]);
+
+  const switchTenant = async (next: string) => {
+    if (!contexts || busy || !next || next === String(contexts.current_tenant_id)) return;
+    if (getOfflineQueue().length !== 0) {
+      setError('Sincroniza o resuelve los eventos pendientes antes de cambiar de cliente. No se trasladarán registros offline entre clientes.');
+      return;
+    }
+    setBusy(true); setError('');
+    try {
+      const response = next === String(contexts.home_tenant_id)
+        ? await api.clearTenantContext()
+        : await api.selectTenantContext(Number(next));
+      await onChange(response.user);
+      const available = await api.myTenantContexts();
+      setContexts(available.data);
+    } catch (issue) {
+      setError(issue instanceof Error ? issue.message : 'No fue posible cambiar de cliente.');
+    } finally { setBusy(false); }
+  };
+  if (!contexts || contexts.tenants.length < 2) return null;
+  return <section className="panel">
+    <div className="panel-head">
+      <div>
+        <h3>Cliente de trabajo</h3>
+        <p className="mt-1 text-xs text-on-surface-variant">
+          El acceso se basa en asignaciones explícitas, no en un cambio manual de identificador.
+        </p>
+      </div>
+      <Badge tone={contexts.current_tenant_id === contexts.home_tenant_id ? 'muted' : 'info'}>
+        {contexts.current_tenant_id === contexts.home_tenant_id ? 'Cuenta principal' : 'Asignación temporal'}
+      </Badge>
+    </div>
+    <select className="field" aria-label="Cambiar cliente de trabajo"
+      value={String(contexts.current_tenant_id)} disabled={busy}
+      onChange={(event) => void switchTenant(event.target.value)}>
+      {contexts.tenants.map((tenant) =>
+        <option key={tenant.tenant_id} value={String(tenant.tenant_id)}>
+          {tenant.tenant_name} · {humanizeCode(tenant.role)}{tenant.home ? ' (principal)' : ''}
+        </option>
+      )}
+    </select>
+    {contexts.current_tenant_id !== contexts.home_tenant_id &&
+      <button className="btn-small mt-3" type="button" disabled={busy}
+        onClick={() => void switchTenant(String(contexts.home_tenant_id))}>
+        Volver al cliente principal
+      </button>}
+    {error && <Alert tone="danger">{error}</Alert>}
+  </section>;
+}
+
 function SiteContextSelector({ tenantId, apiOnline, onChange }: {
   tenantId?: string; apiOnline: boolean; onChange: () => Promise<void>;
 }) {
@@ -1211,7 +1278,7 @@ function ContextDashboard({ tenantId, role, refreshKey }: { tenantId?: string; r
 
 function Dashboard({ data, setScreen, apiOnline, refreshFromApi }: {
   data: AppData; setScreen: (screen: Screen) => void; apiOnline: boolean;
-  refreshFromApi: () => Promise<void>;
+  refreshFromApi: (user?: any) => Promise<void>;
 }) {
   const [siteRefreshKey, setSiteRefreshKey] = useState(0);
   const refreshSelectedSite = async () => {
@@ -1244,6 +1311,8 @@ function Dashboard({ data, setScreen, apiOnline, refreshFromApi }: {
   return (
     <div className="space-y-6">
       <PageTitle title="Panel operativo" subtitle="Resumen vivo de accesos, novedades y pendientes de portería." />
+      {apiOnline && data.user.role !== 'resident' && !data.user.isPlatformAdmin &&
+        <TenantContextSelector tenantId={data.user.tenantId} apiOnline={apiOnline} onChange={refreshFromApi} />}
       {apiOnline && data.user.role !== 'resident' &&
         <SiteContextSelector tenantId={data.user.tenantId} apiOnline={apiOnline} onChange={refreshSelectedSite} />}
       <ContextDashboard tenantId={data.user.tenantId} role={data.user.role} refreshKey={siteRefreshKey} />
