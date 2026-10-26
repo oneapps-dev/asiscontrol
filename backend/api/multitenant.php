@@ -256,7 +256,7 @@ function actor_visible_site_ids(array $actor): ?array
  */
 function scoped_row_site(string $resource,array $row,int $tenantId): int
 {
-    if (in_array($resource,['sites','access_points','devices','units','invitations','parking','booking_resources','shifts','access_events'],true)) {
+    if (in_array($resource,['sites','access_points','devices','units','invitations','parking','booking_resources','shifts','access_events','organization_nodes'],true)) {
         return (int)($resource==='sites'?($row['id']??0):($row['site_id']??0));
     }
     if ($resource==='residents') {
@@ -441,6 +441,7 @@ function enforce_legacy_scope_gate(string $method,string $path): void
             'error_code'=>'ROLE_SCOPE_DENIED'],403);
     }
     if (actor_visible_site_ids($actor)===null) return;
+    if (str_starts_with($path,'/organization/') && in_array($method,['GET','POST','PATCH','DELETE'],true)) return;
     if (($actor['role']??'')==='tech_operator' &&
         preg_match('#^/platform/tenants/[0-9]+/children$#',$path) &&
         in_array($method,['GET','POST'],true)) return;

@@ -7,6 +7,7 @@ require __DIR__ . '/multitenant.php';
 require __DIR__ . '/plan_limits.php';
 require __DIR__ . '/tenant_hierarchy.php';
 require __DIR__ . '/platform_support.php';
+require __DIR__ . '/organization.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
 $apiStage = 'router';
@@ -34,6 +35,7 @@ try {
     handle_plan_routes($method, $path);
     handle_tenant_hierarchy_routes($method, $path);
     handle_platform_preview_routes($method, $path);
+    handle_organization_routes($method, $path);
     if ($method === 'GET' && $path === '/health') {
         $apiStage = 'health.database';
         try {
