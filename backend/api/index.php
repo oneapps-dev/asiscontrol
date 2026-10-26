@@ -712,6 +712,8 @@ try {
 
     if ($method === 'GET' && $path === '/users') {
         require_permission('settings.manage');
+        // User administration is tenant-wide; selected-site operators cannot enumerate or reassign users.
+        require_tenant_wide_scope();
         json_response(['data' => list_rows(
             'SELECT id, tenant_id, site_id, name, email, role, is_active, created_at, updated_at
              FROM users
@@ -723,6 +725,8 @@ try {
 
     if ($method === 'POST' && $path === '/users') {
         require_permission('settings.manage');
+        // User administration is tenant-wide; selected-site operators cannot enumerate or reassign users.
+        require_tenant_wide_scope();
         $data = request_json();
         require_fields($data, ['name', 'email', 'password', 'role']);
         if (!in_array((string) $data['role'], ['admin', 'supervisor', 'coordinator', 'guard', 'auditor', 'resident', 'tech_operator'], true)) {
@@ -758,6 +762,8 @@ try {
 
     if ($method === 'PATCH' && preg_match('#^/users/(\d+)$#', $path, $matches)) {
         require_permission('settings.manage');
+        // User administration is tenant-wide; selected-site operators cannot enumerate or reassign users.
+        require_tenant_wide_scope();
         $data = request_json();
         if (!in_array((string) ($data['role'] ?? 'guard'), ['admin', 'supervisor', 'coordinator', 'guard', 'auditor', 'resident', 'tech_operator'], true)) {
             json_response(['error' => 'Rol de usuario inválido'], 422);
