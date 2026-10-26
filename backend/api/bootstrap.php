@@ -276,7 +276,33 @@ function require_auth(): array
         unset($_SESSION['user'], $_SESSION['last_activity']);
         json_response(['error' => 'La sesión expiró por inactividad', 'error_code' => 'SESSION_EXPIRED'], 401);
     }
+    // Revalidate on every request: sessions must not survive role changes, user
+    // deactivation, tenant suspension or an expired subscription.
+    $sessionUser = $_SESSION['user'];
+    $statement = db()->prepare(
+        "SELECT u.id, u.role, u.site_id, u.is_active, t.status AS tenant_status,
+                (SELECT ts.status FROM tenant_subscriptions ts WHERE ts.tenant_id = u.tenant_id ORDER BY ts.id DESC LIMIT 1) AS subscription_status,
+                (SELECT ts.ends_on FROM tenant_subscriptions ts WHERE ts.tenant_id = u.tenant_id ORDER BY ts.id DESC LIMIT 1) AS subscription_ends_on,
+                (SELECT COUNT(*) FROM platform_admins pa WHERE pa.user_id = u.id AND pa.status = 'active') AS global_admin
+         FROM users u JOIN tenants t ON t.id = u.tenant_id
+         WHERE u.id = :id AND u.tenant_id = :tenant_id LIMIT 1"
+    );
+    $statement->execute(['id' => (int) $sessionUser['id'], 'tenant_id' => (int) $sessionUser['tenant_id']]);
+    $current = $statement->fetch();
+    $residentSession = !empty($sessionUser['resident_id']) && ($sessionUser['role'] ?? '') === 'resident';
+    if (!$current || !(int) $current['is_active'] || $current['tenant_status'] !== 'active'
+        || (!$residentSession && $current['role'] !== ($sessionUser['role'] ?? ''))
+        || (($sessionUser['role'] ?? '') === 'superadmin' && !(int) $current['global_admin'])
+        || (!(int) $current['global_admin'] && (
+            in_array($current['subscription_status'], ['suspended', 'cancelled', 'expired', 'past_due'], true)
+            || ($current['subscription_ends_on'] !== null && $current['subscription_ends_on'] < date('Y-m-d'))
+        ))) {
+        unset($_SESSION['user'], $_SESSION['last_activity'], $_SESSION['selected_tenant_id'], $_SESSION['impersonation']);
+        json_response(['error' => 'Cuenta o autorización inactiva', 'error_code' => 'ACCOUNT_REVOKED'], 403);
+    }
     $_SESSION['last_activity'] = time();
+    $_SESSION['user']['site_id'] = $residentSession ? ($sessionUser['site_id'] ?? null) : $current['site_id'];
+    $_SESSION['user']['platform_admin'] = (bool) $current['global_admin'];
 
     return $_SESSION['user'];
 }

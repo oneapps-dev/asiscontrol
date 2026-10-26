@@ -685,9 +685,10 @@ try {
         require_permission('settings.manage');
         $data = request_json();
         require_fields($data, ['name', 'email', 'password', 'role']);
-        if (!in_array((string) $data['role'], ['superadmin', 'admin', 'supervisor', 'coordinator', 'guard', 'auditor', 'resident', 'tech_operator'], true)) {
+        if (!in_array((string) $data['role'], ['admin', 'supervisor', 'coordinator', 'guard', 'auditor', 'resident', 'tech_operator'], true)) {
             json_response(['error' => 'Rol de usuario inválido'], 422);
         }
+        if (!empty($data['site_id'])) assert_owned_site((int) $data['site_id'], tenant_id());
         $stmt = db()->prepare(
             'INSERT INTO users (tenant_id, site_id, name, email, password_hash, role, is_active)
              VALUES (:tenant_id, :site_id, :name, :email, :password_hash, :role, :is_active)'
@@ -708,14 +709,18 @@ try {
     if ($method === 'PATCH' && preg_match('#^/users/(\d+)$#', $path, $matches)) {
         require_permission('settings.manage');
         $data = request_json();
-        if (!in_array((string) ($data['role'] ?? 'guard'), ['superadmin', 'admin', 'supervisor', 'coordinator', 'guard', 'auditor', 'resident', 'tech_operator'], true)) {
+        if (!in_array((string) ($data['role'] ?? 'guard'), ['admin', 'supervisor', 'coordinator', 'guard', 'auditor', 'resident', 'tech_operator'], true)) {
             json_response(['error' => 'Rol de usuario inválido'], 422);
         }
+        if (!empty($data['site_id'])) assert_owned_site((int) $data['site_id'], tenant_id());
+        if (is_platform_admin_target((int) $matches[1])) json_response(['error' => 'La cuenta global solo se modifica desde CREAMOX'], 403);
+        $currentUser = one_row('SELECT name, role, site_id, is_active FROM users WHERE id = :id AND tenant_id = :tenant_id', ['id' => $matches[1], 'tenant_id' => tenant_id()]);
+        if (!$currentUser) json_response(['error' => 'Usuario no encontrado'], 404);
         $fields = [
-            'site_id' => $data['site_id'] ?? null,
-            'name' => $data['name'] ?? '',
-            'role' => $data['role'] ?? 'guard',
-            'is_active' => isset($data['is_active']) ? (int) (bool) $data['is_active'] : 1,
+            'site_id' => $data['site_id'] ?? $currentUser['site_id'],
+            'name' => $data['name'] ?? $currentUser['name'],
+            'role' => $data['role'] ?? $currentUser['role'],
+            'is_active' => isset($data['is_active']) ? (int) (bool) $data['is_active'] : (int) $currentUser['is_active'],
             'id' => $matches[1],
             'tenant_id' => tenant_id(),
         ];
@@ -3832,7 +3837,7 @@ function require_role(array $roles): array
 function require_permission(string $permission): array
 {
     $user = require_auth();
-    if ((string) $user['role'] === 'superadmin') {
+    if ((string) $user['role'] === 'superadmin' && is_platform_admin($user)) {
         return $user;
     }
 
@@ -3872,10 +3877,6 @@ function active_shift_id_for(array $user, mixed $requested = null): ?int
 
 function is_platform_admin(array $user): bool
 {
-    if ((string) ($user['role'] ?? '') === 'superadmin') {
-        return true;
-    }
-
     try {
         $stmt = db()->prepare(
             'SELECT COUNT(*)
@@ -4199,4 +4200,16 @@ function insert_correction(PDO $pdo, int $tenantId, string $entityType, int $ent
         'reason' => substr(trim($reason) ?: 'Corrección administrativa', 0, 255),
         'corrected_by' => $userId,
     ]);
+}
+
+/** Do not trust site IDs supplied by tenant administrators. */
+function assert_owned_site(int $siteId, int $tenantId): void
+{
+    if (!one_row('SELECT id FROM sites WHERE id = :id AND tenant_id = :tenant_id', ['id' => $siteId, 'tenant_id' => $tenantId])) {
+        json_response(['error' => 'Sede fuera del cliente'], 403);
+    }
+}
+function is_platform_admin_target(int $userId): bool
+{
+    return (bool) one_row('SELECT user_id FROM platform_admins WHERE user_id = :id', ['id' => $userId]);
 }
