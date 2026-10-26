@@ -6,6 +6,7 @@ require __DIR__ . '/bootstrap.php';
 require __DIR__ . '/multitenant.php';
 require __DIR__ . '/plan_limits.php';
 require __DIR__ . '/tenant_hierarchy.php';
+require __DIR__ . '/platform_support.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
 $apiStage = 'router';
@@ -27,10 +28,12 @@ if (!in_array($method, ['GET', 'HEAD', 'OPTIONS'], true) && !$isPublicPost) {
 }
 
 try {
+    platform_preview_readonly_guard($method,$path);
     enforce_legacy_scope_gate($method,$path);
     handle_multitenant_routes($method, $path);
     handle_plan_routes($method, $path);
     handle_tenant_hierarchy_routes($method, $path);
+    handle_platform_preview_routes($method, $path);
     if ($method === 'GET' && $path === '/health') {
         $apiStage = 'health.database';
         try {
