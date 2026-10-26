@@ -30,6 +30,33 @@ status=$(curl -sS -o /tmp/member-escalation-denied.json -w '%{http_code}' -b /tm
  "$base/platform/tenants/$residential_id/memberships")
 test "$status" = "422" || { echo "Role escalation unexpectedly allowed: $status"; exit 1; }
 
+
+# A security operator sees both its directly owned and separately managed clients.
+curl -fsS -b /tmp/member-manager.cookies \
+ "$base/platform/tenants/$security_id/children" > /tmp/member-managed-clients.json
+MEMBER_RES="$residential_id" MEMBER_IND="$industrial_id" python3 - <<'PY'
+import os,json
+ids={int(x['id']) for x in json.load(open('/tmp/member-managed-clients.json'))['data']}
+assert int(os.environ['MEMBER_RES']) in ids and int(os.environ['MEMBER_IND']) in ids
+PY
+curl -fsS -b /tmp/member-manager.cookies \
+ "$base/platform/tenants/$residential_id/membership-options" > /tmp/member-options.json
+GUARD_ID="$guard_id" MEMBER_RES_SITE="$residential_site" python3 - <<'PY'
+import json,os
+d=json.load(open('/tmp/member-options.json'))['data']
+assert any(int(u['id'])==int(os.environ['GUARD_ID']) for u in d['source_users'])
+assert any(int(s['id'])==int(os.environ['MEMBER_RES_SITE']) for s in d['sites'])
+assert 'superadmin' not in d['assignable_roles']
+PY
+# Even an authorized operator cannot elevate a guard into a coordinator.
+status=$(curl -sS -o /tmp/member-ceiling-denied.json -w '%{http_code}' \
+ -b /tmp/member-manager.cookies -H "X-CSRF-Token: $manager_csrf" \
+ -H 'Content-Type: application/json' \
+ -d "{\"user_id\":$guard_id,\"role\":\"coordinator\",\"site_id\":$residential_site}" \
+ "$base/platform/tenants/$residential_id/memberships")
+test "$status" = "403" || { echo "Role ceiling bypass: $status"; exit 1; }
+grep -q MEMBERSHIP_USER_DENIED /tmp/member-ceiling-denied.json
+
 for target in residential industrial; do
  if test "$target" = "residential"; then tenant="$residential_id"; site="$residential_site"; else tenant="$industrial_id"; site="$industrial_site"; fi
  status=$(curl -sS -o "/tmp/member-grant-$target.json" -w '%{http_code}' -b /tmp/member-manager.cookies \
@@ -121,4 +148,25 @@ mysql -h 127.0.0.1 -u root vzwquesv_app -N -e \
 # Logs retain actor + exact tenant and keep old identity unchanged.
 mysql -h 127.0.0.1 -u root vzwquesv_app -N -e \
  "SELECT COUNT(*) FROM platform_audit_logs WHERE actor_user_id=$guard_id AND tenant_id=$industrial_id AND action='contexto.cliente_seleccionado'" | awk '{if ($1 < 1) exit 1}'
+
+# Target subscription changes invalidate the selected context before any operation.
+status=$(curl -sS -o /tmp/member-residential-reselect.json -w '%{http_code}' \
+ -c /tmp/multi-guard.cookies -b /tmp/multi-guard.cookies \
+ -H "X-CSRF-Token: $guard_csrf" -H 'Content-Type: application/json' \
+ -d "{\"tenant_id\":$residential_id}" "$base/me/tenant/select")
+test "$status" = "200" || { echo "Residential reselect $status"; exit 1; }
+mysql -h 127.0.0.1 -u root vzwquesv_app -e \
+ "UPDATE tenant_subscriptions SET status='past_due' WHERE tenant_id=$residential_id"
+status=$(curl -sS -o /tmp/member-past-due-denied.json -w '%{http_code}' \
+ -b /tmp/multi-guard.cookies "$base/me")
+test "$status" = "403" || { echo "Past-due client session allowed: $status"; exit 1; }
+grep -q TENANT_CONTEXT_REVOKED /tmp/member-past-due-denied.json
+mysql -h 127.0.0.1 -u root vzwquesv_app -e \
+ "UPDATE tenant_subscriptions SET status='active' WHERE tenant_id=$residential_id"
+status=$(curl -sS -o /tmp/member-past-due-cleared.json -w '%{http_code}' \
+ -c /tmp/multi-guard.cookies -b /tmp/multi-guard.cookies \
+ -H "X-CSRF-Token: $guard_csrf" -H 'Content-Type: application/json' \
+ -d '{}' "$base/me/tenant/clear")
+test "$status" = "200" || { echo "Past-due context reset denied $status"; exit 1; }
+
 echo 'Multi-tenant memberships: two contexts, privilege separation and live revocation PASS'
