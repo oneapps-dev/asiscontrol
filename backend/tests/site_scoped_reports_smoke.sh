@@ -29,8 +29,8 @@ curl -fsS -b /tmp/scoped-reports.cookies "$base/reports/visits.csv" >/tmp/scoped
 grep -q VISITA_EVIDENCIA_PERMITIDA_QA /tmp/scoped-visit.csv
 ! grep -q VISITA_NO_AUTORIZADA_QA /tmp/scoped-visit.csv
 curl -fsS -b /tmp/scoped-reports.cookies "$base/reports/visits.html" >/tmp/scoped-visit.html
-grep -q VISITA_EVIDENCIA_PERMITIDA_QA /tmp/scoped-visit.html
-! grep -q VISITA_NO_AUTORIZADA_QA /tmp/scoped-visit.html
+grep -q 'Sede permitida QA' /tmp/scoped-visit.html
+! grep -q 'Sede restringida' /tmp/scoped-visit.html
 curl -fsS -b /tmp/scoped-reports.cookies "$base/reports/visits.xlsx" >/tmp/scoped-visit.xlsx
 python3 - <<'PY'
 from zipfile import ZipFile
