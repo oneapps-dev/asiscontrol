@@ -313,14 +313,14 @@ function require_auth(): array
             in_array($current['subscription_status'], ['suspended', 'cancelled', 'expired', 'past_due'], true)
             || ($current['subscription_ends_on'] !== null && $current['subscription_ends_on'] < date('Y-m-d'))
         ))) {
-        unset($_SESSION['user'], $_SESSION['last_activity'], $_SESSION['selected_tenant_id'], $_SESSION['impersonation']);
+        unset($_SESSION['user'], $_SESSION['last_activity'], $_SESSION['selected_tenant_id'], $_SESSION['impersonation'], $_SESSION['active_tenant_context'], $_SESSION['selected_site_context']);
         json_response(['error' => 'Cuenta o autorización inactiva', 'error_code' => 'ACCOUNT_REVOKED'], 403);
     }
     $_SESSION['last_activity'] = time();
     $_SESSION['user']['site_id'] = $residentSession ? ($sessionUser['site_id'] ?? null) : $current['site_id'];
     $_SESSION['user']['platform_admin'] = (bool) $current['global_admin'];
 
-    return $_SESSION['user'];
+    return member_effective_user($_SESSION['user']);
 }
 
 function require_portal_auth(): array

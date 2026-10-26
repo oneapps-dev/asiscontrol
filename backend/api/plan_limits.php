@@ -8,14 +8,16 @@ function plan_resource_usage(int $tenantId, string $resource): int
         'sites'=>'SELECT COUNT(*) FROM sites WHERE tenant_id=:tenant',
         'access_points'=>'SELECT COUNT(*) FROM access_points WHERE tenant_id=:tenant',
         'units'=>'SELECT COUNT(*) FROM units WHERE tenant_id=:tenant AND status="active"',
-        'users'=>'SELECT COUNT(*) FROM users WHERE tenant_id=:tenant AND is_active=1',
-        'users_administrative'=>'SELECT COUNT(*) FROM users WHERE tenant_id=:tenant AND is_active=1 AND role IN ("admin","auditor")',
-        'users_operational'=>'SELECT COUNT(*) FROM users WHERE tenant_id=:tenant AND is_active=1 AND role IN ("guard","supervisor","coordinator","tech_operator")',
+        'users'=>'SELECT (SELECT COUNT(*) FROM users WHERE tenant_id=:tenant AND is_active=1) + (SELECT COUNT(*) FROM tenant_user_memberships WHERE tenant_id=:tenant2 AND status="active" AND (expires_at IS NULL OR expires_at>NOW()))',
+        'users_administrative'=>'SELECT (SELECT COUNT(*) FROM users WHERE tenant_id=:tenant AND is_active=1 AND role IN ("admin","auditor")) + (SELECT COUNT(*) FROM tenant_user_memberships WHERE tenant_id=:tenant2 AND status="active" AND role_code="auditor" AND (expires_at IS NULL OR expires_at>NOW()))',
+        'users_operational'=>'SELECT (SELECT COUNT(*) FROM users WHERE tenant_id=:tenant AND is_active=1 AND role IN ("guard","supervisor","coordinator","tech_operator")) + (SELECT COUNT(*) FROM tenant_user_memberships WHERE tenant_id=:tenant2 AND status="active" AND role_code IN ("guard","supervisor","coordinator") AND (expires_at IS NULL OR expires_at>NOW()))',
         'secondary_tenants'=>'SELECT COUNT(*) FROM tenants WHERE parent_tenant_id=:tenant',
     ];
     if (!isset($sql[$resource])) throw new InvalidArgumentException('Resource capacity code not supported');
     $stmt=db()->prepare($sql[$resource]);
-    $stmt->execute(['tenant'=>$tenantId]);
+    $params=['tenant'=>$tenantId];
+    if (in_array($resource,['users','users_administrative','users_operational'],true)) $params['tenant2']=$tenantId;
+    $stmt->execute($params);
     return (int)$stmt->fetchColumn();
 }
 

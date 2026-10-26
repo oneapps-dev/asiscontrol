@@ -10,6 +10,7 @@ require __DIR__ . '/platform_support.php';
 require __DIR__ . '/organization.php';
 require __DIR__ . '/tenant_features.php';
 require __DIR__ . '/audit_structured.php';
+require __DIR__ . '/tenant_memberships.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
 $apiStage = 'router';
@@ -41,6 +42,7 @@ try {
     handle_organization_routes($method, $path);
     handle_tenant_feature_routes($method,$path);
     handle_structured_audit_routes($method,$path);
+    handle_member_routes($method,$path);
     if ($method === 'GET' && $path === '/health') {
         $apiStage = 'health.database';
         try {
@@ -211,7 +213,7 @@ try {
         unset($user['password_hash']);
         $user['platform_admin'] = is_platform_admin($user);
         $_SESSION['user'] = $user;
-        unset($_SESSION['selected_site_context']);
+        unset($_SESSION['selected_site_context'],$_SESSION['active_tenant_context']);
         $_SESSION['last_activity'] = time();
         if ($residentLogin && !empty($user['resident_id'])) {
             db()->prepare('UPDATE residents SET last_login_at = NOW() WHERE id = :id')->execute(['id' => $user['resident_id']]);
@@ -296,7 +298,7 @@ try {
     if ($method === 'GET' && $path === '/me') {
         $user = require_auth();
         $user['platform_admin'] = is_platform_admin($user);
-        $_SESSION['user'] = $user;
+        // The home principal stays immutable while viewing an assigned tenant.
         json_response(['user' => $user, 'csrf_token' => csrf_token()]);
     }
 
@@ -4284,7 +4286,7 @@ function audit(string $action, string $detail): void
         return;
     }
 
-    $user = $_SESSION['user'];
+    $user = require_auth();
     $stmt = db()->prepare(
         'INSERT INTO audit_logs (tenant_id, user_id, action, detail, ip_address, created_at)
          VALUES (:tenant_id, :user_id, :action, :detail, :ip_address, NOW())'

@@ -129,7 +129,7 @@ function handle_multitenant_routes(string $method,string $path): void
             json_response(['error'=>'Sede fuera de tu alcance','error_code'=>'SCOPE_DENIED'],403);
         }
         $old=actor_selected_site_id($actor);
-        $_SESSION['selected_site_context']=['site_id'=>(int)$siteId,'expires_ts'=>time()+1800];
+        $_SESSION['selected_site_context']=['site_id'=>(int)$siteId,'tenant_id'=>$tenantId,'expires_ts'=>time()+1800];
         audit('contexto.sede_cambiada','Sede seleccionada: #'.$siteId);
         platform_audit($actor,$tenantId,'contexto.sede_cambiada','Cambio de sede operativa',
             ['previous_site'=>$old,'selected_site_id'=>(int)$siteId]);
@@ -327,7 +327,8 @@ function actor_selected_site_id(array $actor): ?int
     if (!is_array($context)) return null;
     $user=$_SESSION['user']??[];
     if ((int)($user['id']??0)!==(int)$actor['id']
-        || (int)($user['tenant_id']??0)!==(int)$actor['tenant_id']) return null;
+        || (int)($user['tenant_id']??0)!==(int)($actor['home_tenant_id']??$actor['tenant_id'])
+        || (int)($context['tenant_id']??$user['tenant_id'])!==(int)$actor['tenant_id']) return null;
     if (time()>=(int)($context['expires_ts']??0)) {
         unset($_SESSION['selected_site_context']);
         return null;
@@ -571,6 +572,10 @@ function enforce_legacy_scope_gate(string $method,string $path): void
     }
     if (actor_visible_site_ids($actor)===null) return;
     if (str_starts_with($path,'/organization/') && in_array($method,['GET','POST','PATCH','DELETE'],true)) return;
+    if (in_array($path,['/me/tenants','/me/tenant/select','/me/tenant/clear'],true)) return;
+    if (($actor['role']??'')==='tech_operator' &&
+        preg_match('#^/platform/tenants/[0-9]+/memberships(?:/[0-9]+)?$#',$path) &&
+        in_array($method,['GET','POST','DELETE'],true)) return;
     if (($actor['role']??'')==='tech_operator' &&
         preg_match('#^/platform/tenants/[0-9]+/children$#',$path) &&
         in_array($method,['GET','POST'],true)) return;
