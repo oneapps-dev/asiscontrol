@@ -24,6 +24,8 @@ export interface OfflineAction {
   args: any[];
   createdAt: string;
   attempts?: number;
+  tenantId?: string;
+  actorUserId?: string;
 }
 
 export class ApiError extends Error {
@@ -68,7 +70,16 @@ function captureCsrf<T extends { csrf_token?: string }>(payload: T): T {
     csrfToken = payload.csrf_token;
     sessionStorage.setItem('asiscontrol.csrf', csrfToken);
   }
+  return payload;
+}
 
+/** A browser queue label; authorization is always checked by the API. */
+function captureIdentity<T extends { csrf_token?: string; user?: { id?: string | number; tenant_id?: string | number } }>(payload: T): T {
+  captureCsrf(payload);
+  if (payload.user?.id && payload.user?.tenant_id) {
+    sessionStorage.setItem('asiscontrol.activeUserId', String(payload.user.id));
+    sessionStorage.setItem('asiscontrol.activeTenantId', String(payload.user.tenant_id));
+  }
   return payload;
 }
 
@@ -83,6 +94,8 @@ function download(path: string, params?: Record<string, string>): void {
 export function queueOfflineAction(action: Omit<OfflineAction, 'id' | 'eventUuid' | 'createdAt'>): OfflineAction {
   const queued: OfflineAction = {
     ...action,
+    actorUserId: sessionStorage.getItem('asiscontrol.activeUserId') || undefined,
+    tenantId: sessionStorage.getItem('asiscontrol.activeTenantId') || undefined,
     id: `offline-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     eventUuid: createUuid(),
     createdAt: new Date().toISOString(),
@@ -111,11 +124,28 @@ export function getOfflineQueue(): OfflineAction[] {
 
 export async function syncOfflineQueue(): Promise<{ synced: number; failed: number }> {
   const queue = getOfflineQueue();
+  if (queue.length === 0) return { synced: 0, failed: 0 };
   const remaining: OfflineAction[] = [];
   let synced = 0;
   let failed = 0;
+  let serverActor: { id: string; tenantId: string };
+  try {
+    const current = await api.currentUser();
+    serverActor = { id: String(current.user.id), tenantId: String(current.user.tenant_id) };
+  } catch {
+    // Keep every item untouched until the server confirms the same actor.
+    return { synced: 0, failed: queue.length };
+  }
 
   for (const item of queue) {
+    // Legacy unlabelled entries remain available for manual review; never
+    // infer their original owner from the current session or form fields.
+    if (!item.tenantId || !item.actorUserId || item.tenantId !== serverActor.tenantId
+        || item.actorUserId !== serverActor.id) {
+      remaining.push(item);
+      failed++;
+      continue;
+    }
     try {
       if (item.method === 'createVisit') {
         const originalPayload = item.args[0] || {};
@@ -125,6 +155,8 @@ export async function syncOfflineQueue(): Promise<{ synced: number; failed: numb
           idempotency_key: item.id,
           action: 'visit',
           client_occurred_at: item.createdAt,
+          tenant_id: item.tenantId,
+          actor_user_id: item.actorUserId,
           payload: {
             ...originalPayload,
             event_type: 'entrada',
@@ -160,11 +192,14 @@ export const api = {
     request<{ user: any; csrf_token?: string }>('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
-    }).then(captureCsrf),
+    }).then(captureIdentity),
+  currentUser: () => request<{ user: any; csrf_token?: string }>('/me').then(captureIdentity),
   logout: () => {
     const result = request<{ ok: true }>('/auth/logout', { method: 'POST' });
     csrfToken = '';
     sessionStorage.removeItem('asiscontrol.csrf');
+    sessionStorage.removeItem('asiscontrol.activeTenantId');
+    sessionStorage.removeItem('asiscontrol.activeUserId');
     return result;
   },
   passwordRequest: (email: string) => request<{ ok: true; message: string }>('/auth/password/request', { method: 'POST', body: JSON.stringify({ email }) }),
@@ -318,10 +353,10 @@ export const api = {
   } }>('/me/tenants'),
   selectTenantContext: (tenant_id: number) => request<{ user: any; current_tenant_id: number; csrf_token?: string }>('/me/tenant/select', {
     method: 'POST', body: JSON.stringify({ tenant_id })
-  }).then(captureCsrf),
+  }).then(captureIdentity),
   clearTenantContext: () => request<{ user: any; current_tenant_id: number; csrf_token?: string }>('/me/tenant/clear', {
     method: 'POST', body: '{}'
-  }).then(captureCsrf),
+  }).then(captureIdentity),
   tenantMembershipOptions: (tenantId: string, sourceTenantId: string) =>
     request<{ data: {
       source_tenant_id: number;
