@@ -20,4 +20,11 @@ guard_status=$(curl -sS -o /tmp/shift-guard-denied.json -w '%{http_code}' -b /tm
 test "$guard_status" = "403" || { echo "Cross-site self-close returned $guard_status"; exit 1; }
 still_open=$(mysql -h 127.0.0.1 -u root vzwquesv_app -N -e "SELECT COUNT(*) FROM guard_shifts WHERE id=$self_shift_id AND ended_at IS NULL")
 test "$still_open" = "1"
-echo "Cross-site forced and personal shift closures rejected PASS"
+# Preserve the original allowed workflow: guard can close their own shift at an authorized site.
+mysql -h 127.0.0.1 -u root vzwquesv_app -e "INSERT INTO guard_shifts (tenant_id,site_id,user_id,checkpoint,started_at) SELECT 1,$site_a,id,'QA_ALLOWED_SELF_CLOSE',NOW() FROM users WHERE email='guardia@asiscontrol.local'"
+own_shift_id=$(mysql -h 127.0.0.1 -u root vzwquesv_app -N -e "SELECT MAX(id) FROM guard_shifts WHERE checkpoint='QA_ALLOWED_SELF_CLOSE'")
+allowed_status=$(curl -sS -o /tmp/shift-guard-allowed.json -w '%{http_code}' -b /tmp/shift-guard.cookies -H "X-CSRF-Token: $guard_csrf" -H 'Content-Type: application/json' -d '{}' "$base/shifts/$own_shift_id/close")
+test "$allowed_status" = "200" || { echo "Allowed self-close returned $allowed_status"; cat /tmp/shift-guard-allowed.json; exit 1; }
+is_closed=$(mysql -h 127.0.0.1 -u root vzwquesv_app -N -e "SELECT COUNT(*) FROM guard_shifts WHERE id=$own_shift_id AND ended_at IS NOT NULL")
+test "$is_closed" = "1"
+echo "Shift closes: unauthorized denied and authorized self-close accepted PASS"
