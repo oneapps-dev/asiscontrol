@@ -383,6 +383,8 @@ try {
 
     if ($method === 'POST' && preg_match('#^/shifts/(\d+)/close$#', $path, $matches)) {
         $user = require_auth();
+        // The shift belongs to the actor, but must also remain within the active site context.
+        validated_shift_site((int)$matches[1], $user);
         $stmt = db()->prepare('UPDATE guard_shifts SET ended_at = NOW() WHERE id = :id AND tenant_id = :tenant_id AND user_id = :user_id AND ended_at IS NULL');
         $stmt->execute(['id' => $matches[1], 'tenant_id' => $user['tenant_id'], 'user_id' => $user['id']]);
         audit('turno.cierre', 'Cierre de turno');
