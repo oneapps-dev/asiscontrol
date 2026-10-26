@@ -239,13 +239,50 @@ function handle_member_routes(string $method,string $path): void
             'csrf_token'=>csrf_token()]);
     }
 
-    if (!preg_match('#^/platform/tenants/(\d+)/memberships(?:/(\d+))?$#',$path,$m)) return;
-    if (!in_array($method,['GET','POST','DELETE'],true)) return;
+    $optionsRoute=preg_match('#^/platform/tenants/(\d+)/membership-options$#',$path,$optionsMatch);
+    if ($optionsRoute) {
+        $m=$optionsMatch;
+        if ($method!=='GET') return;
+    } elseif (!preg_match('#^/platform/tenants/(\d+)/memberships(?:/(\d+))?$#',$path,$m)
+        || !in_array($method,['GET','POST','DELETE'],true)) return;
     $actor=require_auth();
     $tenantId=(int)$m[1];
     $authority=member_authorize_grant($actor,$tenantId);
     $origin=$authority['origin'];
     $operatorId=$authority['operator_tenant_id'];
+
+    if ($optionsRoute) {
+        $sourceId=$origin==='delegated'
+            ? (int)$operatorId
+            : (int)($_GET['source_tenant_id']??0);
+        if (!$sourceId || $sourceId===$tenantId) {
+            json_response(['error'=>'Selecciona un cliente de origen distinto al destinatario'],422);
+        }
+        $source=one_row('SELECT id FROM tenants WHERE id=:id AND status="active"
+            AND commercial_status="active" LIMIT 1',['id'=>$sourceId]);
+        if (!$source) json_response(['error'=>'Cliente de origen no disponible'],404);
+        $users=list_rows(
+            'SELECT u.id,u.name,u.email,u.role
+             FROM users u LEFT JOIN platform_admins pa
+                ON pa.user_id=u.id AND pa.status="active"
+             WHERE u.tenant_id=:source AND u.is_active=1 AND pa.user_id IS NULL
+               AND u.role IN ("coordinator","supervisor","guard","auditor")
+             ORDER BY u.name LIMIT 300',['source'=>$sourceId]
+        );
+        if ($origin==='delegated') {
+            $users=array_values(array_filter($users,static fn($u)=>
+                in_array((string)$u['role'],['coordinator','supervisor','guard'],true)));
+        }
+        json_response(['data'=>[
+            'source_tenant_id'=>$sourceId,
+            'source_users'=>$users,
+            'sites'=>list_rows('SELECT id,name FROM sites WHERE tenant_id=:tenant ORDER BY name',
+                ['tenant'=>$tenantId]),
+            'assignable_roles'=>$origin==='platform'
+                ? ['coordinator','supervisor','guard','auditor']
+                : ['coordinator','supervisor','guard']
+        ]]);
+    }
 
     if ($method==='GET' && !isset($m[2])) {
         $filter=$origin==='delegated'?' AND m.operator_tenant_id=:operator':'';
