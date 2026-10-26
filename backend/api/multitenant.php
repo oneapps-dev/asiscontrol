@@ -492,6 +492,61 @@ function require_tenant_wide_scope(): void
 
 
 
+
+/** Booking permission derives from the destination resource, never request-supplied IDs. */
+function require_booking_resource_access(int $resourceId,array $actor): array
+{
+    if ($resourceId<1) json_response(['error'=>'Recurso inválido'],422);
+    $tenantId=(int)$actor['tenant_id'];
+    $resource=one_row(
+        'SELECT id,tenant_id,site_id,is_active FROM booking_resources
+         WHERE id=:id AND tenant_id=:tenant LIMIT 1',
+        ['id'=>$resourceId,'tenant'=>$tenantId]
+    );
+    if (!$resource || !(int)$resource['is_active']) {
+        json_response(['error'=>'Recurso reservable no encontrado'],404);
+    }
+    $sites=actor_visible_site_ids($actor);
+    if ($sites!==null && !in_array((int)$resource['site_id'],$sites,true)) {
+        json_response(['error'=>'Recurso fuera de tus sedes',
+            'error_code'=>'SCOPE_DENIED'],403);
+    }
+    return $resource;
+}
+
+function require_booking_record_access(int $bookingId,array $actor): array
+{
+    if ($bookingId<1) json_response(['error'=>'Reserva inválida'],422);
+    $tenantId=(int)$actor['tenant_id'];
+    $row=one_row(
+        'SELECT b.*,br.site_id AS authorized_site_id
+         FROM bookings b
+         JOIN booking_resources br ON br.id=b.resource_id AND br.tenant_id=b.tenant_id
+         WHERE b.id=:id AND b.tenant_id=:tenant LIMIT 1',
+        ['id'=>$bookingId,'tenant'=>$tenantId]
+    );
+    if (!$row) json_response(['error'=>'Reserva no encontrada'],404);
+    $sites=actor_visible_site_ids($actor);
+    if ($sites!==null && !in_array((int)$row['authorized_site_id'],$sites,true)) {
+        json_response(['error'=>'Reserva fuera de tus sedes',
+            'error_code'=>'SCOPE_DENIED'],403);
+    }
+    return $row;
+}
+
+function require_reservation_guest_access(int $guestId,array $actor): array
+{
+    if ($guestId<1) json_response(['error'=>'Invitado inválido'],422);
+    $guest=one_row(
+        'SELECT rg.id,rg.booking_id FROM reservation_guests rg
+         WHERE rg.id=:id AND rg.tenant_id=:tenant LIMIT 1',
+        ['id'=>$guestId,'tenant'=>(int)$actor['tenant_id']]
+    );
+    if (!$guest) json_response(['error'=>'Invitado no encontrado'],404);
+    require_booking_record_access((int)$guest['booking_id'],$actor);
+    return $guest;
+}
+
 /** The attachment's parent record is the authorization boundary, not its file id. */
 function require_attachment_parent(string $type,int $recordId,array $actor): array
 {
@@ -627,9 +682,13 @@ function enforce_legacy_scope_gate(string $method,string $path): void
     if ($method==='GET' && in_array($path,$reads,true)) return;
     if ($method==='POST' && in_array($path,[
         '/auth/logout','/me/context/select','/me/context/clear','/shifts','/visits','/vehicles','/packages','/incidents',
-        '/invitations/redeem','/access-events','/offline/events','/files'
+        '/invitations/redeem','/access-events','/offline/events','/files',
+        '/booking-resources','/bookings'
     ],true)) return;
     if ($method==='GET' && preg_match('#^/files/[0-9]+/download$#',$path)) return;
+    if ($method==='GET' && preg_match('#^/bookings/[0-9]+/guests$#',$path)) return;
+    if ($method==='POST' && preg_match('#^/(bookings/[0-9]+/(status|guests)|reservation-guests/[0-9]+/(check-in|check-out))$#',$path)) return;
+    if ($method==='DELETE' && preg_match('#^/bookings/[0-9]+$#',$path)) return;
     if ($method==='POST' && (
         preg_match('#^/shifts/[0-9]+/close$#',$path)
         || preg_match('#^/(visits|vehicles)/[0-9]+/exit$#',$path)

@@ -891,16 +891,23 @@ try {
     }
 
     if ($method === 'POST' && $path === '/booking-resources') {
-        require_permission('bookings.manage');
+        $actor=require_permission('bookings.manage');
         $data = request_json();
         require_fields($data, ['name', 'resource_type']);
+        $siteId=isset($data['site_id']) && (int)$data['site_id']>0 ? (int)$data['site_id'] : null;
+        if ($siteId!==null) {
+            require_tenant_scope('site',$siteId);
+        } elseif (actor_visible_site_ids($actor)!==null) {
+            json_response(['error'=>'Selecciona una sede autorizada para el recurso',
+                'error_code'=>'SCOPE_DENIED'],403);
+        }
         $stmt = db()->prepare(
             'INSERT INTO booking_resources (tenant_id, site_id, name, resource_type, pricing_mode, capacity, price_per_hour, price_per_day, deposit_amount, min_duration_mins, max_duration_days, color, rules, is_active)
              VALUES (:tenant_id, :site_id, :name, :resource_type, :pricing_mode, :capacity, :price_per_hour, :price_per_day, :deposit_amount, :min_duration_mins, :max_duration_days, :color, :rules, 1)'
         );
         $stmt->execute([
             'tenant_id' => tenant_id(),
-            'site_id' => $data['site_id'] ?? null,
+            'site_id' => $siteId,
             'name' => $data['name'],
             'resource_type' => $data['resource_type'],
             'pricing_mode' => in_array(($data['pricing_mode'] ?? 'mixto'), ['hora', 'dia', 'mixto'], true) ? $data['pricing_mode'] : 'mixto',
@@ -923,7 +930,7 @@ try {
             'from' => $_GET['from'] ?? null,
             'to' => $_GET['to'] ?? null,
             'resource_id' => $_GET['resource_id'] ?? null,
-        ]),require_auth())]);
+        ],actor_visible_site_ids(require_auth())),require_auth())]);
     }
 
     if ($method === 'POST' && $path === '/bookings') {
@@ -931,6 +938,7 @@ try {
         $data = request_json();
         require_fields($data, ['resource_id', 'requester_name', 'purpose', 'starts_at', 'ends_at']);
         $resourceId = (int) $data['resource_id'];
+        require_booking_resource_access($resourceId,$user);
         $startsAt = (string) $data['starts_at'];
         $endsAt = (string) $data['ends_at'];
         ensure_booking_window_available((int) $user['tenant_id'], $resourceId, $startsAt, $endsAt);
@@ -960,7 +968,8 @@ try {
     }
 
     if ($method === 'POST' && preg_match('#^/bookings/(\d+)/status$#', $path, $matches)) {
-        require_permission('bookings.manage');
+        $actor=require_permission('bookings.manage');
+        require_booking_record_access((int)$matches[1],$actor);
         $data = request_json();
         $status = (string) ($data['status'] ?? '');
         if (!in_array($status, ['pre_reservation', 'pending', 'pending_payment', 'confirmed', 'paid', 'cancelled', 'expired'], true)) {
@@ -988,7 +997,8 @@ try {
     }
 
     if ($method === 'GET' && preg_match('#^/bookings/(\d+)/guests$#', $path, $matches)) {
-        require_permission('bookings.view');
+        $actor=require_permission('bookings.view');
+        require_booking_record_access((int)$matches[1],$actor);
         json_response(['data' => list_rows('SELECT * FROM reservation_guests WHERE booking_id = :booking_id AND tenant_id = :tenant_id ORDER BY created_at', ['booking_id' => $matches[1], 'tenant_id' => tenant_id()])]);
     }
 
@@ -996,6 +1006,7 @@ try {
         $user = require_permission('reservation_guests.manage');
         $data = request_json();
         require_fields($data, ['guest_name']);
+        require_booking_record_access((int)$matches[1],$user);
         $booking = one_row('SELECT id, starts_at, ends_at FROM bookings WHERE id = :id AND tenant_id = :tenant_id AND status NOT IN ("cancelled", "expired") LIMIT 1', ['id' => $matches[1], 'tenant_id' => $user['tenant_id']]);
         if (!$booking) json_response(['error' => 'Reserva no encontrada o no disponible'], 404);
         $token = bin2hex(random_bytes(24));
@@ -1008,6 +1019,7 @@ try {
 
     if ($method === 'POST' && preg_match('#^/reservation-guests/(\d+)/(check-in|check-out)$#', $path, $matches)) {
         $user = require_permission('reservation_guests.manage');
+        require_reservation_guest_access((int)$matches[1],$user);
         $field = $matches[2] === 'check-in' ? 'checked_in_at' : 'checked_out_at';
         $status = $matches[2] === 'check-in' ? 'used' : 'active';
         db()->prepare('UPDATE reservation_guests SET ' . $field . ' = NOW(), status = :status WHERE id = :id AND tenant_id = :tenant_id AND status <> "cancelled"')->execute(['status' => $status, 'id' => $matches[1], 'tenant_id' => $user['tenant_id']]);
@@ -1016,7 +1028,8 @@ try {
     }
 
     if ($method === 'DELETE' && preg_match('#^/bookings/(\d+)$#', $path, $matches)) {
-        require_permission('bookings.manage');
+        $actor=require_permission('bookings.manage');
+        require_booking_record_access((int)$matches[1],$actor);
         $stmt = db()->prepare('DELETE FROM bookings WHERE id = :id AND tenant_id = :tenant_id');
         $stmt->execute(['id' => $matches[1], 'tenant_id' => tenant_id()]);
         audit('reserva.eliminada', 'Reserva #' . $matches[1] . ' eliminada');
@@ -2980,7 +2993,7 @@ function booking_resources_for_tenant(int $tenantId): array
     );
 }
 
-function bookings_for_tenant(int $tenantId, array $filters = []): array
+function bookings_for_tenant(int $tenantId, array $filters = [], ?array $sites = null): array
 {
     $where = ['b.tenant_id = :tenant_id'];
     $params = ['tenant_id' => $tenantId];
@@ -3000,11 +3013,12 @@ function bookings_for_tenant(int $tenantId, array $filters = []): array
         $params['resource_id'] = (int) $filters['resource_id'];
     }
 
+    $where[]=sql_site_scope($sites,'r.site_id','booking_list_site_',$params);
     [$limit, $offset] = pagination_from_request();
     return list_rows(
         'SELECT b.*, r.name AS resource_name, r.color AS resource_color, r.resource_type
          FROM bookings b
-         INNER JOIN booking_resources r ON r.id = b.resource_id
+         INNER JOIN booking_resources r ON r.id = b.resource_id AND r.tenant_id=b.tenant_id
          WHERE ' . implode(' AND ', $where) . '
          ORDER BY b.starts_at ASC
          LIMIT 300',
