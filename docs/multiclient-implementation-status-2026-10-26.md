@@ -1,78 +1,97 @@
-# AsisControl — Registro de implementación multicliente
-Actualizado: 2026-10-26
-Rama autorizada: `main`
+# AsisControl — Registro actualizado de implementación multicliente
+
+Actualizado: 2026-10-26  
+Rama: `main`  
 Plan rector: `docs/plan-implementacion-arquitectura-multicliente-2026-10-24.md`
 
-## Estado y regla de entrega
+## Estado de liberación
 
-**EN DESARROLLO — NO DESPLEGAR TODAVÍA.** El plan de fases 0–9 aún NO se ha completado ni certificado de extremo a extremo. Las pruebas CI comprueban un subconjunto de operaciones sobre una base MySQL nueva, pero no equivalen a auditoría integral, instalación migrada ni prueba en BanaHosting.
+**EN DESARROLLO — NO DESPLEGAR EN BANAHOSTING.**
+Se implementó y probó en CI una parte sustancial de las fases 0–9, pero aún no se ha demostrado el cumplimiento de todos los criterios CA-01 a CA-23, la compatibilidad de TODAS las rutas heredadas, ni la migración y restauración de una instalación real.
+**Una ejecución CI verde sobre MySQL nuevo no autoriza la publicación.**
 
-### Avances de seguridad e integridad
+## Componentes incorporados
 
-- La elevación a `superadmin` exige un registro activo en `platform_admins`. Se impide su asignación desde la administración ordinaria.
-- Las sesiones de empleados se revalidan contra estado del usuario, rol, tenant y suscripción. El portal revalida residente, persona, unidad, sede y tenant; una revocación surte efecto en la próxima petición.
-- Se añadieron filtros por sede a `/bootstrap` y consultas de visitas, vehículos, paquetes, unidades, incidentes, invitaciones, sedes, dispositivos, reservas, parqueaderos, puestos y eventos de acceso.
-- Las operaciones de turnos, visitas, vehículos, paquetes e incidentes seleccionadas verifican el turno, el cliente y la sede autorizados.
-- Rutas antiguas no auditadas **se deniegan temporalmente a usuarios limitados a sedes**. Esto es un bloqueo conservador de seguridad, NO una implementación funcional definitiva de esas rutas. No desplegar para usuarios reales hasta recuperar todos los flujos autorizados mediante las verificaciones requeridas.
-- Auditoría global, datos de personas y restricciones de alcance general requieren permisos de cliente completo; no se exponen a un perfil limitado.
-- La sincronización offline reconoce IDs reales de visita y vehículo; valida pertenencia a tenant/sede y protege cambios a registros de otras sedes. Falta probar completamente reintentos, conflictos concurrentes e idempotencia.
+| Fase | Avance verificable | Pendiente antes de cierre |
+|---|---|---|
+| 0 Seguridad | Rol global restringido a `platform_admins`; revalidación de sesión, suspensión y suscripción; filtros conservadores por sede | Auditoría integral de endpoints heredados; regresión operativa sin pérdida funcional |
+| 1 Clientes | Tipos security_company, residential, industrial, corporate y custom; jerarquía, relaciones administradas y clientes secundarios | Revisar exhaustivamente los casos de delegación |
+| 2 Permisos y alcances | Rol maestro con techo; restricciones descendentes; sede y miembros multicliente explícitos; revocación efectiva | Permisos por cada recurso, adjuntos, reportes, importaciones y URL directas |
+| 3 Planes | Límites de sedes, puestos, unidades, usuarios por categoría y clientes secundarios, incluidos cupos de asignaciones | Entitlements restantes y concurrencia de cuotas |
+| 4 Sectores | Dependencias industriales configurables, personal; módulos residenciales por tipo y excepciones autorizadas | Flujos empresariales y residenciales en ambiente real |
+| 5 Dashboards | KPI SQL por sector/rol, acotados a cliente y sedes; clientes administrados, asistencia y residencia | Tableros finales por perfil, enlaces y acciones |
+| 6 Soporte CREAMOX | Ver como solo lectura, revocable, 10 minutos, usuario real, auditoría y smoke tests | E2E navegador y UX de expiración |
+| 7 Auditoría | Ledger estructurado adicional, redactado, filtros de cliente/actor y vista CREAMOX | Cobertura total de mutaciones, retención aprobada, exportación |
+| 8 Contextos | Sedes seleccionables y asignaciones a varios clientes por usuario, rol y sede; validación de vínculo, suscripción y expiración | Multi-tab, móviles y eventos offline heredados pendientes |
+| 9 Entrega | PHP lint, TypeScript/build, MySQL limpio, tests integrados; webroot sin SQL de QA | CA-01 a CA-23, E2E, base real clonada, backup/restore, cargas y pruebas en hosting |
 
-### Migraciones implementadas
+## Migraciones implementadas
 
-| Migración | Contenido |
+| Versión | Contenido |
 |---|---|
-| 015 | Tipos de clientes, jerarquía, relaciones de administración delegada |
-| 016 | Roles maestros, techos de permisos, restricciones descendentes y alcances |
-| 017 | Límites de plan normalizados y funcionalidades contratadas |
+| 015 | Tipos de cliente, jerarquía, relaciones |
+| 016 | Roles maestros, restricciones, alcances |
+| 017 | Entitlements y límites de planes |
 | 018 | Permiso `clients.manage` para clientes secundarios |
-| 019 | Reparación de alcances automáticos operativos, conservando concesiones explícitas |
+| 019 | Reparación no destructiva de alcances operativos |
+| 020 | Sesiones del soporte Ver como |
+| 021 | Jerarquía industrial y personal |
+| 022 | Auditoría estructurada |
+| 023 | `tenant_user_memberships`: asignaciones intercliente con rol/sede |
 
-Estas migraciones son incrementales. **No ejecutar `install.sql` sobre una base existente.** Antes de cualquier migración real: copia restaurable y pruebas sobre clon.
+**No ejecutar `backend/database/install.sql` en una instalación existente.** Antes de migrar: copia restaurable, clon de pruebas y `backend/scripts/run_migrations.php` controlado.
 
-### API y frontend entregados parcialmente
+## Contrato de contexto y asignación multicliente
 
-- CREAMOX puede crear clientes independientes o secundarios por tipo, con administrador e invitación de activación.
-- Operador de Medios dispone de una vista de clientes administrados y la API exige pertenencia y permiso `clients.manage`.
-- Se incorporaron endpoints para contexto, permisos efectivos, alcances, restricciones de rol, límites de suscripción y métricas contextuales.
-- El dashboard muestra un bloque contextual con métricas calculadas en MySQL, restringidas a las sedes del usuario. Es una primera implementación del dashboard diferenciado, no el conjunto definitivo de indicadores por perfil y sector.
-- Las semillas QA aisladas simulan empresa de seguridad, propiedad horizontal, industria, personal, turnos, visitas, vehículos, paquetes, incidentes, unidades y dispositivos.
+- La cuenta principal permanece en `users.tenant_id`. La selección no altera esa identidad.
+- `tenant_user_memberships` une usuario, cliente destino, rol, sede y vencimiento opcional. No permite rol global.
+- Operadores de seguridad solo gestionan personal de su empresa para clientes con relación `managed_by` o `secondary_of` vigente.
+- El backend revalida en cada petición el rol origen (techo de privilegios), la membresía, relación comercial, sede, estado del cliente y vigencia de la suscripción.
+- La revocación bloquea el contexto delegado; el usuario regresa explícitamente a su cuenta principal.
+- El frontend no permite cambiar cliente con cola offline pendiente; eventos antiguos sin identificación original quedan retenidos, nunca se atribuyen a la sesión actual.
+- El servidor rechaza un evento offline cuya identidad o cliente declarado no coincidan con los de la sesión.
 
-## Pruebas implementadas en GitHub Actions
+Rutas incorporadas:
+- `GET /api/me/tenants`; `POST /api/me/tenant/select`; `POST /api/me/tenant/clear`.
+- `GET /api/platform/tenants/{id}/membership-options`.
+- `GET/POST /api/platform/tenants/{id}/memberships`; `DELETE /api/platform/tenants/{id}/memberships/{memberId}`.
+- `GET /api/me/contexts`, `POST /api/me/context/select` y `POST /api/me/context/clear`.
+- `GET /api/dashboard/contextual`.
 
-- Sintaxis de archivos PHP, tipado TypeScript, compilación React/Vite.
-- Base de datos MySQL 8 nueva, instalador, migraciones y semillas QA.
-- API de salud y autenticación básica.
-- Comprobación negativa del panel global desde guardia.
-- Aislamiento entre dos sedes del **mismo** tenant en `/bootstrap` y `/visits`.
-- Rechazo de creación de turno fuera del alcance.
-- Denegación de lectura de auditoría a guardia.
-- Denegación de salida offline sobre visita de otra sede.
-- Revocación de sesión del portal tras desactivar un residente.
-- Verificación del conteo de visitas del dashboard contextual frente a una consulta SQL restringida por sede.
+## Pruebas automatizadas
 
-La evidencia de cada ejecución está en GitHub Actions. Cualquier ejecución roja bloquea considerar la revisión validada.
+El workflow `.github/workflows/asiscontrol-ci.yml` utiliza MySQL 8 aislado y ejecuta:
 
-## Fases todavía pendientes
+1. Sintaxis PHP, TypeScript, build con API obligatoria y comprobación del webroot.
+2. Instalación limpia, todas las migraciones y datos QA ficticios.
+3. `multitenant_security_smoke.sh`: alcance, aislamiento y autorización.
+4. `platform_preview_smoke.sh`: Ver como y rechazo de escrituras.
+5. `industrial_structure_smoke.sh`: jerarquía, ciclos y personal.
+6. `user_quota_smoke.sh`: cuotas por categoría/reactivación.
+7. `client_type_gate_smoke.sh`: módulos y excepciones.
+8. `site_context_smoke.sh`: selección y filtrado de sedes.
+9. `structured_audit_smoke.sh`: reportes y redacción.
+10. `multi_tenant_membership_smoke.sh`: varios clientes, tercero bloqueado, escalamiento, revocación y suscripciones.
+11. `sector_dashboard_smoke.sh`: indicadores SQL y visibilidad por perfil.
+12. `offline_context_smoke.sh`: bloqueo de origen entre usuario/cliente más idempotencia.
 
-1. Revisar todas las rutas existentes, recursos adjuntos, importaciones y exports para aplicar permiso + propiedad + alcance + estado comercial. Rehabilitar cada ruta temporalmente bloqueada solo después de probarla.
-2. Usuarios con asignaciones autorizadas en múltiples tenants y selector de contexto verificable en backend/frontend.
-3. Integrar límites y funcionalidades del plan a todos los recursos y operaciones, no solo sedes, puestos, unidades y usuarios.
-4. Jerarquías industriales configurables (sede, edificio, piso, área, dependencia) y sus pantallas/acciones.
-5. Dashboards completos para CREAMOX, administradores, Operadores de Medios, supervisores, vigilantes, auditores y residentes con métricas y visibilidad por sector.
-6. Modo CREAMOX «Ver como» en solo lectura, expirable y auditado, sin mutaciones.
-7. Auditoría estructurada extensiva y gestión completa de permisos, roles, alcances, sesiones y concesiones.
-8. Matriz de aceptación CA-01 a CA-23, regresión de módulos existentes, carga, concurrencia, seguridad ofensiva y calidad offline.
-9. Prueba de actualización desde copia de una base real, respaldo y restauración, documentación del despliegue compartido y verificación de que no sean públicos los archivos sensibles.
+Evidencia por ejecución: [GitHub Actions](https://github.com/oneapps-dev/asiscontrol/actions).
+**Solo las ejecuciones que hayan finalizado satisfactoriamente se consideran pruebas aprobadas.**
 
-### Condición de cierre
+## Prioridades aún pendientes
 
-No declarar listo para BanaHosting hasta:
-- 100 % de fases implementadas sin reducción funcional;
-- CI y matriz de aceptación aprobadas;
-- instalación limpia, migración desde esquema anterior y restauración probadas;
-- paquete de despliegue seguro y manuales completos;
-- autorización del usuario para su posterior publicación en servidor de pruebas.
+1. **Cobertura de rutas heredadas**: matriz por endpoint (rol, permiso, tenant, sede, puesto, suscripción, evidencias, errores) y rehabilitación segura de las rutas provisionalmente cerradas.
+2. **CA-01 a CA-23**: extraer los criterios exactos del requerimiento original, relacionar cada caso con prueba, resultado y evidencia.
+3. **Offline E2E**: conflictos, reintentos concurrentes, colas legacy, aislamiento entre pestañas, conectividad intermitente y dispositivos.
+4. **Paneles por perfil**: terminar los módulos y drilldowns de CREAMOX, Operador, PH, industria, supervisión, vigilancia, auditoría y residentes.
+5. **Comercial**: verificar entitlements, límites concurrentes, retención y periodos pagados.
+6. **Migración/entrega real**: clonar una base existente con seguridad, backup/restore, migraciones, E2E, carga y pruebas de despliegue cPanel.
+7. Solo publicar después de aprobación explícita del usuario y checklist cerrado.
 
-## Decisiones aprobadas
+## Reglas de entrega
 
-Propiedad de datos por tenant y delegaciones explícitas; varios operadores por empresa; límites configurables por CREAMOX; «Ver como» solo lectura; retención de auditoría sin borrado automático hasta política aprobada; permisos descendentes; jerarquía industrial configurable; datos QA ficticios exclusivamente en ambientes de prueba.
+- No usar datos QA ni credenciales demo en producción.
+- No convertir parámetros de React en autorización ni ampliar permisos de un actor.
+- No sacrificar funciones heredadas; todo bloqueo temporal necesita reparación y regresión.
+- Nunca exponer `backend/database`, `backend/tests`, `backend/scripts`, ficheros .env, copias ni tokens en el directorio web.
+- No declarar AsisControl listo para producción por el solo hecho de que CI sea verde.
