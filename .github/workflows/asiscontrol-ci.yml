@@ -112,6 +112,7 @@ jobs:
           test "$status" = "403"
           bash backend/tests/multitenant_security_smoke.sh
           bash backend/tests/evidence_owner_scope_smoke.sh
+          bash backend/tests/site_scoped_reports_smoke.sh
           bash backend/tests/platform_preview_smoke.sh
           bash backend/tests/industrial_structure_smoke.sh
           bash backend/tests/user_quota_smoke.sh
