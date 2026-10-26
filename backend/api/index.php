@@ -382,16 +382,11 @@ try {
     }
 
     if ($method === 'GET' && $path === '/visits') {
-        $stmt = db()->prepare(
-            'SELECT v.*, p.full_name, p.document_type, p.document_number
-             FROM visits v
-             INNER JOIN people p ON p.id = v.person_id
-             WHERE v.tenant_id = :tenant_id
-             ORDER BY v.entered_at DESC
-             LIMIT 200'
-        );
-        $stmt->execute(['tenant_id' => tenant_id()]);
-        json_response(['data' => scope_filter_rows('visits',$stmt->fetchAll(),require_auth())]);
+        $actor=require_auth();
+        $sites=actor_visible_site_ids($actor);
+        json_response(['data'=>scope_filter_rows('visits',visits_for_tenant(
+            (int)$actor['tenant_id'],[], $sites,200
+        ),$actor)]);
     }
 
     if ($method === 'GET' && $path === '/people') {
@@ -492,15 +487,16 @@ try {
         $residentProfile = $isResident ? portal_resident_by_id((int) ($bootstrapUser['resident_id'] ?? 0), $tenantId) : null;
         $residentDestination = $residentProfile ? portal_resident_destination($residentProfile) : '';
         $residentialEnabled = residential_modules_enabled($tenantId);
+        $bootstrapSitesAllowed=$isResident?null:actor_visible_site_ids($bootstrapUser);
         $bootstrapSites = $isResident && $residentProfile
             ? list_rows('SELECT * FROM sites WHERE tenant_id = :tenant_id AND id = :site_id', ['tenant_id' => $tenantId, 'site_id' => $residentProfile['site_id']])
             : list_rows('SELECT * FROM sites WHERE tenant_id = :tenant_id ORDER BY name', ['tenant_id' => $tenantId]);
         $bootstrapVisits = $isResident && $residentProfile
             ? list_rows('SELECT v.*, p.person_type, p.full_name, p.document_type, p.document_number, p.phone, p.company FROM visits v INNER JOIN people p ON p.id = v.person_id WHERE v.tenant_id = :tenant_id AND (v.host = :host OR v.destination = :destination) ORDER BY v.entered_at DESC LIMIT 100', ['tenant_id' => $tenantId, 'host' => $residentProfile['full_name'], 'destination' => $residentDestination])
-            : visits_for_tenant($tenantId);
+            : visits_for_tenant($tenantId,[],$bootstrapSitesAllowed);
         $bootstrapBookings = $isResident && $residentProfile
             ? list_rows('SELECT b.*, br.name AS resource_name, br.color AS resource_color, br.resource_type FROM bookings b INNER JOIN booking_resources br ON br.id = b.resource_id WHERE b.tenant_id = :tenant_id AND b.requester_name = :requester_name ORDER BY b.starts_at ASC LIMIT 100', ['tenant_id' => $tenantId, 'requester_name' => $residentProfile['full_name']])
-            : bookings_for_tenant($tenantId);
+            : bookings_for_tenant($tenantId,[],$bootstrapSitesAllowed);
         $bootstrapInvitations = $isResident && $residentProfile
             ? list_rows('SELECT * FROM invitations WHERE tenant_id = :tenant_id AND destination = :destination AND host = :host ORDER BY created_at DESC LIMIT 100', ['tenant_id' => $tenantId, 'destination' => $residentDestination, 'host' => $residentProfile['full_name']])
             : list_rows('SELECT * FROM invitations WHERE tenant_id = :tenant_id ORDER BY created_at DESC LIMIT 200', ['tenant_id' => $tenantId]);
@@ -516,16 +512,16 @@ try {
                     ['tenant_id' => $tenantId, 'user_id' => $bootstrapUser['id']]
                 ),
                 'visits' => $bootstrapVisits,
-                'vehicles' => $isResident ? [] : list_rows('SELECT * FROM vehicles WHERE tenant_id = :tenant_id ORDER BY entered_at DESC LIMIT 200', ['tenant_id' => $tenantId]),
+                'vehicles' => $isResident ? [] : scoped_vehicles_for_tenant($tenantId,$bootstrapSitesAllowed),
                 'booking_resources' => booking_resources_for_tenant($tenantId),
                 'bookings' => $bootstrapBookings,
-                'packages' => $isResident ? [] : packages_for_tenant($tenantId),
+                'packages' => $isResident ? [] : packages_for_tenant($tenantId,$bootstrapSitesAllowed),
                 'units' => !$residentialEnabled ? [] : ($isResident && $residentProfile ? list_rows('SELECT u.*, s.name AS site_name FROM units u INNER JOIN sites s ON s.id = u.site_id WHERE u.tenant_id = :tenant_id AND u.id = :unit_id', ['tenant_id' => $tenantId, 'unit_id' => $residentProfile['unit_id']]) : units_for_tenant($tenantId)),
                 'residents' => !$residentialEnabled ? [] : ($isResident && $residentProfile ? [$residentProfile] : residents_for_tenant($tenantId)),
                 'parking' => $isResident ? [] : list_rows('SELECT * FROM parking_assignments WHERE tenant_id = :tenant_id AND status = "active" ORDER BY space_code', ['tenant_id' => $tenantId]),
                 'permissions' => $bootstrapPermissions,
                 'invitations' => $bootstrapInvitations,
-                'incidents' => $isResident ? [] : list_rows('SELECT * FROM incidents WHERE tenant_id = :tenant_id ORDER BY created_at DESC LIMIT 200', ['tenant_id' => $tenantId]),
+                'incidents' => $isResident ? [] : scoped_incidents_for_tenant($tenantId,$bootstrapSitesAllowed),
                 'restrictions' => $isResident ? [] : list_rows('SELECT * FROM restrictions WHERE tenant_id = :tenant_id AND is_active = 1 AND (valid_from IS NULL OR valid_from <= NOW()) AND (valid_until IS NULL OR valid_until >= NOW()) ORDER BY created_at DESC', ['tenant_id' => $tenantId]),
                 'audit' => $isResident ? [] : list_rows('SELECT * FROM audit_logs WHERE tenant_id = :tenant_id ORDER BY created_at DESC LIMIT 80', ['tenant_id' => $tenantId]),
             ],
@@ -831,7 +827,10 @@ try {
     }
 
     if ($method === 'GET' && $path === '/vehicles') {
-        json_response(['data' => scope_filter_rows('vehicles',list_rows('SELECT * FROM vehicles WHERE tenant_id = :tenant_id ORDER BY entered_at DESC LIMIT 200', ['tenant_id' => tenant_id()]),require_auth())]);
+        $actor=require_auth();
+        json_response(['data'=>scope_filter_rows('vehicles',scoped_vehicles_for_tenant(
+            (int)$actor['tenant_id'],actor_visible_site_ids($actor)
+        ),$actor)]);
     }
 
     if ($method === 'GET' && $path === '/parking') {
@@ -1459,7 +1458,10 @@ try {
     }
 
     if ($method === 'GET' && $path === '/packages') {
-        json_response(['data' => scope_filter_rows('packages',packages_for_tenant(tenant_id()),require_auth())]);
+        $actor=require_auth();
+        json_response(['data'=>scope_filter_rows('packages',packages_for_tenant(
+            (int)$actor['tenant_id'],actor_visible_site_ids($actor)
+        ),$actor)]);
     }
 
     if ($method === 'GET' && $path === '/portal/packages') {
@@ -1791,7 +1793,10 @@ try {
     }
 
     if ($method === 'GET' && $path === '/incidents') {
-        json_response(['data' => scope_filter_rows('incidents',list_rows('SELECT * FROM incidents WHERE tenant_id = :tenant_id ORDER BY created_at DESC LIMIT 200', ['tenant_id' => tenant_id()]),require_auth())]);
+        $actor=require_auth();
+        json_response(['data'=>scope_filter_rows('incidents',scoped_incidents_for_tenant(
+            (int)$actor['tenant_id'],actor_visible_site_ids($actor)
+        ),$actor)]);
     }
 
     if ($method === 'POST' && $path === '/incidents') {
@@ -2032,13 +2037,14 @@ try {
             $where[] = 'ae.occurred_at <= :to_date';
             $params['to_date'] = $_GET['to'] . ' 23:59:59';
         }
+        $where[]=sql_site_scope(actor_visible_site_ids(require_auth()),'ae.site_id','access_list_site_',$params);
         json_response(['data' => scope_filter_rows('access_events',list_rows(
             'SELECT ae.*, p.full_name, s.name AS site_name, ap.name AS access_point_name, d.name AS device_name
              FROM access_events ae
-             LEFT JOIN people p ON p.id = ae.person_id
-             LEFT JOIN sites s ON s.id = ae.site_id
-             LEFT JOIN access_points ap ON ap.id = ae.access_point_id
-             LEFT JOIN devices d ON d.id = ae.device_id
+             LEFT JOIN people p ON p.id = ae.person_id AND p.tenant_id=ae.tenant_id
+             LEFT JOIN sites s ON s.id = ae.site_id AND s.tenant_id=ae.tenant_id
+             LEFT JOIN access_points ap ON ap.id = ae.access_point_id AND ap.tenant_id=ae.tenant_id
+             LEFT JOIN devices d ON d.id = ae.device_id AND d.tenant_id=ae.tenant_id
              WHERE ' . implode(' AND ', $where) . '
              ORDER BY ae.occurred_at DESC LIMIT 500',
             $params
@@ -2917,7 +2923,7 @@ function one_row(string $sql, array $params = []): ?array
     return $row ?: null;
 }
 
-function visits_for_tenant(int $tenantId, array $filters = [], ?array $siteIds = null): array
+function visits_for_tenant(int $tenantId, array $filters = [], ?array $siteIds = null, ?int $fixedLimit = null): array
 {
     $where = ['v.tenant_id = :tenant_id'];
     $params = ['tenant_id' => $tenantId];
@@ -2939,6 +2945,7 @@ function visits_for_tenant(int $tenantId, array $filters = [], ?array $siteIds =
 
     $where[]=sql_site_scope($siteIds,'COALESCE(v.site_id,gs.site_id)','visit_export_site_',$params);
     [$limit, $offset] = pagination_from_request();
+    if ($fixedLimit!==null) { $limit=max(1,min(200,$fixedLimit)); $offset=0; }
     return list_rows(
         'SELECT v.*, p.person_type, p.full_name, p.document_type, p.document_number, p.phone, p.company
          FROM visits v
@@ -2951,17 +2958,43 @@ function visits_for_tenant(int $tenantId, array $filters = [], ?array $siteIds =
     );
 }
 
-function packages_for_tenant(int $tenantId): array
+function scoped_vehicles_for_tenant(int $tenantId, ?array $sites): array
 {
+    $params=['tenant_id'=>$tenantId];
+    $siteFilter=sql_site_scope($sites,'COALESCE(v.site_id,gs.site_id)','vehicle_list_site_',$params);
+    return list_rows(
+        'SELECT v.* FROM vehicles v
+         LEFT JOIN guard_shifts gs ON gs.id=v.shift_id AND gs.tenant_id=v.tenant_id
+         WHERE v.tenant_id=:tenant_id AND '.$siteFilter.'
+         ORDER BY v.entered_at DESC LIMIT 200',$params
+    );
+}
+
+function scoped_incidents_for_tenant(int $tenantId, ?array $sites): array
+{
+    $params=['tenant_id'=>$tenantId];
+    $siteFilter=sql_site_scope($sites,'gs.site_id','incident_list_site_',$params);
+    return list_rows(
+        'SELECT i.* FROM incidents i
+         LEFT JOIN guard_shifts gs ON gs.id=i.shift_id AND gs.tenant_id=i.tenant_id
+         WHERE i.tenant_id=:tenant_id AND '.$siteFilter.'
+         ORDER BY i.created_at DESC LIMIT 200',$params
+    );
+}
+
+function packages_for_tenant(int $tenantId, ?array $sites = null): array
+{
+    $params=['tenant_id'=>$tenantId];
+    $siteFilter=sql_site_scope($sites,'gs.site_id','package_list_site_',$params);
     [$limit, $offset] = pagination_from_request();
     return list_rows(
         'SELECT p.*, ps.receiver_name AS signature_name, ps.signature_path
          FROM packages p
-         LEFT JOIN package_signatures ps ON ps.package_id = p.id
-         WHERE p.tenant_id = :tenant_id
+         LEFT JOIN guard_shifts gs ON gs.id=p.shift_id AND gs.tenant_id=p.tenant_id
+         LEFT JOIN package_signatures ps ON ps.package_id = p.id AND ps.tenant_id=p.tenant_id
+         WHERE p.tenant_id = :tenant_id AND '.$siteFilter.'
          ORDER BY p.received_at DESC
-         LIMIT ' . $limit . ' OFFSET ' . $offset,
-        ['tenant_id' => $tenantId]
+         LIMIT ' . $limit . ' OFFSET ' . $offset,$params
     );
 }
 
