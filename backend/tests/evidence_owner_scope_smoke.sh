@@ -80,4 +80,41 @@ import json
 rows=json.load(open('/tmp/evidence-tenantwide.json'))['data']
 assert len(rows)==1 and rows[0]['owner_type']=='visit'
 PY
-echo 'Evidence: authorized upload/list/download; unauthorized site and owner rejection PASS'
+
+# A real site-scoped guard must retain evidence access granted by files.manage.
+curl -fsS -c /tmp/evidence-guard.cookies -H 'Content-Type: application/json' \
+ -d '{"email":"guardia@asiscontrol.local","password":"demo1234"}' \
+ "$base/auth/login" >/tmp/evidence-guard-login.json
+curl -fsS -b /tmp/evidence-guard.cookies \
+ "$base/files?owner_type=visit&owner_id=$allowed" >/tmp/evidence-guard-allowed.json
+python3 - <<'PY'
+import json
+rows=json.load(open('/tmp/evidence-guard-allowed.json'))['data']
+assert len(rows)==1 and 'stored_path' not in rows[0]
+PY
+status=$(curl -sS -o /tmp/evidence-guard-denied.json -w '%{http_code}' \
+ -b /tmp/evidence-guard.cookies "$base/files?owner_type=visit&owner_id=$denied")
+test "$status" = "403" || { echo "Guard accessed other-site evidence: $status"; exit 1; }
+
+# A tenant-wide administrator may select a site; the selection reduces access.
+owner_csrf=$(python3 -c 'import json;print(json.load(open("/tmp/evidence-global-login.json"))["csrf_token"])')
+site2=$(mysql -h 127.0.0.1 -u root vzwquesv_app -N -e \
+ "SELECT id FROM sites WHERE tenant_id=1 AND name='QA Sede Restringida' LIMIT 1")
+status=$(curl -sS -o /tmp/evidence-context-selected.json -w '%{http_code}' \
+ -b /tmp/evidence-global.cookies -H "X-CSRF-Token: $owner_csrf" \
+ -H 'Content-Type: application/json' \
+ -d "{\"site_id\":$site2}" "$base/me/context/select")
+test "$status" = "200" || { echo "Admin site selection denied $status"; exit 1; }
+status=$(curl -sS -o /tmp/evidence-context-old-site-denied.json -w '%{http_code}' \
+ -b /tmp/evidence-global.cookies "$base/files?owner_type=visit&owner_id=$allowed")
+test "$status" = "403" || { echo "Site selection failed to constrain evidence access: $status"; exit 1; }
+curl -fsS -b /tmp/evidence-global.cookies \
+ "$base/files?owner_type=visit&owner_id=$denied" >/tmp/evidence-context-selected-files.json
+status=$(curl -sS -o /tmp/evidence-context-cleared.json -w '%{http_code}' \
+ -b /tmp/evidence-global.cookies -H "X-CSRF-Token: $owner_csrf" \
+ -H 'Content-Type: application/json' -d '{}' "$base/me/context/clear")
+test "$status" = "200" || { echo "Site selection clear failed: $status"; exit 1; }
+curl -fsS -b /tmp/evidence-global.cookies \
+ "$base/files?owner_type=visit&owner_id=$allowed" >/tmp/evidence-cleared-files.json
+echo 'Evidence: authorized upload/list/download, restricted guard, and temporary site-context isolation PASS'
+
