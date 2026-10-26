@@ -2286,12 +2286,14 @@ try {
         require_platform_admin();
         json_response(['data' => list_rows(
             'SELECT t.id, t.name, t.legal_name, t.document_number, t.status, t.created_at,
+                     t.parent_tenant_id, ct.code AS client_type,
                     s.name AS site_name, u.name AS admin_name, u.email AS admin_email,
                     ts.id AS subscription_id, ts.status AS subscription_status, ts.starts_on, ts.ends_on,
                     ts.auto_renew, sp.code AS plan_code, sp.name AS plan_name,
                     (SELECT COUNT(*) FROM users tu WHERE tu.tenant_id = t.id AND tu.is_active = 1) AS active_users,
                     (SELECT COUNT(*) FROM units tuu WHERE tuu.tenant_id = t.id AND tuu.status = "active") AS active_units
              FROM tenants t
+             LEFT JOIN client_types ct ON ct.id=t.client_type_id
              LEFT JOIN sites s ON s.tenant_id = t.id AND s.id = (SELECT MIN(s2.id) FROM sites s2 WHERE s2.tenant_id = t.id)
              LEFT JOIN users u ON u.tenant_id = t.id AND u.role = "admin" AND u.id = (SELECT MIN(u2.id) FROM users u2 WHERE u2.tenant_id = t.id AND u2.role = "admin")
              LEFT JOIN tenant_subscriptions ts ON ts.id = (SELECT MAX(ts2.id) FROM tenant_subscriptions ts2 WHERE ts2.tenant_id = t.id)

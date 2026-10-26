@@ -156,6 +156,7 @@ interface AppData {
     tenant: string;
     site: string;
     siteId?: string;
+    tenantId?: string;
     residentId?: string;
     unitId?: string;
     isPlatformAdmin?: boolean;
@@ -411,6 +412,7 @@ function mapApiData(current: AppData, payload: any, user?: any): AppData {
       tenant: user?.tenant_name || current.user.tenant,
       site: activeSite?.name || current.user.site,
       siteId: activeSite?.id ? String(activeSite.id) : current.user.siteId,
+      tenantId: user?.tenant_id ? String(user.tenant_id) : current.user.tenantId,
       residentId: user?.resident_id ? String(user.resident_id) : current.user.residentId,
       unitId: user?.unit_id ? String(user.unit_id) : current.user.unitId,
       isPlatformAdmin: Boolean(payload.platform_admin ?? user?.platform_admin ?? current.user.isPlatformAdmin),
@@ -1029,7 +1031,7 @@ function Shell({
     if (item.id === 'employees' || item.id === 'contractors') return ['superadmin', 'admin', 'supervisor', 'coordinator'].includes(data.user.role);
     if (item.id === 'kiosk') return ['superadmin', 'admin', 'supervisor', 'coordinator', 'guard', 'tech_operator'].includes(data.user.role);
     if (item.id === 'integrity') return ['superadmin', 'supervisor', 'coordinator'].includes(data.user.role);
-    if (item.id === 'platform') return Boolean(data.user.isPlatformAdmin);
+    if (item.id === 'platform') return Boolean(data.user.isPlatformAdmin) || data.user.role === 'tech_operator';
     if (item.id === 'shift') return ['guard', 'supervisor', 'coordinator', 'admin', 'superadmin', 'tech_operator'].includes(data.user.role);
     return data.user.role !== 'resident' || item.id === 'dashboard';
   });
@@ -3464,17 +3466,66 @@ function Phases() {
   );
 }
 
+function ManagedClients({ data, apiOnline }: { data: AppData; apiOnline: boolean }) {
+  const [children, setChildren] = useState<any[]>([]);
+  const [error, setError] = useState('');
+  const [token, setToken] = useState('');
+  const [form, setForm] = useState({ client_type: 'residential', name: '', site_name: '', admin_name: '', admin_email: '', plan_code: 'starter' });
+  const tenantId = data.user.tenantId || '';
+  const reload = async () => {
+    if (!apiOnline || !tenantId) return;
+    try { setChildren((await api.platformChildren(tenantId)).data || []); setError(''); }
+    catch (err) { setError(err instanceof Error ? err.message : 'No se pudieron consultar los clientes'); }
+  };
+  useEffect(() => { void reload(); }, [apiOnline, tenantId]);
+  const createChild = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!tenantId || !apiOnline) return;
+    try {
+      const response = await api.createPlatformChildTenant(tenantId, form);
+      setToken(response.setup_token);
+      setForm({ ...form, name: '', site_name: '', admin_name: '', admin_email: '' });
+      await reload();
+    } catch (err) { setError(err instanceof Error ? err.message : 'No fue posible crear el cliente secundario'); }
+  };
+  return <section className="panel space-y-4">
+    <PageTitle title="Clientes administrados" subtitle="Solo puedes crear y consultar clientes secundarios de tu empresa de seguridad." />
+    {!apiOnline && <Alert tone="warning">Requiere conexión con la API.</Alert>}
+    {!tenantId && <Alert tone="warning">No se ha identificado el cliente de la sesión.</Alert>}
+    {error && <Alert tone="danger">{error}</Alert>}
+    <form onSubmit={createChild} className="grid gap-3 md:grid-cols-2">
+      <input className="field" placeholder="Nombre del cliente" required value={form.name} onChange={e=>setForm({ ...form, name:e.target.value })}/>
+      <select className="field" value={form.client_type} onChange={e=>setForm({ ...form, client_type:e.target.value })}>
+        <option value="residential">Propiedad horizontal</option><option value="industrial">Industrial</option>
+        <option value="corporate">Corporativo</option><option value="custom">Personalizado</option>
+      </select>
+      <input className="field" placeholder="Nombre de sede" required value={form.site_name} onChange={e=>setForm({ ...form, site_name:e.target.value })}/>
+      <input className="field" placeholder="Nombre del administrador" required value={form.admin_name} onChange={e=>setForm({ ...form, admin_name:e.target.value })}/>
+      <input className="field" type="email" placeholder="Correo del administrador" required value={form.admin_email} onChange={e=>setForm({ ...form, admin_email:e.target.value })}/>
+      <button className="btn-primary" disabled={!apiOnline || !tenantId} type="submit">Crear cliente secundario</button>
+    </form>
+    {token && <div className="rounded border border-warning bg-warning/10 p-3 text-sm">
+      Token de activación, visible una sola vez: <code className="break-all">{token}</code>
+    </div>}
+    <div className="space-y-2">{children.map((child:any) => <div key={child.id} className="rounded border border-border p-3">
+      <strong>{child.name}</strong><span className="ml-2 text-xs text-on-surface-variant">{humanizeCode(child.client_type)} · {humanizeCode(child.status)}</span>
+    </div>)}</div>
+  </section>;
+}
+
 function PlatformAdmin({ data, apiOnline }: { data: AppData; apiOnline: boolean }) {
   const [metrics, setMetrics] = useState<Record<string, number>>({});
   const [tenants, setTenants] = useState<any[]>([]);
   const [plans, setPlans] = useState<any[]>([]);
+  const [clientTypes, setClientTypes] = useState<any[]>([]);
+  const [parentTenantId, setParentTenantId] = useState('');
   const [platformNotifications, setPlatformNotifications] = useState<any[]>([]);
   const [platformAudit, setPlatformAudit] = useState<any[]>([]);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [setupToken, setSetupToken] = useState('');
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState({ name: '', legal_name: '', document_number: '', site_name: '', site_address: '', admin_name: '', admin_email: '', plan_code: 'starter' });
+  const [form, setForm] = useState({ name: '', legal_name: '', document_number: '', site_name: '', site_address: '', admin_name: '', admin_email: '', plan_code: 'starter', client_type: 'residential' });
   const [subscription, setSubscription] = useState({ tenantId: '', plan_code: 'starter', status: 'active', starts_on: new Date().toISOString().slice(0, 10), ends_on: '', auto_renew: false, notes: '' });
 
   const reload = async () => {
@@ -3482,10 +3533,11 @@ function PlatformAdmin({ data, apiOnline }: { data: AppData; apiOnline: boolean 
     setLoading(true);
     setError('');
     try {
-      const [metricResponse, tenantResponse, planResponse, notificationResponse, auditResponse] = await Promise.all([api.platformMetrics(), api.platformTenants(), api.platformPlans(), api.platformNotifications(), api.platformAudit()]);
+      const [metricResponse, tenantResponse, planResponse, notificationResponse, auditResponse, typeResponse] = await Promise.all([api.platformMetrics(), api.platformTenants(), api.platformPlans(), api.platformNotifications(), api.platformAudit(), api.platformClientTypes()]);
       setMetrics(metricResponse.data || {});
       setTenants(tenantResponse.data || []);
       setPlans(planResponse.data || []);
+      setClientTypes(typeResponse.data || []);
       setPlatformNotifications(notificationResponse.data || []);
       setPlatformAudit(auditResponse.data || []);
       if ((planResponse.data || []).length > 0 && !form.plan_code) setForm((current) => ({ ...current, plan_code: planResponse.data[0].code }));
@@ -3503,10 +3555,10 @@ function PlatformAdmin({ data, apiOnline }: { data: AppData; apiOnline: boolean 
     setError('');
     setNotice('');
     try {
-      const response = await api.createPlatformTenant(form);
+      const response = parentTenantId ? await api.createPlatformChildTenant(parentTenantId, form) : await api.createPlatformTenant(form);
       setSetupToken(response.setup_token);
       setNotice('Cliente creado. Entrega el token de activación al administrador y guárdalo en un canal seguro.');
-      setForm({ name: '', legal_name: '', document_number: '', site_name: '', site_address: '', admin_name: '', admin_email: '', plan_code: form.plan_code });
+      setForm({ name: '', legal_name: '', document_number: '', site_name: '', site_address: '', admin_name: '', admin_email: '', plan_code: form.plan_code, client_type: form.client_type });
       await reload();
     } catch (createError) {
       setError(createError instanceof Error ? createError.message : 'No fue posible crear el cliente.');
@@ -3534,6 +3586,9 @@ function PlatformAdmin({ data, apiOnline }: { data: AppData; apiOnline: boolean 
     }
   };
 
+  if (!data.user.isPlatformAdmin && data.user.role === 'tech_operator') {
+    return <ManagedClients data={data} apiOnline={apiOnline} />;
+  }
   if (!data.user.isPlatformAdmin) {
     return <section className="panel"><PageTitle title="Administración de clientes" subtitle="Módulo restringido al equipo proveedor." /><Alert tone="warning">Tu cuenta no tiene acceso al control plane.</Alert></section>;
   }
@@ -3561,6 +3616,13 @@ function PlatformAdmin({ data, apiOnline }: { data: AppData; apiOnline: boolean 
       <section className="panel">
         <PageTitle title="Crear cliente" subtitle="Genera una sede, administrador y token de activación de un solo uso (48 horas)." />
         <form onSubmit={createTenant} className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <select className="field" value={parentTenantId} onChange={event => setParentTenantId(event.target.value)}>
+            <option value="">Cliente independiente de CREAMOX</option>
+            {tenants.filter(t => t.client_type === 'security_company').map(t => <option key={t.id} value={String(t.id)}>Secundario de {t.name}</option>)}
+          </select>
+          <select className="field" value={form.client_type} onChange={event=>setForm({ ...form, client_type:event.target.value })}>
+            {clientTypes.filter(t => !parentTenantId || t.code !== 'security_company').map(t => <option key={t.code} value={t.code}>{t.name}</option>)}
+          </select>
           <input className="field" placeholder="Nombre del cliente" value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} required />
           <input className="field" placeholder="Razón social" value={form.legal_name} onChange={(event) => setForm({ ...form, legal_name: event.target.value })} />
           <input className="field" placeholder="NIT / documento" value={form.document_number} onChange={(event) => setForm({ ...form, document_number: event.target.value })} />
