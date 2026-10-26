@@ -1165,3 +1165,38 @@ CREATE TABLE IF NOT EXISTS organization_people (
 ) ENGINE=InnoDB;
 
 INSERT INTO schema_migrations(migration) VALUES ('2026_10_26_021_business_structure.sql') ON DUPLICATE KEY UPDATE applied_at=applied_at;
+
+-- Structured audit ledger migration 022 for clean installations.
+-- Migration 022: structured audit ledger, additive to legacy audit_logs and platform_audit_logs.
+-- Sensitive fields must be redacted before insertion by audit_structured.php.
+CREATE TABLE IF NOT EXISTS structured_audit_events (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  origin ENUM('tenant','platform') NOT NULL,
+  actor_user_id BIGINT UNSIGNED NULL,
+  root_tenant_id BIGINT UNSIGNED NULL,
+  tenant_id BIGINT UNSIGNED NULL,
+  selected_site_id BIGINT UNSIGNED NULL,
+  access_point_id BIGINT UNSIGNED NULL,
+  resource_type VARCHAR(70) NULL,
+  resource_id BIGINT UNSIGNED NULL,
+  action VARCHAR(100) NOT NULL,
+  summary VARCHAR(255) NOT NULL,
+  reason VARCHAR(255) NULL,
+  previous_json JSON NULL,
+  new_json JSON NULL,
+  metadata_json JSON NULL,
+  request_ip VARCHAR(45) NULL,
+  user_agent VARCHAR(255) NULL,
+  support_preview_id BIGINT UNSIGNED NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_structured_audit_actor FOREIGN KEY (actor_user_id) REFERENCES users(id),
+  CONSTRAINT fk_structured_audit_root FOREIGN KEY (root_tenant_id) REFERENCES tenants(id),
+  CONSTRAINT fk_structured_audit_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id),
+  INDEX idx_structured_audit_tenant_time (tenant_id,created_at),
+  INDEX idx_structured_audit_actor_time (actor_user_id,created_at),
+  INDEX idx_structured_audit_site_time (selected_site_id,created_at),
+  INDEX idx_structured_audit_action_time (action,created_at),
+  INDEX idx_structured_audit_preview (support_preview_id,created_at)
+) ENGINE=InnoDB;
+
+INSERT INTO schema_migrations(migration) VALUES ('2026_10_26_022_structured_audit.sql') ON DUPLICATE KEY UPDATE applied_at=applied_at;
