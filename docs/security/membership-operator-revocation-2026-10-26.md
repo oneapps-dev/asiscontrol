@@ -13,3 +13,7 @@ Se añadió un caso de suspensión del operador en `backend/tests/multi_tenant_m
 
 ## Liberación
 El workflow de CI sobre MySQL nuevo no acredita restauración desde una base histórica. No desplegar hasta completar criterios CA-01 a CA-23 y pruebas de migración.
+
+## Regresión corregida tras ejecución fallida
+
+La ejecución de GitHub Actions del commit `7682a85a` falló porque la prueba esperaba un 403 al consultar `/me/tenants` en la cuenta principal del operador suspendido. Ese supuesto no verificaba el control de la membresía delegada. El commit `9aea0387` modifica la prueba para seleccionar primero un cliente delegado, suspender el operador y exigir `403 TENANT_CONTEXT_REVOKED` desde `/me`. Después restaura el estado del operador y limpia el contexto. Se debe comprobar el resultado del CI de ese commit antes de considerar este bloque aprobado.
