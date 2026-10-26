@@ -63,6 +63,17 @@ assert 'VISITA_NO_AUTORIZADA_QA' not in content
 PY
 
 echo 'QA REPORT REQUEST 6'
+echo 'QA SQL scoped summary'
+curl -fsS -b /tmp/scoped-reports.cookies "$base/reports/summary" >/tmp/scoped-summary.json
+expected_site_visits=$(mysql -h 127.0.0.1 -u root vzwquesv_app -N -e \
+ "SELECT COUNT(*) FROM visits v LEFT JOIN guard_shifts gs ON gs.id=v.shift_id AND gs.tenant_id=v.tenant_id WHERE v.tenant_id=1 AND COALESCE(v.site_id,gs.site_id)=$site1")
+EXPECTED_SITE="$expected_site_visits" python3 - <<'PY'
+import os,json
+metrics=json.load(open('/tmp/scoped-summary.json'))['data']
+assert metrics['visits_total']==int(os.environ['EXPECTED_SITE']), (metrics,os.environ['EXPECTED_SITE'])
+assert metrics['visits_inside']+metrics['visits_exited']==metrics['visits_total']
+PY
+
 curl -fsS -b /tmp/scoped-attendance.cookies "$base/attendance" >/tmp/scoped-attendance.json
 python3 - <<'PY'
 import json
@@ -100,6 +111,12 @@ curl -fsS -c /tmp/reports-tenant-supervisor.cookies -H 'Content-Type: applicatio
  "$base/auth/login" >/tmp/reports-tenant-supervisor.json
 echo 'QA REPORT REQUEST 12'
 curl -fsS -b /tmp/reports-tenant-supervisor.cookies "$base/reports/visits.csv" >/tmp/reports-full-visits.csv
+curl -fsS -b /tmp/reports-tenant-supervisor.cookies "$base/reports/summary" >/tmp/reports-full-summary.json
+EXPECTED_SITE="$expected_site_visits" python3 - <<'PY'
+import json,os
+d=json.load(open('/tmp/reports-full-summary.json'))['data']
+assert d['visits_total']>int(os.environ['EXPECTED_SITE']), 'Tenant-wide report unexpectedly truncated'
+PY
 echo 'QA REPORT REQUEST 13'
 curl -fsS -b /tmp/reports-tenant-admin.cookies "$base/reports/attendance.csv" >/tmp/reports-full-attendance.csv
 grep -q VISITA_NO_AUTORIZADA_QA /tmp/reports-full-visits.csv
