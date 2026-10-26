@@ -1109,6 +1109,46 @@ function Shell({
   );
 }
 
+function ContextDashboard({ tenantId, role }: { tenantId?: string; role: Role }) {
+  const [context, setContext] = useState<{
+    tenant_name: string;
+    client_type_name: string;
+    role: string;
+    scope: string;
+    metrics: Record<string, number>;
+  } | null>(null);
+  useEffect(() => {
+    let alive = true;
+    setContext(null);
+    void api.contextualDashboard().then((result) => {
+      if (alive) setContext(result.data);
+    }).catch(() => { if (alive) setContext(null); });
+    return () => { alive = false; };
+  }, [tenantId, role]);
+
+  if (!context) return null;
+  const extra = context.client_type_name === 'Empresa de seguridad'
+    ? [['Clientes administrados', context.metrics.managed_clients || 0]]
+    : context.client_type_name === 'Propiedad horizontal'
+      ? [['Unidades activas', context.metrics.units_active || 0]]
+      : [['Turnos activos', context.metrics.active_shifts || 0]];
+  return <section className="panel">
+    <div className="panel-head">
+      <h3>Indicadores del contexto autorizado</h3>
+      <Badge tone="info">{context.client_type_name} · {context.scope === 'tenant' ? 'Cliente completo' : 'Sedes asignadas'}</Badge>
+    </div>
+    <p className="mb-3 text-sm text-on-surface-variant">{context.tenant_name} · {humanizeCode(context.role)}</p>
+    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      {[['Personas dentro', context.metrics.people_inside], ['Vehículos dentro', context.metrics.vehicles_inside],
+        ['Paquetes pendientes', context.metrics.packages_pending], ['Incidentes abiertos', context.metrics.incidents_open],
+        ...extra].map(([label, value]) => <div key={String(label)} className="rounded-lg border border-border bg-surface-container-low p-3">
+          <p className="text-xs uppercase text-on-surface-variant">{label}</p>
+          <p className="mt-1 text-2xl font-black text-primary">{Number(value || 0).toLocaleString('es-CO')}</p>
+        </div>)}
+    </div>
+  </section>;
+}
+
 function Dashboard({ data, setScreen }: { data: AppData; setScreen: (screen: Screen) => void }) {
   const insidePeople = data.visitors.filter((visitor) => visitor.status === 'inside').length;
   const insideVehicles = data.vehicles.filter((vehicle) => vehicle.status === 'inside').length;
@@ -1136,6 +1176,7 @@ function Dashboard({ data, setScreen }: { data: AppData; setScreen: (screen: Scr
   return (
     <div className="space-y-6">
       <PageTitle title="Panel operativo" subtitle="Resumen vivo de accesos, novedades y pendientes de portería." />
+      <ContextDashboard tenantId={data.user.tenantId} role={data.user.role} />
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Metric icon="groups" label="Personas dentro" value={insidePeople} tone="primary" onClick={() => setScreen('people')} />
         <Metric icon="directions_car" label="Vehículos dentro" value={insideVehicles} tone="info" onClick={() => setScreen('vehicles')} />

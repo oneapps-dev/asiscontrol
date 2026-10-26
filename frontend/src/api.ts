@@ -312,6 +312,7 @@ export const api = {
   exportAttendanceCsv: (params?: { from?: string; to?: string }) => download('/reports/attendance.csv', params),
   exportAttendanceXlsx: (params?: { from?: string; to?: string }) => download('/reports/attendance.xlsx', params),
   openAttendanceReport: (params?: { from?: string; to?: string; employee_id?: string }) => download('/reports/attendance.html', params),
+  contextualDashboard: () => request<{ data: { tenant_name: string; client_type: string; client_type_name: string; role: string; scope: string; authorized_sites: number[] | null; metrics: Record<string, number> } }>('/dashboard/contextual'),
   platformMe: () => request<{ data: { user: any; platform_admin: boolean } }>('/platform/me'),
   platformPlans: () => request<{ data: any[] }>('/platform/plans'),
   platformMetrics: () => request<{ data: Record<string, number> }>('/platform/metrics'),

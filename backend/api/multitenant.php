@@ -95,6 +95,7 @@ function require_tenant_scope(string $type, int $id): array
 
 function handle_multitenant_routes(string $method,string $path): void
 {
+    handle_contextual_dashboard($method,$path);
     if ($method==='GET' && ($path==='/me/context' || $path==='/me/effective-permissions')) {
         $actor=require_auth();
         $tenantId=(int)$actor['tenant_id'];
@@ -446,6 +447,7 @@ function enforce_legacy_scope_gate(string $method,string $path): void
 
     $reads=[
         '/me','/me/context','/me/effective-permissions','/bootstrap',
+        '/dashboard/contextual',
         '/sites','/visits','/vehicles','/packages','/units','/invitations',
         '/incidents','/shifts','/access-points','/devices','/booking-resources',
         '/bookings','/parking','/access-events'
@@ -463,4 +465,68 @@ function enforce_legacy_scope_gate(string $method,string $path): void
     )) return;
     json_response(['error'=>'Ruta pendiente de autorización por sede',
         'error_code'=>'SITE_SCOPE_ROUTE_NOT_ENABLED'],403);
+}
+
+
+/** Context-specific counts run against MySQL, never against truncated React arrays. */
+function contextual_metric_count(int $tenantId,?array $sites,string $resource): int
+{
+    $sources=[
+        'people_inside'=>['visits v','v','LEFT JOIN guard_shifts gs ON gs.id=v.shift_id AND gs.tenant_id=v.tenant_id','v.status="inside"','COALESCE(v.site_id,gs.site_id)'],
+        'vehicles_inside'=>['vehicles v','v','LEFT JOIN guard_shifts gs ON gs.id=v.shift_id AND gs.tenant_id=v.tenant_id','v.status="inside"','COALESCE(v.site_id,gs.site_id)'],
+        'packages_pending'=>['packages p','p','LEFT JOIN guard_shifts gs ON gs.id=p.shift_id AND gs.tenant_id=p.tenant_id','p.status="pending"','gs.site_id'],
+        'incidents_open'=>['incidents i','i','LEFT JOIN guard_shifts gs ON gs.id=i.shift_id AND gs.tenant_id=i.tenant_id','i.status="open"','gs.site_id'],
+        'active_shifts'=>['guard_shifts gs','gs','','gs.ended_at IS NULL','gs.site_id'],
+        'units_active'=>['units u','u','','u.status="active"','u.site_id']
+    ];
+    if (!isset($sources[$resource])) throw new InvalidArgumentException('Unknown metric');
+    [$table,$alias,$join,$condition,$siteExpr]=$sources[$resource];
+    $where="$alias.tenant_id=:tenant AND $condition";
+    $params=['tenant'=>$tenantId];
+    if ($sites!==null) {
+        if ($sites===[]) return 0;
+        $placeholders=[];
+        foreach($sites as $index=>$siteId) {
+            $key='site'.$index;
+            $placeholders[]=':'.$key;
+            $params[$key]=(int)$siteId;
+        }
+        $where.=" AND $siteExpr IN (".implode(',',$placeholders).")";
+    }
+    $stmt=db()->prepare("SELECT COUNT(*) FROM $table $join WHERE $where");
+    $stmt->execute($params);
+    return (int)$stmt->fetchColumn();
+}
+
+function handle_contextual_dashboard(string $method,string $path): void
+{
+    if ($method!=='GET' || $path!=='/dashboard/contextual') return;
+    $actor=require_auth();
+    if (($actor['role']??'')==='resident') json_response(['error'=>'Usa el portal del residente'],403);
+    $tenantId=(int)$actor['tenant_id'];
+    $tenant=one_row(
+        'SELECT t.id,t.name,ct.code AS client_type,ct.name AS client_type_name
+           FROM tenants t LEFT JOIN client_types ct ON ct.id=t.client_type_id
+          WHERE t.id=:id LIMIT 1',['id'=>$tenantId]);
+    if (!$tenant) json_response(['error'=>'Cliente no encontrado'],404);
+    $sites=actor_visible_site_ids($actor);
+    $metrics=[];
+    foreach(['people_inside','vehicles_inside','packages_pending','incidents_open','active_shifts','units_active'] as $key) {
+        $metrics[$key]=contextual_metric_count($tenantId,$sites,$key);
+    }
+    if ($tenant['client_type']==='security_company' && in_array((string)$actor['role'],['tech_operator','admin','superadmin'],true)) {
+        $children=one_row('SELECT COUNT(*) AS n FROM tenants WHERE parent_tenant_id=:id AND status="active"',
+            ['id'=>$tenantId]);
+        $metrics['managed_clients']=(int)($children['n']??0);
+    }
+    json_response(['data'=>[
+        'tenant_id'=>$tenantId,
+        'tenant_name'=>$tenant['name'],
+        'client_type'=>$tenant['client_type']??'custom',
+        'client_type_name'=>$tenant['client_type_name']??'Personalizado',
+        'role'=>(string)$actor['role'],
+        'scope'=>$sites===null?'tenant':'sites',
+        'authorized_sites'=>$sites,
+        'metrics'=>$metrics
+    ]]);
 }
