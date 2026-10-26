@@ -111,6 +111,7 @@ jobs:
           status=$(curl -sS -o /tmp/restricted.json -w '%{http_code}' -b /tmp/guard.cookies http://127.0.0.1:8765/api/platform/me)
           test "$status" = "403"
           bash backend/tests/multitenant_security_smoke.sh
+          bash backend/tests/evidence_owner_scope_smoke.sh
           bash backend/tests/platform_preview_smoke.sh
           bash backend/tests/industrial_structure_smoke.sh
           bash backend/tests/user_quota_smoke.sh
