@@ -3826,6 +3826,8 @@ function PlatformAdmin({ data, apiOnline }: { data: AppData; apiOnline: boolean 
 
   const [platformNotifications, setPlatformNotifications] = useState<any[]>([]);
   const [platformAudit, setPlatformAudit] = useState<any[]>([]);
+  const [structuredAudit, setStructuredAudit] = useState<any[]>([]);
+  const [auditTenantFilter, setAuditTenantFilter] = useState('');
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [setupToken, setSetupToken] = useState('');
@@ -3838,13 +3840,14 @@ function PlatformAdmin({ data, apiOnline }: { data: AppData; apiOnline: boolean 
     setLoading(true);
     setError('');
     try {
-      const [metricResponse, tenantResponse, planResponse, notificationResponse, auditResponse, typeResponse] = await Promise.all([api.platformMetrics(), api.platformTenants(), api.platformPlans(), api.platformNotifications(), api.platformAudit(), api.platformClientTypes()]);
+      const [metricResponse, tenantResponse, planResponse, notificationResponse, auditResponse, typeResponse, structuredResponse] = await Promise.all([api.platformMetrics(), api.platformTenants(), api.platformPlans(), api.platformNotifications(), api.platformAudit(), api.platformClientTypes(), api.platformStructuredAudit()]);
       setMetrics(metricResponse.data || {});
       setTenants(tenantResponse.data || []);
       setPlans(planResponse.data || []);
       setClientTypes(typeResponse.data || []);
       setPlatformNotifications(notificationResponse.data || []);
       setPlatformAudit(auditResponse.data || []);
+      setStructuredAudit(structuredResponse.data || []);
       if ((planResponse.data || []).length > 0 && !form.plan_code) setForm((current) => ({ ...current, plan_code: planResponse.data[0].code }));
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : 'No fue posible cargar el control de clientes.');
@@ -4128,6 +4131,46 @@ function PlatformAdmin({ data, apiOnline }: { data: AppData; apiOnline: boolean 
         </div>
       </section>}
       {subscription.tenantId && <section className="panel"><PageTitle title="Actualizar suscripción" subtitle="La pasarela de pago queda desacoplada; registra aquí el estado confirmado por administración." /><form onSubmit={saveSubscription} className="grid gap-3 md:grid-cols-2 xl:grid-cols-4"><select className="field" value={subscription.plan_code} onChange={(event) => setSubscription({ ...subscription, plan_code: event.target.value })}>{plans.map((plan) => <option key={plan.code} value={plan.code}>{plan.name}</option>)}</select><select className="field" value={subscription.status} onChange={(event) => setSubscription({ ...subscription, status: event.target.value })}>{['trial', 'active', 'past_due', 'suspended', 'cancelled', 'expired'].map((status) => <option key={status} value={status}>{humanizeCode(status)}</option>)}</select><input className="field" type="date" value={subscription.starts_on} onChange={(event) => setSubscription({ ...subscription, starts_on: event.target.value })} required /><input className="field" type="date" value={subscription.ends_on} onChange={(event) => setSubscription({ ...subscription, ends_on: event.target.value })} /><textarea className="field md:col-span-2" placeholder="Notas administrativas" value={subscription.notes} onChange={(event) => setSubscription({ ...subscription, notes: event.target.value })} /><label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={subscription.auto_renew} onChange={(event) => setSubscription({ ...subscription, auto_renew: event.target.checked })} /> Renovación automática configurada</label><div className="flex gap-2"><button className="btn-primary" type="submit"><Icon name="save" /> Guardar</button><button className="btn-ghost" type="button" onClick={() => setSubscription({ ...subscription, tenantId: '' })}>Cerrar</button></div></form></section>}
+      <section className="panel">
+        <div className="panel-head">
+          <h3>Auditoría estructurada</h3>
+          <Badge tone="primary">{structuredAudit.length} eventos recientes</Badge>
+        </div>
+        <p className="mb-3 text-xs text-on-surface-variant">
+          Conserva actor, cliente, sede, acción y contexto. Los datos de acceso sensibles se eliminan de los metadatos.
+        </p>
+        <div className="mb-3 flex flex-wrap items-center gap-3">
+          <select className="field max-w-xs" value={auditTenantFilter} onChange={(e) => setAuditTenantFilter(e.target.value)}
+            aria-label="Filtrar auditoría por cliente">
+            <option value="">Todos los clientes</option>
+            {tenants.map((tenant) => <option key={tenant.id} value={String(tenant.id)}>{tenant.name}</option>)}
+          </select>
+          <button type="button" className="btn-small" disabled={!apiOnline}
+            onClick={() => void api.platformStructuredAudit(auditTenantFilter || undefined)
+              .then((result) => { setStructuredAudit(result.data || []); setError(''); })
+              .catch((issue) => setError(issue instanceof Error ? issue.message : 'No fue posible consultar la auditoría.'))}>
+            Aplicar filtro
+          </button>
+        </div>
+        <div className="max-h-80 overflow-auto">
+          <table className="w-full min-w-[700px] text-left text-sm">
+            <thead><tr>
+              <th className="p-2">Fecha</th><th className="p-2">Acción</th>
+              <th className="p-2">Actor</th><th className="p-2">Cliente / sede</th><th className="p-2">Detalle</th>
+            </tr></thead>
+            <tbody>
+              {structuredAudit.slice(0, 80).map((event) => <tr key={event.id} className="border-t border-border">
+                <td className="p-2 text-xs">{event.created_at}</td>
+                <td className="p-2 font-semibold">{humanizeCode(event.action)}</td>
+                <td className="p-2">{event.actor_user_id ?? 'Sistema'}</td>
+                <td className="p-2">{event.tenant_id ?? 'Global'} / {event.selected_site_id ?? 'Todas'}</td>
+                <td className="p-2 text-xs">{event.summary}</td>
+              </tr>)}
+              {!structuredAudit.length && <tr><td className="p-3 text-on-surface-variant" colSpan={5}>No hay eventos disponibles.</td></tr>}
+            </tbody>
+          </table>
+        </div>
+      </section>
       <div className="grid gap-4 xl:grid-cols-2">
         <section className="panel"><div className="panel-head"><h3>Notificaciones del sistema</h3><Badge tone="primary">{platformNotifications.length}</Badge></div><div className="space-y-2">{platformNotifications.slice(0, 12).map((item) => <div key={item.id} className="rounded-lg border border-border bg-surface-container-low p-3"><div className="flex items-center justify-between gap-2"><strong className="text-sm">{item.subject || 'Notificación'}</strong><Badge tone={item.status === 'sent' ? 'success' : item.status === 'failed' ? 'danger' : 'warning'}>{humanizeCode(item.status || 'pending')}</Badge></div><p className="mt-1 text-xs text-on-surface-variant">{item.tenant_name || 'Plataforma'} · {item.recipient || 'Sin destinatario'}</p><p className="mt-1 text-xs text-on-surface-variant">{item.created_at}</p></div>)}{platformNotifications.length === 0 && <p className="text-sm text-on-surface-variant">No hay notificaciones registradas.</p>}</div></section>
         <section className="panel"><div className="panel-head"><h3>Auditoría del proveedor</h3><Badge tone="primary">{platformAudit.length}</Badge></div><div className="space-y-2">{platformAudit.slice(0, 12).map((item) => <div key={item.id} className="rounded-lg border border-border bg-surface-container-low p-3"><div className="flex items-center justify-between gap-2"><strong className="text-sm">{humanizeCode(item.action)}</strong><span className="text-xs text-on-surface-variant">{item.created_at}</span></div><p className="mt-1 text-xs text-on-surface-variant">{item.actor_name || 'Sistema'} · {item.tenant_name || 'Plataforma'}</p><p className="mt-1 text-sm">{item.detail}</p></div>)}{platformAudit.length === 0 && <p className="text-sm text-on-surface-variant">No hay acciones registradas.</p>}</div></section>

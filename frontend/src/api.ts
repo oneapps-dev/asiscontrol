@@ -340,6 +340,13 @@ export const api = {
   platformMetrics: () => request<{ data: Record<string, number> }>('/platform/metrics'),
   platformNotifications: () => request<{ data: any[] }>('/platform/notifications'),
   platformAudit: () => request<{ data: any[] }>('/platform/audit'),
+  platformStructuredAudit: (tenantId?: string) => request<{ data: Array<{
+    id: number; tenant_id: number | null; actor_user_id: number | null;
+    selected_site_id: number | null; action: string; summary: string;
+    origin: string; created_at: string; request_ip: string | null;
+  }> }>(`/platform/audit/structured${tenantId ? `?tenant_id=${encodeURIComponent(tenantId)}` : ''}`),
+  tenantStructuredAudit: () => request<{ data: any[] }>('/audit/structured'),
+
   platformTenants: () => request<{ data: any[] }>('/platform/tenants'),
   platformClientTypes: () => request<{ data: any[] }>('/platform/client-types'),
   platformTenantFeatures: (id: string) => request<{ data: { client_type: string; residential_modules: boolean; residential_modules_override: boolean | null; built_in_residential: boolean } }>(`/platform/tenants/${id}/features`),
