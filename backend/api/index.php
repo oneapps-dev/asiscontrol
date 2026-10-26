@@ -368,8 +368,9 @@ try {
             'checkpoint' => $data['checkpoint'],
             'notes' => $data['notes'] ?? null,
         ]);
+        $createdRecordId=(int) db()->lastInsertId();
         audit('turno.inicio', 'Inicio de turno');
-        json_response(['id' => db()->lastInsertId()], 201);
+        json_response(['id' => $createdRecordId], 201);
     }
 
     if ($method === 'POST' && preg_match('#^/shifts/(\d+)/close$#', $path, $matches)) {
@@ -688,8 +689,9 @@ try {
             'user_agent' => substr((string) ($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 4000) ?: null,
             'authorized_by' => $user['id'],
         ]);
+        $createdRecordId=(int) db()->lastInsertId();
         audit('dispositivo.autorizado', 'Dispositivo ' . $data['name']);
-        json_response(['id' => db()->lastInsertId(), 'device_token' => $token], 201);
+        json_response(['id' => $createdRecordId, 'device_token' => $token], 201);
     }
 
     if ($method === 'POST' && preg_match('#^/devices/(\d+)/revoke$#', $path, $matches)) {
@@ -823,8 +825,9 @@ try {
             'level' => $data['level'],
             'reason' => $data['reason'],
         ]);
+        $createdRecordId=(int) db()->lastInsertId();
         audit('restriccion.creada', 'Restriccion para documento ' . $data['document_number']);
-        json_response(['id' => db()->lastInsertId()], 201);
+        json_response(['id' => $createdRecordId], 201);
     }
 
     if ($method === 'GET' && $path === '/vehicles') {
@@ -861,8 +864,9 @@ try {
             'plate' => !empty($data['plate']) ? strtoupper((string) $data['plate']) : null,
             'status' => $data['status'] ?? 'active',
         ]);
+        $createdRecordId=(int) db()->lastInsertId();
         audit('parqueadero.creado', 'Cupo ' . strtoupper((string) $data['space_code']));
-        json_response(['id' => db()->lastInsertId()], 201);
+        json_response(['id' => $createdRecordId], 201);
     }
 
     if ($method === 'PATCH' && preg_match('#^/parking/(\d+)$#', $path, $matches)) {
@@ -920,8 +924,9 @@ try {
             'color' => $data['color'] ?? '#2563eb',
             'rules' => trim((string) ($data['rules'] ?? '')) ?: null,
         ]);
+        $createdRecordId=(int) db()->lastInsertId();
         audit('reserva.recurso_creado', 'Recurso reservable ' . $data['name']);
-        json_response(['id' => db()->lastInsertId()], 201);
+        json_response(['id' => $createdRecordId], 201);
     }
 
     if ($method === 'GET' && $path === '/bookings') {
@@ -1065,8 +1070,9 @@ try {
             'parking_space' => $parkingSpace,
             'identification_method' => in_array(($data['identification_method'] ?? 'manual'), ['huella', 'cedula', 'manual', 'qr', 'otro'], true) ? $data['identification_method'] : 'manual',
         ]);
+        $createdRecordId=(int) db()->lastInsertId();
         audit('vehiculo.ingreso', 'Ingreso vehiculo ' . strtoupper((string) $data['plate']));
-        json_response(['id' => db()->lastInsertId()], 201);
+        json_response(['id' => $createdRecordId], 201);
     }
 
     if ($method === 'POST' && preg_match('#^/vehicles/(\d+)/exit$#', $path, $matches)) {
@@ -1239,8 +1245,9 @@ try {
             'occurred_at' => $occurredAt, 'source' => ($data['source'] ?? 'online') === 'offline' ? 'offline' : 'online', 'status' => $status,
             'notes' => trim((string) ($data['notes'] ?? '')) ?: null, 'idempotency' => substr($idempotency, 0, 64),
         ]);
+        $createdRecordId=(int) db()->lastInsertId();
         audit('asistencia.registrada', 'Marcación de kiosco: ' . $profile['full_name'] . ' (' . $eventType . ')');
-        json_response(['id' => db()->lastInsertId(), 'status' => $status], 201);
+        json_response(['id' => $createdRecordId, 'status' => $status], 201);
     }
 
     if ($method === 'POST' && $path === '/attendance') {
@@ -1262,8 +1269,9 @@ try {
         }
         $stmt = db()->prepare('INSERT INTO attendance_records (tenant_id, employee_profile_id, person_id, site_id, shift_id, event_type, identification_method, occurred_at, source, status, notes, idempotency_key) VALUES (:tenant_id, :profile_id, :person_id, :site_id, :shift_id, :event_type, :method, :occurred_at, :source, :status, :notes, :idempotency)');
         $stmt->execute(['tenant_id' => $user['tenant_id'], 'profile_id' => $profile['id'], 'person_id' => $profile['person_id'], 'site_id' => $data['site_id'] ?? $user['site_id'] ?? null, 'shift_id' => $data['shift_id'] ?? null, 'event_type' => $data['event_type'], 'method' => in_array(($data['identification_method'] ?? 'manual'), ['huella', 'cedula', 'manual', 'qr', 'otro'], true) ? $data['identification_method'] : 'manual', 'occurred_at' => $occurredAt, 'source' => in_array(($data['source'] ?? 'online'), ['online', 'offline', 'import'], true) ? $data['source'] : 'online', 'status' => $status, 'notes' => trim((string) ($data['notes'] ?? '')) ?: null, 'idempotency' => $data['idempotency_key'] ?? null]);
+        $createdRecordId=(int) db()->lastInsertId();
         audit('asistencia.registrada', 'Asistencia de ' . $profile['full_name'] . ': ' . $data['event_type']);
-        json_response(['id' => db()->lastInsertId(), 'status' => $status], 201);
+        json_response(['id' => $createdRecordId, 'status' => $status], 201);
     }
 
     if ($method === 'GET' && $path === '/contractors') {
@@ -1664,8 +1672,9 @@ try {
             'subject_id' => $data['subject_id'] ?? null,
             'notes' => $data['notes'],
         ]);
+        $createdRecordId=(int) db()->lastInsertId();
         audit('aprobacion.solicitada', 'Solicitud de ' . humanize_code_label((string) $data['subject_type']));
-        json_response(['id' => db()->lastInsertId()], 201);
+        json_response(['id' => $createdRecordId], 201);
     }
 
     if ($method === 'POST' && preg_match('#^/approvals/(\d+)/(approve|reject)$#', $path, $matches)) {
@@ -1805,8 +1814,9 @@ try {
             'linked_type' => in_array(($data['linked_type'] ?? ''), ['person', 'vehicle', 'package', 'access_point', 'unit'], true) ? $data['linked_type'] : null,
             'linked_id' => !empty($data['linked_id']) ? (int) $data['linked_id'] : null,
         ]);
+        $createdRecordId=(int) db()->lastInsertId();
         audit('incidente.creado', $data['title']);
-        json_response(['id' => db()->lastInsertId()], 201);
+        json_response(['id' => $createdRecordId], 201);
     }
 
     if ($method === 'POST' && preg_match('#^/incidents/(\d+)/review$#', $path, $matches)) {
