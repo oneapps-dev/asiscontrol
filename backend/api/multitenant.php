@@ -90,12 +90,61 @@ function require_tenant_scope(string $type, int $id): array
     if (!is_platform_admin($actor) && !scope_covers(scopes_for_user((int)$actor['id'],$tenantId),$tenantId,$type,$id)) {
         json_response(['error'=>'Alcance insuficiente','error_code'=>'SCOPE_DENIED'],403);
     }
+    $selected=actor_selected_site_id($actor);
+    if ($selected!==null) {
+        $siteId=$type==='site'?$id:0;
+        if (in_array($type,['unit','access_point'],true)) {
+            $table=$type==='unit'?'units':'access_points';
+            $site=one_row("SELECT site_id FROM {$table} WHERE id=:id AND tenant_id=:tenant",
+                ['id'=>$id,'tenant'=>$tenantId]);
+            $siteId=(int)($site['site_id']??0);
+        }
+        if ($siteId!==0 && $siteId!==$selected) {
+            json_response(['error'=>'Recurso fuera de la sede seleccionada','error_code'=>'SITE_CONTEXT_DENIED'],403);
+        }
+    }
     return $actor;
 }
 
 function handle_multitenant_routes(string $method,string $path): void
 {
     handle_contextual_dashboard($method,$path);
+    if ($method==='GET' && $path==='/me/contexts') {
+        $actor=require_auth();
+        if (($actor['role']??'')==='resident') json_response(['error'=>'El residente debe usar su portal'],403);
+        json_response(['data'=>site_context_payload($actor)]);
+    }
+    if ($method==='POST' && $path==='/me/context/select') {
+        $actor=require_auth();
+        if (($actor['role']??'')==='resident') json_response(['error'=>'No autorizado'],403);
+        $data=request_json();
+        $siteId=filter_var($data['site_id']??null,FILTER_VALIDATE_INT);
+        if ($siteId===false || $siteId===null || (int)$siteId<=0) {
+            json_response(['error'=>'Debes seleccionar una sede autorizada'],422);
+        }
+        $tenantId=(int)$actor['tenant_id'];
+        $allowed=actor_base_site_ids($actor);
+        if (!valid_scope_resource($tenantId,'site',(int)$siteId)
+            || ($allowed!==null && !in_array((int)$siteId,$allowed,true))) {
+            json_response(['error'=>'Sede fuera de tu alcance','error_code'=>'SCOPE_DENIED'],403);
+        }
+        $old=actor_selected_site_id($actor);
+        $_SESSION['selected_site_context']=['site_id'=>(int)$siteId,'expires_ts'=>time()+1800];
+        audit('contexto.sede_cambiada','Sede seleccionada: #'.$siteId);
+        platform_audit($actor,$tenantId,'contexto.sede_cambiada','Cambio de sede operativa',
+            ['previous_site'=>$old,'selected_site_id'=>(int)$siteId]);
+        json_response(['data'=>site_context_payload($actor)]);
+    }
+    if ($method==='POST' && $path==='/me/context/clear') {
+        $actor=require_auth();
+        if (($actor['role']??'')==='resident') json_response(['error'=>'No autorizado'],403);
+        $old=actor_selected_site_id($actor);
+        unset($_SESSION['selected_site_context']);
+        audit('contexto.sede_restablecida','Filtro de sede retirado');
+        platform_audit($actor,(int)$actor['tenant_id'],'contexto.sede_restablecida',
+            'Filtro de sede retirado',['previous_site'=>$old]);
+        json_response(['data'=>site_context_payload($actor)]);
+    }
     if ($method==='GET' && ($path==='/me/context' || $path==='/me/effective-permissions')) {
         $actor=require_auth();
         $tenantId=(int)$actor['tenant_id'];
@@ -243,7 +292,7 @@ function handle_multitenant_routes(string $method,string $path): void
 
 
 /** NULL means tenant-wide visibility; [] means no authorized sites. */
-function actor_visible_site_ids(array $actor): ?array
+function actor_base_site_ids(array $actor): ?array
 {
     if (is_platform_admin($actor)) return null;
     $tenantId=(int)$actor['tenant_id'];
@@ -265,6 +314,69 @@ function actor_visible_site_ids(array $actor): ?array
         }
     }
     return array_map('intval',array_keys($allowed));
+}
+
+
+/**
+ * Selected site is a temporary DISPLAY/OPERATION filter, never a new grant.
+ * A preview target cannot inherit CREAMOX's current site selection.
+ */
+function actor_selected_site_id(array $actor): ?int
+{
+    $context=$_SESSION['selected_site_context']??null;
+    if (!is_array($context)) return null;
+    $user=$_SESSION['user']??[];
+    if ((int)($user['id']??0)!==(int)$actor['id']
+        || (int)($user['tenant_id']??0)!==(int)$actor['tenant_id']) return null;
+    if (time()>=(int)($context['expires_ts']??0)) {
+        unset($_SESSION['selected_site_context']);
+        return null;
+    }
+    $siteId=(int)($context['site_id']??0);
+    return $siteId>0?$siteId:null;
+}
+
+function actor_visible_site_ids(array $actor): ?array
+{
+    $base=actor_base_site_ids($actor);
+    $selected=actor_selected_site_id($actor);
+    if ($selected===null) return $base;
+    $tenantId=(int)$actor['tenant_id'];
+    if (!valid_scope_resource($tenantId,'site',$selected)
+        || ($base!==null && !in_array($selected,$base,true))) {
+        unset($_SESSION['selected_site_context']);
+        return []; // Fail closed on the request that detects revoked scope.
+    }
+    return [$selected];
+}
+
+function site_context_payload(array $actor): array
+{
+    $tenantId=(int)$actor['tenant_id'];
+    $base=actor_base_site_ids($actor);
+    $rows=list_rows(
+        'SELECT id,name,timezone FROM sites WHERE tenant_id=:tenant ORDER BY name',
+        ['tenant'=>$tenantId]
+    );
+    if ($base!==null) {
+        $rows=array_values(array_filter($rows,static fn($row):bool =>
+            in_array((int)$row['id'],$base,true)));
+    }
+    $selected=actor_selected_site_id($actor);
+    if ($selected!==null && !in_array($selected,array_map(static fn($r)=>(int)$r['id'],$rows),true)) {
+        unset($_SESSION['selected_site_context']);
+        $selected=null;
+    }
+    $tenant=one_row('SELECT t.id,t.name,t.parent_tenant_id,p.name AS parent_name
+        FROM tenants t LEFT JOIN tenants p ON p.id=t.parent_tenant_id
+        WHERE t.id=:id LIMIT 1',['id'=>$tenantId]);
+    return [
+        'tenant'=>$tenant,
+        'scope'=>$base===null?'tenant':'sites',
+        'sites'=>$rows,
+        'selected_site_id'=>$selected,
+        'expires_at'=>$selected===null?null:date('c',(int)$_SESSION['selected_site_context']['expires_ts']),
+    ];
 }
 
 /**
@@ -464,7 +576,7 @@ function enforce_legacy_scope_gate(string $method,string $path): void
         in_array($method,['GET','POST'],true)) return;
 
     $reads=[
-        '/me','/me/context','/me/effective-permissions','/bootstrap',
+        '/me','/me/context','/me/contexts','/me/effective-permissions','/bootstrap',
         '/dashboard/contextual',
         '/sites','/visits','/vehicles','/packages','/units','/invitations',
         '/incidents','/shifts','/access-points','/devices','/booking-resources',
@@ -472,7 +584,7 @@ function enforce_legacy_scope_gate(string $method,string $path): void
     ];
     if ($method==='GET' && in_array($path,$reads,true)) return;
     if ($method==='POST' && in_array($path,[
-        '/auth/logout','/shifts','/visits','/vehicles','/packages','/incidents',
+        '/auth/logout','/me/context/select','/me/context/clear','/shifts','/visits','/vehicles','/packages','/incidents',
         '/invitations/redeem','/access-events','/offline/events'
     ],true)) return;
     if ($method==='POST' && (

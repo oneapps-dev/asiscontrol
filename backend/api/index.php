@@ -209,6 +209,7 @@ try {
         unset($user['password_hash']);
         $user['platform_admin'] = is_platform_admin($user);
         $_SESSION['user'] = $user;
+        unset($_SESSION['selected_site_context']);
         $_SESSION['last_activity'] = time();
         if ($residentLogin && !empty($user['resident_id'])) {
             db()->prepare('UPDATE residents SET last_login_at = NOW() WHERE id = :id')->execute(['id' => $user['resident_id']]);
