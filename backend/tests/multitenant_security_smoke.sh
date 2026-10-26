@@ -31,6 +31,12 @@ assert all(v.get('reason')!='VISITA_NO_AUTORIZADA_QA' for v in boot['visits']), 
 assert all(v.get('reason')!='VISITA_NO_AUTORIZADA_QA' for v in visits), 'Direct visit route leak'
 PY
 
+curl -fsS -b /tmp/siteguard.cookies "$base/dashboard/contextual" >/tmp/scoped-dashboard.json
+expected_inside=$(mysql -h 127.0.0.1 -u root vzwquesv_app -N -e \
+  "SELECT COUNT(*) FROM visits v LEFT JOIN guard_shifts gs ON gs.id=v.shift_id AND gs.tenant_id=v.tenant_id WHERE v.tenant_id=1 AND v.status='inside' AND COALESCE(v.site_id,gs.site_id)=1")
+actual_inside=$(python3 -c 'import json;print(json.load(open("/tmp/scoped-dashboard.json"))["data"]["metrics"]["people_inside"])')
+test "$actual_inside" = "$expected_inside" || { echo "Context dashboard leaked a second site"; exit 1; }
+
 csrf=$(python3 -c 'import json;print(json.load(open("/tmp/siteguard-login.json"))["csrf_token"])')
 site_id=$(mysql -h 127.0.0.1 -u root vzwquesv_app -N -e "SELECT id FROM sites WHERE name='QA Sede Restringida' AND tenant_id=1 LIMIT 1")
 status=$(curl -sS -o /tmp/out-of-scope.json -w '%{http_code}' \
