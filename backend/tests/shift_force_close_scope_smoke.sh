@@ -19,6 +19,12 @@ curl -fsS -c /tmp/shift-admin.cookies -H 'Content-Type: application/json' -d '{"
 admin_csrf=$(python3 -c 'import json;print(json.load(open("/tmp/shift-admin-login.json"))["csrf_token"])')
 selected_status=$(curl -sS -o /tmp/shift-admin-selected.json -w '%{http_code}' -c /tmp/shift-admin.cookies -b /tmp/shift-admin.cookies -H "X-CSRF-Token: $admin_csrf" -H 'Content-Type: application/json' -d "{\"site_id\":$site_a}" "$base/me/context/select")
 test "$selected_status" = "200" || { echo "Admin site selection returned $selected_status"; exit 1; }
+# A user WITH shifts.monitor is still denied when the persisted shift is in another site.
+scoped_denied=$(curl -sS -o /tmp/shift-admin-cross-site.json -w '%{http_code}' -b /tmp/shift-admin.cookies -H "X-CSRF-Token: $admin_csrf" -H 'Content-Type: application/json' -d '{"reason":"QA forbidden other site"}' "$base/shifts/$shift_id/force-close")
+test "$scoped_denied" = "403" || { echo "Privileged cross-site forced close returned $scoped_denied"; cat /tmp/shift-admin-cross-site.json; exit 1; }
+grep -Eq 'SCOPE_DENIED|SITE_CONTEXT_DENIED' /tmp/shift-admin-cross-site.json
+denied_still_open=$(mysql -h 127.0.0.1 -u root vzwquesv_app -N -e "SELECT COUNT(*) FROM guard_shifts WHERE id=$shift_id AND ended_at IS NULL")
+test "$denied_still_open" = "1"
 force_status=$(curl -sS -o /tmp/shift-force-allowed.json -w '%{http_code}' -b /tmp/shift-admin.cookies -H "X-CSRF-Token: $admin_csrf" -H 'Content-Type: application/json' -d '{"reason":"QA authorized supervisory closure"}' "$base/shifts/$force_shift_id/force-close")
 test "$force_status" = "200" || { echo "Allowed forced close returned $force_status"; cat /tmp/shift-force-allowed.json; exit 1; }
 force_closed=$(mysql -h 127.0.0.1 -u root vzwquesv_app -N -e "SELECT COUNT(*) FROM guard_shifts WHERE id=$force_shift_id AND ended_at IS NOT NULL")
