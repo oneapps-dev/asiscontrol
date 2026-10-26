@@ -23,7 +23,7 @@ cp .env.production.example .env.production
 npm run build
 ```
 
-El build ejecuta `scripts/copy-backend-to-dist.mjs` y copia `backend/` y la documentación operativa dentro de `frontend/dist` para publicar el sistema completo en cPanel. `VITE_API_REQUIRED=true` evita que una caída de la API se disfrace como modo demo local. La API queda disponible bajo `/api`; copia `backend/.env.example` como `backend/.env` en el servidor y completa allí MySQL/SMTP. No pongas secretos en `.htaccess` ni en el frontend.
+El build ejecuta `scripts/copy-backend-to-dist.mjs` y copia únicamente el backend operativo dentro de `frontend/dist` para el paquete cPanel. La documentación de arquitectura y las semillas QA permanecen en GitHub y no deben publicarse en el directorio web. El build debe generarse desde el código fuente; la copia histórica de `dist` almacenada en el repositorio no es un paquete verificado. `VITE_API_REQUIRED=true` evita que una caída de la API se disfrace como modo demo local. La API queda disponible bajo `/api`; copia `backend/.env.example` como `backend/.env` en el servidor y completa allí MySQL/SMTP. No pongas secretos en `.htaccess` ni en el frontend.
 
 Al subir el contenido de `dist`, conserva el archivo oculto `.htaccess` en la raíz del document root. Debe responder `GET /api/health` con JSON; si devuelve 404, el hosting no está cargando el rewrite o el archivo oculto no fue subido.
 

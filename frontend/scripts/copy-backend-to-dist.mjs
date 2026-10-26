@@ -33,4 +33,4 @@ for (const [from, to] of copies) {
   });
 }
 
-console.log('Asiscontrol backend, database and phase docs copied to frontend/dist.');
+console.log('AsisControl operational backend copied to frontend/dist; documentation remains in GitHub.');
