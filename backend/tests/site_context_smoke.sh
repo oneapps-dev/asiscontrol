@@ -33,6 +33,13 @@ status=$(curl -sS -o /tmp/context-selected.json -w '%{http_code}' \
   "$base/me/context/select")
 test "$status" = "200" || { echo "Allowed site selection failed: $status"; cat /tmp/context-selected.json; exit 1; }
 
+# A selected site must not permit tenant-wide user enumeration or identity changes.
+user_status=$(curl -sS -o /tmp/site-users-blocked.json -w '%{http_code}' -b /tmp/context-admin.cookies "$base/users")
+test "$user_status" = "403" || { echo "Selected-site user listing returned $user_status"; exit 1; }
+patch_status=$(curl -sS -o /tmp/site-user-edit-blocked.json -w '%{http_code}' -b /tmp/context-admin.cookies -H "X-CSRF-Token: $admin_csrf" -H 'Content-Type: application/json' -X PATCH -d '{"name":"QA unauthorized edit"}' "$base/users/1")
+test "$patch_status" = "403" || { echo "Selected-site user update returned $patch_status"; exit 1; }
+create_status=$(curl -sS -o /tmp/site-user-create-blocked.json -w '%{http_code}' -b /tmp/context-admin.cookies -H "X-CSRF-Token: $admin_csrf" -H 'Content-Type: application/json' -d '{}' "$base/users")
+test "$create_status" = "403" || { echo "Selected-site user create returned $create_status"; exit 1; }
 curl -fsS -b /tmp/context-admin.cookies "$base/visits" > /tmp/site-context-visits.json
 curl -fsS -b /tmp/context-admin.cookies "$base/bootstrap" > /tmp/site-context-bootstrap.json
 curl -fsS -b /tmp/context-admin.cookies "$base/dashboard/contextual" > /tmp/site-context-metrics.json
