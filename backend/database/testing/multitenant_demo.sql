@@ -140,3 +140,30 @@ SELECT t.name,
  (SELECT COUNT(*) FROM packages p WHERE p.tenant_id=t.id) AS packages,
  (SELECT COUNT(*) FROM incidents i WHERE i.tenant_id=t.id) AS incidents
 FROM tenants t WHERE t.name LIKE 'QA %' ORDER BY t.name;
+
+
+-- Industrial QA structure: independent from residential unit/tenant fixtures.
+INSERT INTO organization_nodes (tenant_id,site_id,parent_id,node_type,code,name,sort_order)
+SELECT t.id,s.id,NULL,'building','EDIF-QA','Edificio principal QA',10
+FROM tenants t JOIN sites s ON s.tenant_id=t.id AND s.name='QA Sede Principal'
+WHERE t.name='QA Industria Central'
+AND NOT EXISTS (SELECT 1 FROM organization_nodes n WHERE n.tenant_id=t.id AND n.site_id=s.id AND n.code='EDIF-QA');
+
+INSERT INTO organization_nodes (tenant_id,site_id,parent_id,node_type,code,name,sort_order)
+SELECT t.id,s.id,p.id,'floor','PISO-QA-1','Primer piso QA',20
+FROM tenants t JOIN sites s ON s.tenant_id=t.id AND s.name='QA Sede Principal'
+JOIN organization_nodes p ON p.tenant_id=t.id AND p.site_id=s.id AND p.code='EDIF-QA'
+WHERE t.name='QA Industria Central'
+AND NOT EXISTS (SELECT 1 FROM organization_nodes n WHERE n.tenant_id=t.id AND n.site_id=s.id AND n.code='PISO-QA-1');
+
+INSERT INTO organization_nodes (tenant_id,site_id,parent_id,node_type,code,name,sort_order)
+SELECT t.id,s.id,p.id,'area','AREA-QA','Producción QA',30
+FROM tenants t JOIN sites s ON s.tenant_id=t.id AND s.name='QA Sede Principal'
+JOIN organization_nodes p ON p.tenant_id=t.id AND p.site_id=s.id AND p.code='PISO-QA-1'
+WHERE t.name='QA Industria Central'
+AND NOT EXISTS (SELECT 1 FROM organization_nodes n WHERE n.tenant_id=t.id AND n.site_id=s.id AND n.code='AREA-QA');
+
+INSERT INTO people (tenant_id,person_type,document_type,document_number,full_name,privacy_consent_at)
+SELECT t.id,'empleado','CC',CONCAT('QAEMP',t.id),'Empleado industrial ficticio QA',NOW()
+FROM tenants t WHERE t.name='QA Industria Central'
+AND NOT EXISTS (SELECT 1 FROM people p WHERE p.tenant_id=t.id AND p.document_number=CONCAT('QAEMP',t.id));
