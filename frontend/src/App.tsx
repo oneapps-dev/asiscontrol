@@ -3561,6 +3561,14 @@ function PlatformAdmin({ data, apiOnline }: { data: AppData; apiOnline: boolean 
   const [plans, setPlans] = useState<any[]>([]);
   const [clientTypes, setClientTypes] = useState<any[]>([]);
   const [parentTenantId, setParentTenantId] = useState('');
+  const [previewTenantId, setPreviewTenantId] = useState('');
+  const [previewUserId, setPreviewUserId] = useState('');
+  const [previewUsers, setPreviewUsers] = useState<Array<{ id: number; name: string; role: string }>>([]);
+  const [previewReason, setPreviewReason] = useState('');
+  const [preview, setPreview] = useState<any | null>(null);
+  const [previewAudit, setPreviewAudit] = useState<any[]>([]);
+  const [previewBusy, setPreviewBusy] = useState(false);
+
   const [platformNotifications, setPlatformNotifications] = useState<any[]>([]);
   const [platformAudit, setPlatformAudit] = useState<any[]>([]);
   const [error, setError] = useState('');
@@ -3591,6 +3599,71 @@ function PlatformAdmin({ data, apiOnline }: { data: AppData; apiOnline: boolean 
   };
 
   useEffect(() => { void reload(); }, [apiOnline, data.user.isPlatformAdmin]);
+
+  useEffect(() => {
+    if (!apiOnline || !data.user.isPlatformAdmin) return;
+    let alive = true;
+    void api.platformPreviewContext().then((result) => {
+      if (alive) setPreview(result.active ? result.data : null);
+    }).catch(() => { if (alive) setPreview(null); });
+    void api.platformPreviewAudit().then((result) => {
+      if (alive) setPreviewAudit(result.data || []);
+    }).catch(() => {});
+    return () => { alive = false; };
+  }, [apiOnline, data.user.isPlatformAdmin]);
+
+  useEffect(() => {
+    if (!apiOnline || !previewTenantId || !data.user.isPlatformAdmin) {
+      setPreviewUsers([]);
+      return;
+    }
+    let alive = true;
+    setPreviewUsers([]);
+    void api.platformPreviewUsers(previewTenantId)
+      .then((result) => { if (alive) setPreviewUsers(result.data || []); })
+      .catch((issue) => { if (alive) setError(issue instanceof Error ? issue.message : 'No se pudieron cargar usuarios.'); });
+    return () => { alive = false; };
+  }, [apiOnline, previewTenantId, data.user.isPlatformAdmin]);
+
+  const startPreview = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!previewTenantId || !previewUserId || previewReason.trim().length < 10) return;
+    setPreviewBusy(true);
+    setError('');
+    try {
+      await api.platformPreviewStart({
+        tenant_id: Number(previewTenantId),
+        user_id: Number(previewUserId),
+        reason: previewReason.trim(),
+      });
+      const result = await api.platformPreviewContext();
+      if (!result.active) throw new Error('No se inició la vista de soporte.');
+      setPreview(result.data);
+      setSetupToken('');
+    } catch (issue) {
+      setError(issue instanceof Error ? issue.message : 'No se pudo iniciar Ver como.');
+    } finally {
+      setPreviewBusy(false);
+    }
+  };
+
+  const stopPreview = async () => {
+    setPreviewBusy(true);
+    setError('');
+    try {
+      await api.platformPreviewStop();
+      setPreview(null);
+      setPreviewReason('');
+      const audit = await api.platformPreviewAudit();
+      setPreviewAudit(audit.data || []);
+      await reload();
+    } catch (issue) {
+      setError(issue instanceof Error ? issue.message : 'No se pudo cerrar Ver como.');
+    } finally {
+      setPreviewBusy(false);
+    }
+  };
+
 
   const createTenant = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -3635,6 +3708,51 @@ function PlatformAdmin({ data, apiOnline }: { data: AppData; apiOnline: boolean 
     return <section className="panel"><PageTitle title="Administración de clientes" subtitle="Módulo restringido al equipo proveedor." /><Alert tone="warning">Tu cuenta no tiene acceso al control plane.</Alert></section>;
   }
 
+
+  if (preview) {
+    return <div className="space-y-5">
+      <section className="panel border border-warning">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <Badge tone="warning">Modo Ver como activo · Solo lectura</Badge>
+            <h2 className="mt-2 text-xl font-black">{preview.tenant_name}</h2>
+            <p className="mt-1 text-sm text-on-surface-variant">
+              Usuario de referencia: {preview.target_name} · {humanizeCode(preview.role)}
+            </p>
+          </div>
+          <button className="btn-primary" type="button" disabled={!apiOnline || previewBusy} onClick={() => void stopPreview()}>
+            Salir de Ver como
+          </button>
+        </div>
+        {error && <Alert tone="danger">{error}</Alert>}
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <p className="text-sm">Inicio: {String(preview.started_at)}</p>
+          <p className="text-sm">Expira: {String(preview.expires_at)}</p>
+          <p className="text-sm">Alcance: {preview.scope === 'tenant' ? 'Cliente completo' : 'Sedes asignadas'}</p>
+          <p className="text-sm">Permisos efectivos: {(preview.permissions || []).length}</p>
+        </div>
+        <p className="mt-3 text-sm">Motivo: {preview.reason}</p>
+        <p className="mt-3 text-sm text-on-surface-variant">La identidad de CREAMOX permanece intacta. Durante esta vista se bloquean en el servidor todas las operaciones de escritura. No representa un inicio de sesión del usuario.</p>
+      </section>
+      <section className="panel">
+        <div className="panel-head"><h3>Indicadores autorizados del usuario</h3></div>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {Object.entries(preview.metrics || {}).map(([key, value]) => <div key={key} className="rounded border border-border p-3">
+            <p className="text-xs uppercase text-on-surface-variant">{humanizeCode(key)}</p>
+            <p className="text-2xl font-bold text-primary">{Number(value || 0).toLocaleString('es-CO')}</p>
+          </div>)}
+        </div>
+        <p className="mt-4 text-xs text-on-surface-variant">
+          Sedes autorizadas: {preview.authorized_sites === null ? 'Todas las del cliente' : (preview.authorized_sites || []).join(', ') || 'Ninguna'}
+        </p>
+      </section>
+      <section className="panel">
+        <h3 className="font-semibold">Permisos efectivos (solo consulta)</h3>
+        <p className="mt-2 text-sm text-on-surface-variant">{(preview.permissions || []).join(' · ') || 'Sin permisos'}</p>
+      </section>
+    </div>;
+  }
+
   return (
     <div className="space-y-6">
       <section className="panel">
@@ -3653,6 +3771,29 @@ function PlatformAdmin({ data, apiOnline }: { data: AppData; apiOnline: boolean 
             ['Invitaciones pendientes', metrics.pending_invites],
           ].map(([label, value]) => <div key={String(label)} className="rounded-lg border border-border bg-surface-container-low p-4"><p className="text-xs font-semibold uppercase tracking-[0.1em] text-on-surface-variant">{label}</p><p className="mt-2 text-2xl font-black text-primary">{Number(value || 0).toLocaleString('es-CO')}</p></div>)}
         </div>
+      </section>
+
+      <section className="panel">
+        <PageTitle title="Ver como (soporte CREAMOX)" subtitle="Visualiza permisos, alcance e indicadores de un usuario real sin cambiar tu cuenta ni permitir escrituras. Expira a los diez minutos." />
+        <form className="grid gap-3 md:grid-cols-2" onSubmit={startPreview}>
+          <select className="field" required value={previewTenantId} onChange={(event) => { setPreviewTenantId(event.target.value); setPreviewUserId(''); }}>
+            <option value="">Selecciona un cliente activo</option>
+            {tenants.filter((tenant) => tenant.status === 'active').map((tenant) =>
+              <option key={tenant.id} value={String(tenant.id)}>{tenant.name}</option>
+            )}
+          </select>
+          <select className="field" required value={previewUserId} onChange={(event) => setPreviewUserId(event.target.value)}>
+            <option value="">Selecciona un usuario de referencia</option>
+            {previewUsers.map((user) => <option key={user.id} value={String(user.id)}>{user.name} · {humanizeCode(user.role)}</option>)}
+          </select>
+          <input className="field md:col-span-2" required minLength={10} maxLength={250}
+            placeholder="Motivo de soporte (mínimo 10 caracteres)" value={previewReason} onChange={(event) => setPreviewReason(event.target.value)} />
+          <button type="submit" className="btn-primary md:col-span-2"
+            disabled={!apiOnline || !previewUserId || previewBusy || previewReason.trim().length < 10}>
+            {previewBusy ? 'Validando…' : 'Iniciar Ver como (solo lectura)'}
+          </button>
+        </form>
+        <p className="mt-3 text-xs text-on-surface-variant">Actividad reciente: {previewAudit.slice(0, 5).map((item) => '#'+item.id+' '+humanizeCode(item.status)).join(' · ') || 'Sin sesiones anteriores'}</p>
       </section>
 
       <section className="panel">

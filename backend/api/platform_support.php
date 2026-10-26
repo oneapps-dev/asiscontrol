@@ -97,6 +97,20 @@ function platform_preview_current(array $actor): ?array
 
 function handle_platform_preview_routes(string $method,string $path): void
 {
+    if ($method==='GET' && preg_match('#^/platform/tenants/([0-9]+)/preview-users$#',$path,$matches)) {
+        require_platform_admin();
+        $tenantId=(int)$matches[1];
+        $tenant=one_row('SELECT id FROM tenants WHERE id=:tenant AND status="active"',['tenant'=>$tenantId]);
+        if (!$tenant) json_response(['error'=>'Cliente no disponible'],404);
+        json_response(['data'=>list_rows(
+            'SELECT u.id,u.name,u.role
+             FROM users u LEFT JOIN platform_admins pa ON pa.user_id=u.id AND pa.status="active"
+             WHERE u.tenant_id=:tenant AND u.is_active=1 AND u.role<>"superadmin"
+                   AND pa.user_id IS NULL
+             ORDER BY u.name LIMIT 300',
+            ['tenant'=>$tenantId]
+        )]);
+    }
     if (!str_starts_with($path,'/platform/impersonation/')) return;
     if (!in_array($path,[
         '/platform/impersonation/start',
