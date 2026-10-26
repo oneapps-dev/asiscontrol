@@ -452,7 +452,7 @@ try {
             'shift_id' => $data['shift_id'],
             'site_id' => $shiftSiteId,
             'operator_user_id' => $user['id'],
-            'identification_method' => in_array(($data['identification_method'] ?? 'manual'), ['huella', 'cedula', 'manual', 'qr', 'otro'], true) ? $data['identification_method'] : 'manual',
+            'identification_method' => in_array(($data['identification_method'] ?? 'manual'), ['huella', 'cedula', 'manual', 'qr', 'otro'], true) ? ($data['identification_method'] ?? 'manual') : 'manual',
             'destination' => $data['destination'],
             'host' => $data['host'],
             'reason' => $data['reason'],
@@ -604,7 +604,7 @@ try {
             'site_id' => (int) $data['site_id'],
             'code' => strtoupper(trim((string) $data['code'])),
             'name' => trim((string) $data['name']),
-            'mode' => in_array(($data['mode'] ?? 'con_vigilancia'), ['con_vigilancia', 'sin_vigilancia'], true) ? $data['mode'] : 'con_vigilancia',
+            'mode' => in_array(($data['mode'] ?? 'con_vigilancia'), ['con_vigilancia', 'sin_vigilancia'], true) ? ($data['mode'] ?? 'con_vigilancia') : 'con_vigilancia',
             'capabilities_json' => json_encode(is_array($data['capabilities'] ?? null) ? $data['capabilities'] : [], JSON_UNESCAPED_UNICODE),
             'latitude' => $data['latitude'] ?? null,
             'longitude' => $data['longitude'] ?? null,
@@ -634,13 +634,13 @@ try {
             'tenant_id' => $user['tenant_id'],
             'code' => strtoupper(trim((string) $data['code'])),
             'name' => trim((string) $data['name']),
-            'mode' => in_array(($data['mode'] ?? 'con_vigilancia'), ['con_vigilancia', 'sin_vigilancia'], true) ? $data['mode'] : 'con_vigilancia',
+            'mode' => in_array(($data['mode'] ?? 'con_vigilancia'), ['con_vigilancia', 'sin_vigilancia'], true) ? ($data['mode'] ?? 'con_vigilancia') : 'con_vigilancia',
             'capabilities_json' => json_encode(is_array($data['capabilities'] ?? null) ? $data['capabilities'] : [], JSON_UNESCAPED_UNICODE),
             'latitude' => $data['latitude'] ?? null,
             'longitude' => $data['longitude'] ?? null,
             'geofence_radius_m' => !empty($data['geofence_radius_m']) ? max(25, (int) $data['geofence_radius_m']) : (int) ($config['geofence']['default_radius_m'] ?? 150),
             'allowed_networks_json' => json_encode(array_values(array_filter(array_map('trim', is_array($data['allowed_networks'] ?? null) ? $data['allowed_networks'] : []))), JSON_UNESCAPED_UNICODE),
-            'status' => in_array(($data['status'] ?? 'active'), ['active', 'inactive'], true) ? $data['status'] : 'active',
+            'status' => in_array(($data['status'] ?? 'active'), ['active', 'inactive'], true) ? ($data['status'] ?? 'active') : 'active',
         ]);
         audit('punto_acceso.actualizado', 'Punto de acceso #' . $matches[1] . ' actualizado');
         json_response(['ok' => true]);
@@ -960,11 +960,11 @@ try {
             'purpose' => $data['purpose'],
             'starts_at' => $startsAt,
             'ends_at' => $endsAt,
-            'status' => in_array(($data['status'] ?? 'pending'), ['pre_reservation', 'pending', 'pending_payment', 'confirmed', 'paid'], true) ? $data['status'] : 'pending',
+            'status' => in_array(($data['status'] ?? 'pending'), ['pre_reservation', 'pending', 'pending_payment', 'confirmed', 'paid'], true) ? ($data['status'] ?? 'pending') : 'pending',
             'amount' => (float) ($data['amount'] ?? 0),
             'deposit_amount' => (float) ($data['deposit_amount'] ?? 0),
             'terms_accepted_at' => !empty($data['terms_accepted']) ? date('Y-m-d H:i:s') : null,
-            'source' => in_array(($data['source'] ?? 'admin'), ['admin', 'resident', 'system'], true) ? $data['source'] : 'admin',
+            'source' => in_array(($data['source'] ?? 'admin'), ['admin', 'resident', 'system'], true) ? ($data['source'] ?? 'admin') : 'admin',
             'notes' => trim((string) ($data['notes'] ?? '')) ?: null,
         ]);
         $bookingId = db()->lastInsertId();
@@ -1068,7 +1068,7 @@ try {
             'vehicle_type' => $data['vehicle_type'],
             'destination' => $data['destination'],
             'parking_space' => $parkingSpace,
-            'identification_method' => in_array(($data['identification_method'] ?? 'manual'), ['huella', 'cedula', 'manual', 'qr', 'otro'], true) ? $data['identification_method'] : 'manual',
+            'identification_method' => in_array(($data['identification_method'] ?? 'manual'), ['huella', 'cedula', 'manual', 'qr', 'otro'], true) ? ($data['identification_method'] ?? 'manual') : 'manual',
         ]);
         $createdRecordId=(int) db()->lastInsertId();
         audit('vehiculo.ingreso', 'Ingreso vehiculo ' . strtoupper((string) $data['plate']));
@@ -1241,7 +1241,7 @@ try {
             'tenant_id' => $user['tenant_id'], 'profile_id' => $profile['id'], 'person_id' => $profile['person_id'],
             'site_id' => !empty($data['site_id']) ? (int) $data['site_id'] : ($user['site_id'] ?? null),
             'shift_id' => !empty($data['shift_id']) && is_numeric($data['shift_id']) ? (int) $data['shift_id'] : null,
-            'event_type' => $eventType, 'method' => in_array(($data['identification_method'] ?? 'manual'), ['huella', 'cedula', 'manual', 'qr', 'otro'], true) ? $data['identification_method'] : 'manual',
+            'event_type' => $eventType, 'method' => in_array(($data['identification_method'] ?? 'manual'), ['huella', 'cedula', 'manual', 'qr', 'otro'], true) ? ($data['identification_method'] ?? 'manual') : 'manual',
             'occurred_at' => $occurredAt, 'source' => ($data['source'] ?? 'online') === 'offline' ? 'offline' : 'online', 'status' => $status,
             'notes' => trim((string) ($data['notes'] ?? '')) ?: null, 'idempotency' => substr($idempotency, 0, 64),
         ]);
@@ -1268,7 +1268,7 @@ try {
             if ($scheduled && strtotime($occurredAt) > $scheduled + ((int) $profile['tolerance_mins'] * 60)) $status = 'tarde';
         }
         $stmt = db()->prepare('INSERT INTO attendance_records (tenant_id, employee_profile_id, person_id, site_id, shift_id, event_type, identification_method, occurred_at, source, status, notes, idempotency_key) VALUES (:tenant_id, :profile_id, :person_id, :site_id, :shift_id, :event_type, :method, :occurred_at, :source, :status, :notes, :idempotency)');
-        $stmt->execute(['tenant_id' => $user['tenant_id'], 'profile_id' => $profile['id'], 'person_id' => $profile['person_id'], 'site_id' => $data['site_id'] ?? $user['site_id'] ?? null, 'shift_id' => $data['shift_id'] ?? null, 'event_type' => $data['event_type'], 'method' => in_array(($data['identification_method'] ?? 'manual'), ['huella', 'cedula', 'manual', 'qr', 'otro'], true) ? $data['identification_method'] : 'manual', 'occurred_at' => $occurredAt, 'source' => in_array(($data['source'] ?? 'online'), ['online', 'offline', 'import'], true) ? $data['source'] : 'online', 'status' => $status, 'notes' => trim((string) ($data['notes'] ?? '')) ?: null, 'idempotency' => $data['idempotency_key'] ?? null]);
+        $stmt->execute(['tenant_id' => $user['tenant_id'], 'profile_id' => $profile['id'], 'person_id' => $profile['person_id'], 'site_id' => $data['site_id'] ?? $user['site_id'] ?? null, 'shift_id' => $data['shift_id'] ?? null, 'event_type' => $data['event_type'], 'method' => in_array(($data['identification_method'] ?? 'manual'), ['huella', 'cedula', 'manual', 'qr', 'otro'], true) ? ($data['identification_method'] ?? 'manual') : 'manual', 'occurred_at' => $occurredAt, 'source' => in_array(($data['source'] ?? 'online'), ['online', 'offline', 'import'], true) ? ($data['source'] ?? 'online') : 'online', 'status' => $status, 'notes' => trim((string) ($data['notes'] ?? '')) ?: null, 'idempotency' => $data['idempotency_key'] ?? null]);
         $createdRecordId=(int) db()->lastInsertId();
         audit('asistencia.registrada', 'Asistencia de ' . $profile['full_name'] . ': ' . $data['event_type']);
         json_response(['id' => $createdRecordId, 'status' => $status], 201);
@@ -1578,7 +1578,7 @@ try {
             'tenant_id' => $user['tenant_id'],
             'shift_id' => $data['shift_id'] ?? null,
             'tracking' => $data['tracking'],
-            'package_type' => in_array(($data['package_type'] ?? 'paquete'), ['documento', 'paquete', 'mercancia', 'alimento', 'servicios', 'otro'], true) ? $data['package_type'] : 'otro',
+            'package_type' => in_array(($data['package_type'] ?? 'paquete'), ['documento', 'paquete', 'mercancia', 'alimento', 'servicios', 'otro'], true) ? ($data['package_type'] ?? 'paquete') : 'otro',
             'service_type' => trim((string) ($data['service_type'] ?? '')) ?: null,
             'courier' => $data['courier'],
             'courier_phone' => trim((string) ($data['courier_phone'] ?? '')) ?: null,
