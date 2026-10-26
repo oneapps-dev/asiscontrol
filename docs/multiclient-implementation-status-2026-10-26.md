@@ -80,7 +80,7 @@ Evidencia por ejecución: [GitHub Actions](https://github.com/oneapps-dev/asisco
 
 ## Prioridades aún pendientes
 
-1. **Cobertura de rutas heredadas**: matriz por endpoint (rol, permiso, tenant, sede, puesto, suscripción, evidencias, errores) y rehabilitación segura de las rutas provisionalmente cerradas.
+1. **Cobertura de rutas heredadas**: matriz por endpoint (rol, permiso, tenant, sede, puesto, suscripción, evidencias, errores) y rehabilitación segura de las rutas provisionalmente cerradas. Inventario estático preliminar en `docs/security/route-authorization-review-2026-10-26.md` (118 pares método-ruta literales y 55 patrones dinámicos detectados; no equivalen a cobertura certificada).
 2. **CA-01 a CA-23**: extraer los criterios exactos del requerimiento original, relacionar cada caso con prueba, resultado y evidencia.
 3. **Offline E2E**: conflictos, reintentos concurrentes, colas legacy, aislamiento entre pestañas, conectividad intermitente y dispositivos.
 4. **Paneles por perfil**: terminar los módulos y drilldowns de CREAMOX, Operador, PH, industria, supervisión, vigilancia, auditoría y residentes.
