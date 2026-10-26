@@ -11,6 +11,18 @@ SELECT 1,'empleado','CC','QA-ATT-SECURED','QA Empleado Auditoría',NOW()
 WHERE NOT EXISTS(SELECT 1 FROM people WHERE tenant_id=1 AND document_type='CC' AND document_number='QA-ATT-SECURED');
 INSERT IGNORE INTO employee_profiles(tenant_id,person_id,status)
 SELECT 1,id,'active' FROM people WHERE tenant_id=1 AND document_type='CC' AND document_number='QA-ATT-SECURED';
+INSERT INTO users(tenant_id,site_id,name,email,password_hash,role,is_active)
+SELECT 1,$site1,'QA Supervisor Reportes','qa-site-reports-supervisor@asiscontrol.local',
+ password_hash,'supervisor',1 FROM users WHERE email='admin@asiscontrol.local'
+AND NOT EXISTS(SELECT 1 FROM users WHERE email='qa-site-reports-supervisor@asiscontrol.local');
+INSERT IGNORE INTO user_scopes(tenant_id,user_id,scope_type,scope_id)
+SELECT 1,id,'site',$site1 FROM users WHERE email='qa-site-reports-supervisor@asiscontrol.local';
+INSERT INTO users(tenant_id,site_id,name,email,password_hash,role,is_active)
+SELECT 1,$site1,'QA Supervisor General','qa-tenant-reports-supervisor@asiscontrol.local',
+ password_hash,'supervisor',1 FROM users WHERE email='admin@asiscontrol.local'
+AND NOT EXISTS(SELECT 1 FROM users WHERE email='qa-tenant-reports-supervisor@asiscontrol.local');
+INSERT IGNORE INTO user_scopes(tenant_id,user_id,scope_type,scope_id)
+SELECT 1,id,'tenant',1 FROM users WHERE email='qa-tenant-reports-supervisor@asiscontrol.local';
 INSERT INTO attendance_records(tenant_id,employee_profile_id,person_id,site_id,event_type,occurred_at,status,notes)
 SELECT 1,ep.id,p.id,$site1,'entrada',NOW(),'puntual','QA_ATTENDANCE_ALLOWED_SITE'
 FROM employee_profiles ep JOIN people p ON p.id=ep.person_id
@@ -22,8 +34,12 @@ WHERE ep.tenant_id=1 AND p.document_number='QA-ATT-SECURED';
 SQL
 
 curl -fsS -c /tmp/scoped-reports.cookies -H 'Content-Type: application/json' \
- -d '{"email":"qa-site-fileadmin@asiscontrol.local","password":"demo1234"}' \
+ -d '{"email":"qa-site-reports-supervisor@asiscontrol.local","password":"demo1234"}' \
  "$base/auth/login" >/tmp/scoped-reports-login.json
+
+curl -fsS -c /tmp/scoped-attendance.cookies -H 'Content-Type: application/json' \
+ -d '{"email":"qa-site-fileadmin@asiscontrol.local","password":"demo1234"}' \
+ "$base/auth/login" >/tmp/scoped-attendance-login.json
 
 curl -fsS -b /tmp/scoped-reports.cookies "$base/reports/visits.csv" >/tmp/scoped-visit.csv
 grep -q VISITA_EVIDENCIA_PERMITIDA_QA /tmp/scoped-visit.csv
@@ -41,7 +57,7 @@ assert 'VISITA_EVIDENCIA_PERMITIDA_QA' in content
 assert 'VISITA_NO_AUTORIZADA_QA' not in content
 PY
 
-curl -fsS -b /tmp/scoped-reports.cookies "$base/attendance" >/tmp/scoped-attendance.json
+curl -fsS -b /tmp/scoped-attendance.cookies "$base/attendance" >/tmp/scoped-attendance.json
 python3 - <<'PY'
 import json
 rows=json.load(open('/tmp/scoped-attendance.json'))['data']
@@ -49,13 +65,13 @@ notes={str(x.get('notes','')) for x in rows}
 assert 'QA_ATTENDANCE_ALLOWED_SITE' in notes
 assert 'QA_ATTENDANCE_DENIED_SITE' not in notes
 PY
-curl -fsS -b /tmp/scoped-reports.cookies "$base/reports/attendance.csv" >/tmp/scoped-attendance.csv
+curl -fsS -b /tmp/scoped-attendance.cookies "$base/reports/attendance.csv" >/tmp/scoped-attendance.csv
 grep -q QA_ATTENDANCE_ALLOWED_SITE /tmp/scoped-attendance.csv
 ! grep -q QA_ATTENDANCE_DENIED_SITE /tmp/scoped-attendance.csv
-curl -fsS -b /tmp/scoped-reports.cookies "$base/reports/attendance.html" >/tmp/scoped-attendance.html
+curl -fsS -b /tmp/scoped-attendance.cookies "$base/reports/attendance.html" >/tmp/scoped-attendance.html
 grep -q QA_ATTENDANCE_ALLOWED_SITE /tmp/scoped-attendance.html
 ! grep -q QA_ATTENDANCE_DENIED_SITE /tmp/scoped-attendance.html
-curl -fsS -b /tmp/scoped-reports.cookies "$base/reports/attendance.xlsx" >/tmp/scoped-attendance.xlsx
+curl -fsS -b /tmp/scoped-attendance.cookies "$base/reports/attendance.xlsx" >/tmp/scoped-attendance.xlsx
 python3 - <<'PY'
 from zipfile import ZipFile
 with ZipFile('/tmp/scoped-attendance.xlsx') as z:
@@ -68,7 +84,10 @@ PY
 curl -fsS -c /tmp/reports-tenant-admin.cookies -H 'Content-Type: application/json' \
  -d '{"email":"admin@asiscontrol.local","password":"demo1234"}' \
  "$base/auth/login" >/tmp/reports-tenant-admin.json
-curl -fsS -b /tmp/reports-tenant-admin.cookies "$base/reports/visits.csv" >/tmp/reports-full-visits.csv
+curl -fsS -c /tmp/reports-tenant-supervisor.cookies -H 'Content-Type: application/json' \
+ -d '{"email":"qa-tenant-reports-supervisor@asiscontrol.local","password":"demo1234"}' \
+ "$base/auth/login" >/tmp/reports-tenant-supervisor.json
+curl -fsS -b /tmp/reports-tenant-supervisor.cookies "$base/reports/visits.csv" >/tmp/reports-full-visits.csv
 curl -fsS -b /tmp/reports-tenant-admin.cookies "$base/reports/attendance.csv" >/tmp/reports-full-attendance.csv
 grep -q VISITA_NO_AUTORIZADA_QA /tmp/reports-full-visits.csv
 grep -q QA_ATTENDANCE_DENIED_SITE /tmp/reports-full-attendance.csv
