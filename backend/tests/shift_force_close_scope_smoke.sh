@@ -11,10 +11,15 @@ status=$(curl -sS -o /tmp/shift-scope-denied.json -w '%{http_code}' -b /tmp/shif
 test "$status" = "403" || { echo "Cross-site close returned $status"; exit 1; }
 still_open=$(mysql -h 127.0.0.1 -u root vzwquesv_app -N -e "SELECT COUNT(*) FROM guard_shifts WHERE id=$shift_id AND ended_at IS NULL")
 test "$still_open" = "1"
-# A supervisor scoped to the allowed site must retain the legitimate force-close action.
+# An authorized administrator with selected site must retain the force-close action.
 mysql -h 127.0.0.1 -u root vzwquesv_app -e "INSERT INTO guard_shifts (tenant_id,site_id,user_id,checkpoint,started_at) SELECT 1,$site_a,id,'QA_ALLOWED_FORCE_CLOSE',NOW() FROM users WHERE email='guardia@asiscontrol.local'"
 force_shift_id=$(mysql -h 127.0.0.1 -u root vzwquesv_app -N -e "SELECT MAX(id) FROM guard_shifts WHERE checkpoint='QA_ALLOWED_FORCE_CLOSE'")
-force_status=$(curl -sS -o /tmp/shift-force-allowed.json -w '%{http_code}' -b /tmp/shift-scope.cookies -H "X-CSRF-Token: $csrf" -H 'Content-Type: application/json' -d '{"reason":"QA authorized supervisory closure"}' "$base/shifts/$force_shift_id/force-close")
+# The seeded supervisor lacks shifts.monitor. Use the seeded admin, which explicitly has it.
+curl -fsS -c /tmp/shift-admin.cookies -H 'Content-Type: application/json' -d '{"email":"admin@asiscontrol.local","password":"demo1234"}' "$base/auth/login" >/tmp/shift-admin-login.json
+admin_csrf=$(python3 -c 'import json;print(json.load(open("/tmp/shift-admin-login.json"))["csrf_token"])')
+selected_status=$(curl -sS -o /tmp/shift-admin-selected.json -w '%{http_code}' -c /tmp/shift-admin.cookies -b /tmp/shift-admin.cookies -H "X-CSRF-Token: $admin_csrf" -H 'Content-Type: application/json' -d "{\"site_id\":$site_a}" "$base/me/context/select")
+test "$selected_status" = "200" || { echo "Admin site selection returned $selected_status"; exit 1; }
+force_status=$(curl -sS -o /tmp/shift-force-allowed.json -w '%{http_code}' -b /tmp/shift-admin.cookies -H "X-CSRF-Token: $admin_csrf" -H 'Content-Type: application/json' -d '{"reason":"QA authorized supervisory closure"}' "$base/shifts/$force_shift_id/force-close")
 test "$force_status" = "200" || { echo "Allowed forced close returned $force_status"; cat /tmp/shift-force-allowed.json; exit 1; }
 force_closed=$(mysql -h 127.0.0.1 -u root vzwquesv_app -N -e "SELECT COUNT(*) FROM guard_shifts WHERE id=$force_shift_id AND ended_at IS NOT NULL")
 test "$force_closed" = "1"
