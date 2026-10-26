@@ -342,6 +342,7 @@ try {
         $user = require_auth();
         $data = request_json();
         require_fields($data, ['site_id', 'checkpoint']);
+        require_tenant_scope('site',(int)$data['site_id']);
         $stmt = db()->prepare(
             'INSERT INTO guard_shifts (tenant_id, site_id, user_id, checkpoint, notes, started_at)
              VALUES (:tenant_id, :site_id, :user_id, :checkpoint, :notes, NOW())'
@@ -421,6 +422,7 @@ try {
         require_fields($data, ['shift_id', 'document_type', 'document_number', 'full_name', 'destination', 'host', 'reason']);
         $data['shift_id'] = active_shift_id_for($user, $data['shift_id']);
         if (!$data['shift_id']) json_response(['error' => 'Selecciona un turno activo para registrar la visita', 'error_code' => 'ACTIVE_SHIFT_REQUIRED'], 422);
+        $shiftSiteId=validated_shift_site((int)$data['shift_id'],$user,!empty($data['site_id'])?(int)$data['site_id']:null);
         $pdo = db();
         $pdo->beginTransaction();
 
@@ -433,7 +435,7 @@ try {
             'tenant_id' => $user['tenant_id'],
             'person_id' => $personId,
             'shift_id' => $data['shift_id'],
-            'site_id' => !empty($data['site_id']) ? (int) $data['site_id'] : ($user['site_id'] ?? null),
+            'site_id' => $shiftSiteId,
             'operator_user_id' => $user['id'],
             'identification_method' => in_array(($data['identification_method'] ?? 'manual'), ['huella', 'cedula', 'manual', 'qr', 'otro'], true) ? $data['identification_method'] : 'manual',
             'destination' => $data['destination'],
@@ -449,6 +451,7 @@ try {
 
     if ($method === 'POST' && preg_match('#^/visits/(\d+)/exit$#', $path, $matches)) {
         require_permission('visits.manage');
+        require_scoped_record('visits',(int)$matches[1]);
         $data = request_json();
         $stmt = db()->prepare(
             'UPDATE visits
@@ -988,6 +991,7 @@ try {
         $data = request_json();
         require_fields($data, ['plate', 'driver_name', 'vehicle_type', 'destination']);
         $data['shift_id'] = active_shift_id_for($user, $data['shift_id'] ?? null);
+        $shiftSiteId=$data['shift_id']?validated_shift_site((int)$data['shift_id'],$user,!empty($data['site_id'])?(int)$data['site_id']:null):null;
         $parkingSpace = trim((string) ($data['parking_space'] ?? '')) ?: null;
         if ($parkingSpace) {
             $space = one_row('SELECT id FROM parking_assignments WHERE tenant_id = :tenant_id AND space_code = :space_code AND status = "active" LIMIT 1', ['tenant_id' => tenant_id(), 'space_code' => $parkingSpace]);
@@ -1003,7 +1007,7 @@ try {
             'tenant_id' => $user['tenant_id'],
             'shift_id' => $data['shift_id'],
             'person_id' => !empty($data['person_id']) ? (int) $data['person_id'] : null,
-            'site_id' => !empty($data['site_id']) ? (int) $data['site_id'] : ($user['site_id'] ?? null),
+            'site_id' => $shiftSiteId,
             'plate' => strtoupper((string) $data['plate']),
             'driver_name' => $data['driver_name'],
             'vehicle_type' => $data['vehicle_type'],
@@ -1017,6 +1021,7 @@ try {
 
     if ($method === 'POST' && preg_match('#^/vehicles/(\d+)/exit$#', $path, $matches)) {
         require_permission('vehicles.manage');
+        require_scoped_record('vehicles',(int)$matches[1]);
         $data = request_json();
         $stmt = db()->prepare(
             'UPDATE vehicles
@@ -1534,6 +1539,7 @@ try {
 
     if ($method === 'POST' && preg_match('#^/packages/(\d+)/deliver$#', $path, $matches)) {
         require_permission('packages.manage');
+        require_scoped_record('packages',(int)$matches[1]);
         $data = request_json();
         $stmt = db()->prepare(
             'UPDATE packages
@@ -1555,6 +1561,7 @@ try {
 
     if ($method === 'POST' && preg_match('#^/packages/(\d+)/(reject|return)$#', $path, $matches)) {
         $user = require_permission('packages.manage');
+        require_scoped_record('packages',(int)$matches[1]);
         $data = request_json();
         require_fields($data, ['reason']);
         $action = $matches[2];
@@ -1567,6 +1574,7 @@ try {
 
     if ($method === 'POST' && preg_match('#^/packages/(\d+)/signature$#', $path, $matches)) {
         require_permission('packages.manage');
+        require_scoped_record('packages',(int)$matches[1]);
         $data = request_json();
         require_fields($data, ['receiver_name', 'signature_data_url']);
         $signatureId = store_package_signature(
@@ -1746,6 +1754,7 @@ try {
 
     if ($method === 'POST' && preg_match('#^/incidents/(\d+)/review$#', $path, $matches)) {
         require_permission('incidents.manage');
+        require_scoped_record('incidents',(int)$matches[1]);
         db()->prepare('UPDATE incidents SET status = "in_review" WHERE id = :id AND tenant_id = :tenant_id AND status = "open"')->execute(['id' => $matches[1], 'tenant_id' => tenant_id()]);
         audit('incidente.en_revision', 'Incidente #' . $matches[1] . ' en revisión');
         json_response(['ok' => true]);
@@ -1753,6 +1762,7 @@ try {
 
     if ($method === 'POST' && preg_match('#^/incidents/(\d+)/close$#', $path, $matches)) {
         $user = require_permission('incidents.manage');
+        require_scoped_record('incidents',(int)$matches[1]);
         $data = request_json();
         if ((string) $user['role'] === 'guard' && !empty($data['severity']) && $data['severity'] === 'alta') json_response(['error' => 'Los incidentes de alta severidad deben cerrarse por un administrador'], 403);
         $stmt = db()->prepare('UPDATE incidents SET status = "closed", closed_at = NOW(), closed_by = :closed_by, resolution = :resolution WHERE id = :id AND tenant_id = :tenant_id AND status IN ("open", "in_review")');
@@ -1762,6 +1772,8 @@ try {
     }
 
     if ($method === 'GET' && $path === '/audit') {
+        require_permission('audit.view');
+        if (actor_visible_site_ids(require_auth())!==null) json_response(['error'=>'Auditoría global no disponible en alcances de sede'],403);
         json_response(['data' => list_rows('SELECT * FROM audit_logs WHERE tenant_id = :tenant_id ORDER BY created_at DESC LIMIT 120', ['tenant_id' => tenant_id()])]);
     }
 
@@ -3899,17 +3911,24 @@ function require_permission(string $permission): array
 /** Garantiza que los perfiles operativos registren con un turno abierto. */
 function active_shift_id_for(array $user, mixed $requested = null): ?int
 {
-    if (in_array((string) ($user['role'] ?? ''), ['admin', 'superadmin', 'auditor', 'resident'], true)) {
-        return $requested !== null && is_numeric($requested) ? (int) $requested : null;
+    $tenantId=(int)$user['tenant_id'];
+    $shiftId=($requested!==null && is_numeric($requested))?(int)$requested:0;
+    $nonOperational=in_array((string)($user['role']??''),['admin','superadmin','auditor','resident'],true);
+    if ($nonOperational && $shiftId===0) return null;
+
+    $params=['tenant'=>$tenantId];
+    $sql='SELECT id,site_id FROM guard_shifts WHERE tenant_id=:tenant AND ended_at IS NULL';
+    if (!$nonOperational) {
+        $sql.=' AND user_id=:user';
+        $params['user']=(int)$user['id'];
     }
-    $shiftId = $requested !== null && is_numeric($requested) ? (int) $requested : 0;
-    $params = ['tenant_id' => (int) $user['tenant_id'], 'user_id' => (int) $user['id']];
-    $sql = 'SELECT id FROM guard_shifts WHERE tenant_id = :tenant_id AND user_id = :user_id AND ended_at IS NULL';
-    if ($shiftId > 0) { $sql .= ' AND id = :shift_id'; $params['shift_id'] = $shiftId; }
-    $sql .= ' ORDER BY started_at DESC LIMIT 1';
-    $row = one_row($sql, $params);
-    if (!$row) json_response(['error' => 'Debes iniciar un turno antes de registrar operaciones', 'error_code' => 'ACTIVE_SHIFT_REQUIRED'], 422);
-    return (int) $row['id'];
+    if ($shiftId>0) { $sql.=' AND id=:shift'; $params['shift']=$shiftId; }
+    $sql.=' ORDER BY started_at DESC LIMIT 1';
+    $row=one_row($sql,$params);
+    if (!$row) json_response(['error'=>'Debes usar un turno activo y autorizado',
+        'error_code'=>'ACTIVE_SHIFT_REQUIRED'],422);
+    require_tenant_scope('site',(int)$row['site_id']);
+    return (int)$row['id'];
 }
 
 function is_platform_admin(array $user): bool

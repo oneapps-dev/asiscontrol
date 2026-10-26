@@ -315,3 +315,35 @@ function scope_filter_bootstrap_payload(array $payload,array $actor): array
     }
     return $payload;
 }
+
+
+function require_scoped_record(string $resource,int $id): array
+{
+    $actor=require_auth();
+    $tables=['visits'=>'visits','vehicles'=>'vehicles','packages'=>'packages',
+        'incidents'=>'incidents','invitations'=>'invitations'];
+    if (!isset($tables[$resource]) || $id<=0) json_response(['error'=>'Recurso inválido'],422);
+    $table=$tables[$resource];
+    $stmt=db()->prepare("SELECT * FROM {$table} WHERE id=:id AND tenant_id=:tenant LIMIT 1");
+    $stmt->execute(['id'=>$id,'tenant'=>(int)$actor['tenant_id']]);
+    $row=$stmt->fetch(PDO::FETCH_ASSOC);
+    if (!$row) json_response(['error'=>'Registro no encontrado'],404);
+    $allowed=actor_visible_site_ids($actor);
+    if ($allowed!==null && !in_array(scoped_row_site($resource,$row,(int)$actor['tenant_id']),$allowed,true)) {
+        json_response(['error'=>'Registro fuera de tus sedes','error_code'=>'SCOPE_DENIED'],403);
+    }
+    return $row;
+}
+
+function validated_shift_site(int $shiftId,array $actor,?int $requestedSite=null): int
+{
+    $shift=one_row('SELECT id,site_id FROM guard_shifts WHERE id=:id AND tenant_id=:tenant',
+        ['id'=>$shiftId,'tenant'=>(int)$actor['tenant_id']]);
+    if (!$shift) json_response(['error'=>'Turno fuera del cliente'],422);
+    $siteId=(int)$shift['site_id'];
+    if ($requestedSite!==null && $requestedSite!==$siteId) {
+        json_response(['error'=>'La sede y el turno no coinciden','error_code'=>'SHIFT_SITE_MISMATCH'],422);
+    }
+    require_tenant_scope('site',$siteId);
+    return $siteId;
+}
