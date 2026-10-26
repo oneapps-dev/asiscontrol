@@ -1132,8 +1132,8 @@ try {
             'SELECT p.id AS person_id, p.document_type, p.document_number, p.full_name, p.phone, p.email, p.company,
                     ep.id AS employee_profile_id, ep.employee_code, ep.schedule_start, ep.schedule_end,
                     ep.tolerance_mins, ep.incomplete_after_hours, ep.status AS employee_status,
-                    (SELECT COUNT(*) FROM attendance_records ar WHERE ar.employee_profile_id = ep.id AND DATE(ar.occurred_at) = CURRENT_DATE) AS today_events
-             FROM people p INNER JOIN employee_profiles ep ON ep.person_id = p.id
+                    (SELECT COUNT(*) FROM attendance_records ar WHERE ar.employee_profile_id = ep.id AND ar.tenant_id = p.tenant_id AND DATE(ar.occurred_at) = CURRENT_DATE) AS today_events
+             FROM people p INNER JOIN employee_profiles ep ON ep.person_id = p.id AND ep.tenant_id = p.tenant_id
              WHERE p.tenant_id = :tenant_id AND p.record_status = "active"
              ORDER BY p.full_name LIMIT 500',
             ['tenant_id' => tenant_id()]
