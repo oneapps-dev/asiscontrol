@@ -1889,7 +1889,7 @@ try {
 
     if ($method === 'GET' && $path === '/reports/summary') {
         require_permission('reports.view');
-        json_response(['data' => report_summary(tenant_id())]);
+        json_response(['data' => report_summary(tenant_id(),actor_visible_site_ids(require_auth()))]);
     }
 
     if ($method === 'GET' && $path === '/reports/visits.csv') {
@@ -3349,8 +3349,42 @@ function approvals_for_tenant(int $tenantId): array
     );
 }
 
-function report_summary(int $tenantId): array
+function report_summary(int $tenantId, ?array $siteIds = null): array
 {
+    // Reports must filter in SQL BEFORE aggregation, not hide totals in React.
+    if ($siteIds!==null) {
+        $specs=[
+            'visits_total'=>['visits v','v',
+                'LEFT JOIN guard_shifts gs ON gs.id=v.shift_id AND gs.tenant_id=v.tenant_id',
+                'COALESCE(v.site_id,gs.site_id)','1=1'],
+            'visits_inside'=>['visits v','v',
+                'LEFT JOIN guard_shifts gs ON gs.id=v.shift_id AND gs.tenant_id=v.tenant_id',
+                'COALESCE(v.site_id,gs.site_id)','v.status="inside"'],
+            'visits_exited'=>['visits v','v',
+                'LEFT JOIN guard_shifts gs ON gs.id=v.shift_id AND gs.tenant_id=v.tenant_id',
+                'COALESCE(v.site_id,gs.site_id)','v.status="exited"'],
+            'vehicles_total'=>['vehicles v','v',
+                'LEFT JOIN guard_shifts gs ON gs.id=v.shift_id AND gs.tenant_id=v.tenant_id',
+                'COALESCE(v.site_id,gs.site_id)','1=1'],
+            'packages_pending'=>['packages p','p',
+                'LEFT JOIN guard_shifts gs ON gs.id=p.shift_id AND gs.tenant_id=p.tenant_id',
+                'gs.site_id','p.status="pending"'],
+            'incidents_open'=>['incidents i','i',
+                'LEFT JOIN guard_shifts gs ON gs.id=i.shift_id AND gs.tenant_id=i.tenant_id',
+                'gs.site_id','i.status="open"'],
+        ];
+        $summary=[];
+        foreach($specs as $key=>$spec) {
+            [$table,$alias,$join,$siteExpression,$condition]=$spec;
+            $params=['tenant_id'=>$tenantId];
+            $scope=sql_site_scope($siteIds,$siteExpression,'summary_'.$key.'_',$params);
+            $sql="SELECT COUNT(*) FROM {$table} {$join} WHERE {$alias}.tenant_id=:tenant_id AND {$condition} AND {$scope}";
+            $statement=db()->prepare($sql);
+            $statement->execute($params);
+            $summary[$key]=(int)$statement->fetchColumn();
+        }
+        return $summary;
+    }
     $pdo = db();
     $summary = [];
     $queries = [

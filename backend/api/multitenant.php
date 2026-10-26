@@ -621,7 +621,7 @@ function enforce_legacy_scope_gate(string $method,string $path): void
         '/sites','/visits','/vehicles','/packages','/units','/invitations',
         '/incidents','/shifts','/access-points','/devices','/booking-resources',
         '/bookings','/parking','/access-events','/files','/attendance',
-        '/reports/visits.csv','/reports/visits.xlsx','/reports/visits.html',
+        '/reports/summary','/reports/visits.csv','/reports/visits.xlsx','/reports/visits.html',
         '/reports/attendance.csv','/reports/attendance.xlsx','/reports/attendance.html'
     ];
     if ($method==='GET' && in_array($path,$reads,true)) return;
