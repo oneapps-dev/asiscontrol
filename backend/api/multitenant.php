@@ -690,7 +690,7 @@ function enforce_legacy_scope_gate(string $method,string $path): void
     if ($method==='POST' && preg_match('#^/(bookings/[0-9]+/(status|guests)|reservation-guests/[0-9]+/(check-in|check-out))$#',$path)) return;
     if ($method==='DELETE' && preg_match('#^/bookings/[0-9]+$#',$path)) return;
     if ($method==='POST' && (
-        preg_match('#^/shifts/[0-9]+/close$#',$path)
+        preg_match('#^/shifts/[0-9]+/(?:close|force-close)$#',$path)
         || preg_match('#^/(visits|vehicles)/[0-9]+/exit$#',$path)
         || preg_match('#^/packages/[0-9]+/(deliver|reject|return|signature)$#',$path)
         || preg_match('#^/incidents/[0-9]+/(review|close)$#',$path)
