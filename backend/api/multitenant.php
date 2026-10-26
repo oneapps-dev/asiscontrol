@@ -491,6 +491,41 @@ function require_tenant_wide_scope(): void
 }
 
 
+
+/** The attachment's parent record is the authorization boundary, not its file id. */
+function require_attachment_parent(string $type,int $recordId,array $actor): array
+{
+    $types=[
+        'shift_start'=>['guard_shifts','shifts'],
+        'visit'=>['visits','visits'],
+        'visit_exit'=>['visits','visits'],
+        'vehicle'=>['vehicles','vehicles'],
+        'vehicle_exit'=>['vehicles','vehicles'],
+        'package'=>['packages','packages'],
+        'package_delivery'=>['packages','packages'],
+        'incident'=>['incidents','incidents'],
+        'booking'=>['bookings','bookings'],
+    ];
+    if (!isset($types[$type]) || $recordId<1) {
+        json_response(['error'=>'Tipo o identificador de evidencia no permitido',
+            'error_code'=>'ATTACHMENT_OWNER_INVALID'],422);
+    }
+    [$table,$resource]=$types[$type];
+    $tenantId=(int)$actor['tenant_id'];
+    $row=one_row("SELECT * FROM {$table} WHERE id=:id AND tenant_id=:tenant LIMIT 1",
+        ['id'=>$recordId,'tenant'=>$tenantId]);
+    if (!$row) json_response(['error'=>'Registro asociado no encontrado'],404);
+    $visible=actor_visible_site_ids($actor);
+    if ($visible!==null) {
+        $site=scoped_row_site($resource,$row,$tenantId);
+        if ($site<=0 || !in_array($site,$visible,true)) {
+            json_response(['error'=>'Evidencia fuera de tus sedes',
+                'error_code'=>'SCOPE_DENIED'],403);
+        }
+    }
+    return $row;
+}
+
 /** Normalize legacy offline IDs and verify authorized site before queueing. */
 function normalize_offline_scope(array $actor,array $envelope,array $payload): array
 {
@@ -585,13 +620,14 @@ function enforce_legacy_scope_gate(string $method,string $path): void
         '/dashboard/contextual',
         '/sites','/visits','/vehicles','/packages','/units','/invitations',
         '/incidents','/shifts','/access-points','/devices','/booking-resources',
-        '/bookings','/parking','/access-events'
+        '/bookings','/parking','/access-events','/files'
     ];
     if ($method==='GET' && in_array($path,$reads,true)) return;
     if ($method==='POST' && in_array($path,[
         '/auth/logout','/me/context/select','/me/context/clear','/shifts','/visits','/vehicles','/packages','/incidents',
-        '/invitations/redeem','/access-events','/offline/events'
+        '/invitations/redeem','/access-events','/offline/events','/files'
     ],true)) return;
+    if ($method==='GET' && preg_match('#^/files/[0-9]+/download$#',$path)) return;
     if ($method==='POST' && (
         preg_match('#^/shifts/[0-9]+/close$#',$path)
         || preg_match('#^/(visits|vehicles)/[0-9]+/exit$#',$path)

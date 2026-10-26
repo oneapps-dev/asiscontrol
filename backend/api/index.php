@@ -1970,7 +1970,10 @@ try {
         $ownerType = $_GET['owner_type'] ?? '';
         $ownerId = $_GET['owner_id'] ?? '';
         require_query_fields(['owner_type' => $ownerType, 'owner_id' => $ownerId]);
-        json_response(['data' => files_for_owner(tenant_id(), (string) $ownerType, (int) $ownerId)]);
+        $ownerNumber=filter_var($ownerId,FILTER_VALIDATE_INT);
+        if ($ownerNumber===false || $ownerNumber<1) json_response(['error'=>'Identificador inválido'],422);
+        require_attachment_parent((string)$ownerType,(int)$ownerNumber,require_auth());
+        json_response(['data' => files_for_owner(tenant_id(), (string) $ownerType, (int) $ownerNumber)]);
     }
 
     if ($method === 'GET' && preg_match('#^/files/(\d+)/download$#', $path, $matches)) {
@@ -1986,6 +1989,7 @@ try {
         if (!$ownerType || !$ownerId || empty($_FILES['file'])) {
             json_response(['error' => 'Archivo, owner_type y owner_id son requeridos'], 422);
         }
+        require_attachment_parent((string)$ownerType,$ownerId,$user);
 
         $fileId = store_attachment((int) $user['tenant_id'], (int) $user['id'], (string) $ownerType, $ownerId, $_FILES['file']);
         audit('archivo.subido', 'Archivo adjunto #' . $fileId . ' para ' . $ownerType . ':' . $ownerId);
@@ -3374,7 +3378,7 @@ function require_query_fields(array $fields): void
 function files_for_owner(int $tenantId, string $ownerType, int $ownerId): array
 {
     return list_rows(
-        'SELECT id, owner_type, owner_id, original_name, stored_path, mime_type, byte_size, sha256, captured_at, immutable_at, created_at
+        'SELECT id, owner_type, owner_id, original_name, mime_type, byte_size, sha256, captured_at, immutable_at, created_at
          FROM file_attachments
          WHERE tenant_id = :tenant_id AND owner_type = :owner_type AND owner_id = :owner_id
          ORDER BY created_at DESC',
@@ -3565,6 +3569,7 @@ function download_attachment(int $tenantId, int $fileId): void
     if (!$file) {
         json_response(['error' => 'Archivo no encontrado'], 404);
     }
+    require_attachment_parent((string)$file['owner_type'],(int)$file['owner_id'],require_auth());
 
     $path = dirname(__DIR__) . '/' . $file['stored_path'];
     if (!is_file($path)) {
