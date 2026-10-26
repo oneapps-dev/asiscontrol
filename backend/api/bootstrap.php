@@ -290,6 +290,22 @@ function require_auth(): array
     $statement->execute(['id' => (int) $sessionUser['id'], 'tenant_id' => (int) $sessionUser['tenant_id']]);
     $current = $statement->fetch();
     $residentSession = !empty($sessionUser['resident_id']) && ($sessionUser['role'] ?? '') === 'resident';
+    if ($residentSession) {
+        $residentStmt=db()->prepare(
+            "SELECT r.id FROM residents r
+             JOIN people p ON p.id=r.person_id AND p.tenant_id=r.tenant_id
+             JOIN units un ON un.id=r.unit_id AND un.tenant_id=r.tenant_id
+             JOIN sites si ON si.id=un.site_id AND si.tenant_id=r.tenant_id
+             WHERE r.id=:resident_id AND r.tenant_id=:tenant_id
+             AND r.status='active' AND p.record_status='active' AND un.status='active' LIMIT 1"
+        );
+        $residentStmt->execute(['resident_id'=>(int)$sessionUser['resident_id'],
+            'tenant_id'=>(int)$sessionUser['tenant_id']]);
+        if (!$residentStmt->fetchColumn()) {
+            unset($_SESSION['user'],$_SESSION['portal_resident'],$_SESSION['last_activity'],$_SESSION['portal_last_activity']);
+            json_response(['error'=>'Acceso de residente revocado','error_code'=>'RESIDENT_ACCESS_REVOKED'],403);
+        }
+    }
     if (!$current || !(int) $current['is_active'] || $current['tenant_status'] !== 'active'
         || (!$residentSession && $current['role'] !== ($sessionUser['role'] ?? ''))
         || (($sessionUser['role'] ?? '') === 'superadmin' && !(int) $current['global_admin'])
@@ -334,6 +350,32 @@ function require_portal_auth(): array
         unset($_SESSION['portal_resident'], $_SESSION['portal_last_activity']);
         json_response(['error' => 'La sesión expiró por inactividad', 'error_code' => 'SESSION_EXPIRED'], 401);
     }
+    // Do not trust stale resident snapshots stored inside PHP sessions.
+    $residentSession=$_SESSION['portal_resident'];
+    $stmt=db()->prepare(
+        "SELECT r.id,r.tenant_id,r.unit_id,r.person_id,p.full_name,p.email,p.phone,
+                un.tower,un.unit_code,un.floor,si.id AS site_id,si.name AS site_name,
+                (SELECT ts.status FROM tenant_subscriptions ts WHERE ts.tenant_id=r.tenant_id
+                 ORDER BY ts.id DESC LIMIT 1) AS subscription_status,
+                (SELECT ts.ends_on FROM tenant_subscriptions ts WHERE ts.tenant_id=r.tenant_id
+                 ORDER BY ts.id DESC LIMIT 1) AS subscription_ends_on
+         FROM residents r
+         JOIN people p ON p.id=r.person_id AND p.tenant_id=r.tenant_id
+         JOIN units un ON un.id=r.unit_id AND un.tenant_id=r.tenant_id
+         JOIN sites si ON si.id=un.site_id AND si.tenant_id=r.tenant_id
+         JOIN tenants t ON t.id=r.tenant_id
+         WHERE r.id=:id AND r.tenant_id=:tenant AND r.status='active'
+           AND p.record_status='active' AND un.status='active' AND t.status='active' LIMIT 1"
+    );
+    $stmt->execute(['id'=>(int)$residentSession['id'],'tenant'=>(int)$residentSession['tenant_id']]);
+    $current=$stmt->fetch(PDO::FETCH_ASSOC);
+    if (!$current || in_array($current['subscription_status'],['suspended','cancelled','expired','past_due'],true)
+        || ($current['subscription_ends_on']!==null && $current['subscription_ends_on']<date('Y-m-d'))) {
+        unset($_SESSION['portal_resident'],$_SESSION['portal_last_activity'],$_SESSION['user'],$_SESSION['last_activity']);
+        json_response(['error'=>'Acceso de residente revocado','error_code'=>'RESIDENT_ACCESS_REVOKED'],403);
+    }
+    unset($current['subscription_status'],$current['subscription_ends_on']);
+    $_SESSION['portal_resident']=$current;
     $_SESSION['portal_last_activity'] = time();
     return $_SESSION['portal_resident'];
 }
