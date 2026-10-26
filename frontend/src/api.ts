@@ -312,6 +312,15 @@ export const api = {
   exportAttendanceCsv: (params?: { from?: string; to?: string }) => download('/reports/attendance.csv', params),
   exportAttendanceXlsx: (params?: { from?: string; to?: string }) => download('/reports/attendance.xlsx', params),
   openAttendanceReport: (params?: { from?: string; to?: string; employee_id?: string }) => download('/reports/attendance.html', params),
+  mySiteContexts: () => request<{ data: {
+    tenant: { id: number; name: string; parent_tenant_id: number | null; parent_name: string | null };
+    scope: 'tenant' | 'sites'; sites: Array<{ id: number; name: string; timezone: string }>;
+    selected_site_id: number | null; expires_at: string | null;
+  } }>('/me/contexts'),
+  selectSiteContext: (site_id: number) => request<{ data: any }>('/me/context/select', {
+    method: 'POST', body: JSON.stringify({ site_id })
+  }),
+  clearSiteContext: () => request<{ data: any }>('/me/context/clear', { method: 'POST', body: '{}' }),
   myContext: () => request<{ data: { tenant: { id: number; name: string; client_type: string; status: string }; role: string; permissions: string[]; scopes: any[] } }>('/me/context'),
   organizationNodes: () => request<{ data: any[] }>('/organization/nodes'),
   createOrganizationNode: (payload: any) => request<{ id: number }>('/organization/nodes', { method: 'POST', body: JSON.stringify(payload) }),

@@ -874,7 +874,7 @@ function App() {
 
   return (
     <Shell data={data} screen={screen} setScreen={setScreen} setData={setData} onLogout={handleLogout} apiOnline={apiOnline} connectionState={connectionState} notice={notice} offlineCount={offlineCount} onSyncOffline={handleSyncOffline}>
-      {screen === 'dashboard' && <Dashboard data={data} setScreen={setScreen} />}
+      {screen === 'dashboard' && <Dashboard data={data} setScreen={setScreen} apiOnline={apiOnline} refreshFromApi={refreshFromApi} />}
       {screen === 'shift' && <Shift data={data} updateData={updateData} addAudit={addAudit} apiOnline={apiOnline} refreshFromApi={refreshFromApi} />}
       {screen === 'visitors' && <Visitors data={data} updateData={updateData} apiOnline={apiOnline} refreshFromApi={refreshFromApi} />}
       {screen === 'invitations' && <Invitations data={data} apiOnline={apiOnline} refreshFromApi={refreshFromApi} />}
@@ -1109,7 +1109,67 @@ function Shell({
   );
 }
 
-function ContextDashboard({ tenantId, role }: { tenantId?: string; role: Role }) {
+function SiteContextSelector({ tenantId, apiOnline, onChange }: {
+  tenantId?: string; apiOnline: boolean; onChange: () => Promise<void>;
+}) {
+  const [context, setContext] = useState<{
+    tenant: { id: number; name: string; parent_name: string | null };
+    scope: 'tenant' | 'sites';
+    sites: Array<{ id: number; name: string }>;
+    selected_site_id: number | null;
+    expires_at: string | null;
+  } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  useEffect(() => {
+    if (!apiOnline || !tenantId) { setContext(null); return; }
+    let alive = true;
+    void api.mySiteContexts()
+      .then((result) => { if (alive) setContext(result.data); })
+      .catch((issue) => { if (alive) setError(issue instanceof Error ? issue.message : 'No se pudo cargar el contexto.'); });
+    return () => { alive = false; };
+  }, [apiOnline, tenantId]);
+  const select = async (value: string) => {
+    if (!apiOnline || busy) return;
+    setBusy(true); setError('');
+    try {
+      const response = value ? await api.selectSiteContext(Number(value)) : await api.clearSiteContext();
+      setContext(response.data);
+      await onChange();
+    } catch (issue) {
+      setError(issue instanceof Error ? issue.message : 'No se pudo cambiar la sede.');
+      const response = await api.mySiteContexts().catch(() => null);
+      if (response) setContext(response.data);
+    } finally { setBusy(false); }
+  };
+  if (!context || (!context.sites.length && !error)) return null;
+  return <section className="panel">
+    <div className="panel-head">
+      <div>
+        <h3>Contexto operativo autorizado</h3>
+        <p className="mt-1 text-xs text-on-surface-variant">
+          {[context.tenant.parent_name, context.tenant.name].filter(Boolean).join(' › ')}
+        </p>
+      </div>
+      <Badge tone={context.selected_site_id ? 'info' : 'muted'}>
+        {context.selected_site_id ? 'Sede seleccionada' : context.scope === 'tenant' ? 'Cliente completo' : 'Sedes asignadas'}
+      </Badge>
+    </div>
+    <select className="field" aria-label="Seleccionar sede autorizada"
+      disabled={!apiOnline || busy} value={context.selected_site_id ? String(context.selected_site_id) : ''}
+      onChange={(event) => void select(event.target.value)}>
+      <option value="">{context.scope === 'tenant' ? 'Todas las sedes del cliente' : 'Todas mis sedes autorizadas'}</option>
+      {context.sites.map((site) => <option key={site.id} value={String(site.id)}>{site.name}</option>)}
+    </select>
+    <p className="mt-2 text-xs text-on-surface-variant">
+      El cambio modifica las consultas y operaciones autorizadas en el servidor, no tu rol.
+      {context.expires_at ? ' Expira: ' + context.expires_at : ''}
+    </p>
+    {error && <Alert tone="danger">{error}</Alert>}
+  </section>;
+}
+
+function ContextDashboard({ tenantId, role, refreshKey }: { tenantId?: string; role: Role; refreshKey: number }) {
   const [context, setContext] = useState<{
     tenant_name: string;
     client_type_name: string;
@@ -1124,7 +1184,7 @@ function ContextDashboard({ tenantId, role }: { tenantId?: string; role: Role })
       if (alive) setContext(result.data);
     }).catch(() => { if (alive) setContext(null); });
     return () => { alive = false; };
-  }, [tenantId, role]);
+  }, [tenantId, role, refreshKey]);
 
   if (!context) return null;
   const extra = context.client_type_name === 'Empresa de seguridad'
@@ -1149,7 +1209,15 @@ function ContextDashboard({ tenantId, role }: { tenantId?: string; role: Role })
   </section>;
 }
 
-function Dashboard({ data, setScreen }: { data: AppData; setScreen: (screen: Screen) => void }) {
+function Dashboard({ data, setScreen, apiOnline, refreshFromApi }: {
+  data: AppData; setScreen: (screen: Screen) => void; apiOnline: boolean;
+  refreshFromApi: () => Promise<void>;
+}) {
+  const [siteRefreshKey, setSiteRefreshKey] = useState(0);
+  const refreshSelectedSite = async () => {
+    await refreshFromApi();
+    setSiteRefreshKey((current) => current + 1);
+  };
   const insidePeople = data.visitors.filter((visitor) => visitor.status === 'inside').length;
   const insideVehicles = data.vehicles.filter((vehicle) => vehicle.status === 'inside').length;
   const pendingPackages = data.packages.filter((item) => item.status === 'pending').length;
@@ -1176,7 +1244,9 @@ function Dashboard({ data, setScreen }: { data: AppData; setScreen: (screen: Scr
   return (
     <div className="space-y-6">
       <PageTitle title="Panel operativo" subtitle="Resumen vivo de accesos, novedades y pendientes de portería." />
-      <ContextDashboard tenantId={data.user.tenantId} role={data.user.role} />
+      {apiOnline && data.user.role !== 'resident' &&
+        <SiteContextSelector tenantId={data.user.tenantId} apiOnline={apiOnline} onChange={refreshSelectedSite} />}
+      <ContextDashboard tenantId={data.user.tenantId} role={data.user.role} refreshKey={siteRefreshKey} />
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Metric icon="groups" label="Personas dentro" value={insidePeople} tone="primary" onClick={() => setScreen('people')} />
         <Metric icon="directions_car" label="Vehículos dentro" value={insideVehicles} tone="info" onClick={() => setScreen('vehicles')} />
