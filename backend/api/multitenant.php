@@ -222,3 +222,96 @@ function handle_multitenant_routes(string $method,string $path): void
         json_response(['ok'=>true]);
     }
 }
+
+
+/** NULL means tenant-wide visibility; [] means no authorized sites. */
+function actor_visible_site_ids(array $actor): ?array
+{
+    if (is_platform_admin($actor)) return null;
+    $tenantId=(int)$actor['tenant_id'];
+    $scopes=scopes_for_user((int)$actor['id'],$tenantId);
+    foreach($scopes as $scope) {
+        if ($scope['scope_type']==='tenant' && (int)$scope['scope_id']===$tenantId) return null;
+    }
+    $allowed=[];
+    foreach($scopes as $scope) {
+        $type=(string)$scope['scope_type'];
+        $id=(int)$scope['scope_id'];
+        if ($type==='site' && valid_scope_resource($tenantId,'site',$id)) $allowed[$id]=true;
+        if ($type==='access_point' || $type==='unit') {
+            $table=$type==='access_point'?'access_points':'units';
+            $stmt=db()->prepare("SELECT site_id FROM {$table} WHERE id=:id AND tenant_id=:tenant");
+            $stmt->execute(['id'=>$id,'tenant'=>$tenantId]);
+            $siteId=(int)$stmt->fetchColumn();
+            if ($siteId>0) $allowed[$siteId]=true;
+        }
+    }
+    return array_map('intval',array_keys($allowed));
+}
+
+/**
+ * Resolve the tenant-owned site to avoid revealing records from other sites.
+ * Unattributed records are intentionally hidden from limited users.
+ */
+function scoped_row_site(string $resource,array $row,int $tenantId): int
+{
+    if (in_array($resource,['sites','access_points','devices','units','invitations','parking','booking_resources','shifts'],true)) {
+        return (int)($resource==='sites'?($row['id']??0):($row['site_id']??0));
+    }
+    if ($resource==='residents') {
+        $reference='units'; $id=(int)($row['unit_id']??0); $field='site_id';
+    } elseif ($resource==='bookings') {
+        $reference='booking_resources'; $id=(int)($row['resource_id']??0); $field='site_id';
+    } elseif (in_array($resource,['visits','vehicles','packages','incidents'],true)) {
+        if (!empty($row['site_id'])) return (int)$row['site_id'];
+        $reference='guard_shifts'; $id=(int)($row['shift_id']??0); $field='site_id';
+    } else {
+        return 0;
+    }
+    if ($id<=0) return 0;
+    static $cache=[];
+    $cacheKey=$tenantId.':'.$reference.':'.$id;
+    if (!array_key_exists($cacheKey,$cache)) {
+        $stmt=db()->prepare("SELECT {$field} FROM {$reference} WHERE id=:id AND tenant_id=:tenant LIMIT 1");
+        $stmt->execute(['id'=>$id,'tenant'=>$tenantId]);
+        $cache[$cacheKey]=(int)$stmt->fetchColumn();
+    }
+    return $cache[$cacheKey];
+}
+
+function scope_filter_rows(string $resource,array $rows,array $actor): array
+{
+    if (($actor['role']??'')==='resident') return $rows; // Existing portal-owned filters apply.
+    $visible=actor_visible_site_ids($actor);
+    if ($visible===null) return $rows;
+    $tenantId=(int)$actor['tenant_id'];
+    return array_values(array_filter($rows,static function($row)use($resource,$tenantId,$visible):bool {
+        if (!is_array($row)) return false;
+        return in_array(scoped_row_site($resource,$row,$tenantId),$visible,true);
+    }));
+}
+
+function scope_filter_bootstrap_payload(array $payload,array $actor): array
+{
+    if (($actor['role']??'')==='resident') return $payload;
+    if (actor_visible_site_ids($actor)===null) return $payload;
+    $resources=[
+        'sites'=>'sites','access_points'=>'access_points','devices'=>'devices',
+        'visits'=>'visits','vehicles'=>'vehicles','packages'=>'packages',
+        'booking_resources'=>'booking_resources','bookings'=>'bookings',
+        'units'=>'units','residents'=>'residents','parking'=>'parking',
+        'invitations'=>'invitations','incidents'=>'incidents'
+    ];
+    foreach ($resources as $key=>$resource) {
+        if (isset($payload['data'][$key]) && is_array($payload['data'][$key])) {
+            $payload['data'][$key]=scope_filter_rows($resource,$payload['data'][$key],$actor);
+        }
+    }
+    // No unscoped tenant-wide exports of PII, restrictions or audit records.
+    foreach (['restrictions','audit'] as $key) $payload['data'][$key]=[];
+    if (isset($payload['data']['active_shift']) && is_array($payload['data']['active_shift'])) {
+        $shift=$payload['data']['active_shift'];
+        $payload['data']['active_shift']=scope_filter_rows('shifts',[$shift],$actor)[0]??null;
+    }
+    return $payload;
+}

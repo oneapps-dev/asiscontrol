@@ -375,7 +375,7 @@ try {
              LIMIT 200'
         );
         $stmt->execute(['tenant_id' => tenant_id()]);
-        json_response(['data' => $stmt->fetchAll()]);
+        json_response(['data' => scope_filter_rows('visits',$stmt->fetchAll(),require_auth())]);
     }
 
     if ($method === 'GET' && $path === '/people') {
@@ -485,7 +485,7 @@ try {
         $bootstrapInvitations = $isResident && $residentProfile
             ? list_rows('SELECT * FROM invitations WHERE tenant_id = :tenant_id AND destination = :destination AND host = :host ORDER BY created_at DESC LIMIT 100', ['tenant_id' => $tenantId, 'destination' => $residentDestination, 'host' => $residentProfile['full_name']])
             : list_rows('SELECT * FROM invitations WHERE tenant_id = :tenant_id ORDER BY created_at DESC LIMIT 200', ['tenant_id' => $tenantId]);
-        json_response([
+        $bootstrapPayload = [
             'csrf_token' => csrf_token(),
             'platform_admin' => is_platform_admin($bootstrapUser),
             'data' => [
@@ -510,11 +510,12 @@ try {
                 'restrictions' => $isResident ? [] : list_rows('SELECT * FROM restrictions WHERE tenant_id = :tenant_id AND is_active = 1 AND (valid_from IS NULL OR valid_from <= NOW()) AND (valid_until IS NULL OR valid_until >= NOW()) ORDER BY created_at DESC', ['tenant_id' => $tenantId]),
                 'audit' => $isResident ? [] : list_rows('SELECT * FROM audit_logs WHERE tenant_id = :tenant_id ORDER BY created_at DESC LIMIT 80', ['tenant_id' => $tenantId]),
             ],
-        ]);
+        ];
+        json_response(scope_filter_bootstrap_payload($bootstrapPayload,$bootstrapUser));
     }
 
     if ($method === 'GET' && $path === '/sites') {
-        json_response(['data' => list_rows('SELECT * FROM sites WHERE tenant_id = :tenant_id ORDER BY name', ['tenant_id' => tenant_id()])]);
+        json_response(['data' => scope_filter_rows('sites',list_rows('SELECT * FROM sites WHERE tenant_id = :tenant_id ORDER BY name', ['tenant_id' => tenant_id()]),require_auth())]);
     }
 
     if ($method === 'POST' && $path === '/sites') {
@@ -787,7 +788,7 @@ try {
     }
 
     if ($method === 'GET' && $path === '/vehicles') {
-        json_response(['data' => list_rows('SELECT * FROM vehicles WHERE tenant_id = :tenant_id ORDER BY entered_at DESC LIMIT 200', ['tenant_id' => tenant_id()])]);
+        json_response(['data' => scope_filter_rows('vehicles',list_rows('SELECT * FROM vehicles WHERE tenant_id = :tenant_id ORDER BY entered_at DESC LIMIT 200', ['tenant_id' => tenant_id()]),require_auth())]);
     }
 
     if ($method === 'GET' && $path === '/parking') {
@@ -1313,7 +1314,7 @@ try {
     }
 
     if ($method === 'GET' && $path === '/units') {
-        json_response(['data' => units_for_tenant(tenant_id())]);
+        json_response(['data' => scope_filter_rows('units',units_for_tenant(tenant_id()),require_auth())]);
     }
 
     if ($method === 'POST' && $path === '/units') {
@@ -1394,7 +1395,7 @@ try {
     }
 
     if ($method === 'GET' && $path === '/packages') {
-        json_response(['data' => packages_for_tenant(tenant_id())]);
+        json_response(['data' => scope_filter_rows('packages',packages_for_tenant(tenant_id()),require_auth())]);
     }
 
     if ($method === 'GET' && $path === '/portal/packages') {
@@ -1580,7 +1581,7 @@ try {
     }
 
     if ($method === 'GET' && $path === '/invitations') {
-        json_response(['data' => list_rows('SELECT * FROM invitations WHERE tenant_id = :tenant_id ORDER BY created_at DESC LIMIT 200', ['tenant_id' => tenant_id()])]);
+        json_response(['data' => scope_filter_rows('invitations',list_rows('SELECT * FROM invitations WHERE tenant_id = :tenant_id ORDER BY created_at DESC LIMIT 200', ['tenant_id' => tenant_id()]),require_auth())]);
     }
 
     if ($method === 'GET' && $path === '/approvals') {
@@ -1716,7 +1717,7 @@ try {
     }
 
     if ($method === 'GET' && $path === '/incidents') {
-        json_response(['data' => list_rows('SELECT * FROM incidents WHERE tenant_id = :tenant_id ORDER BY created_at DESC LIMIT 200', ['tenant_id' => tenant_id()])]);
+        json_response(['data' => scope_filter_rows('incidents',list_rows('SELECT * FROM incidents WHERE tenant_id = :tenant_id ORDER BY created_at DESC LIMIT 200', ['tenant_id' => tenant_id()]),require_auth())]);
     }
 
     if ($method === 'POST' && $path === '/incidents') {
