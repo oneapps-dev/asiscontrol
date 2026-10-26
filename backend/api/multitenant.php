@@ -426,3 +426,41 @@ function normalize_offline_scope(array $actor,array $envelope,array $payload): a
     }
     return $payload;
 }
+
+
+/** Fail closed for site-scoped principals until each legacy route is verified. */
+function enforce_legacy_scope_gate(string $method,string $path): void
+{
+    if ($path==='/health' || str_starts_with($path,'/auth/') && $path!=='/auth/logout') return;
+    if (empty($_SESSION['user'])) return; // Portal-only sessions use require_portal_auth().
+    $actor=require_auth();
+    if (($actor['role']??'')==='resident') {
+        if (str_starts_with($path,'/portal/') || in_array($path,['/me','/bootstrap','/me/context','/me/effective-permissions','/auth/logout'],true)) return;
+        json_response(['error'=>'Solo está autorizado el portal del residente',
+            'error_code'=>'ROLE_SCOPE_DENIED'],403);
+    }
+    if (actor_visible_site_ids($actor)===null) return;
+    if (($actor['role']??'')==='tech_operator' &&
+        preg_match('#^/platform/tenants/[0-9]+/children$#',$path) &&
+        in_array($method,['GET','POST'],true)) return;
+
+    $reads=[
+        '/me','/me/context','/me/effective-permissions','/bootstrap',
+        '/sites','/visits','/vehicles','/packages','/units','/invitations',
+        '/incidents','/shifts','/access-points','/devices','/booking-resources',
+        '/bookings','/parking','/access-events'
+    ];
+    if ($method==='GET' && in_array($path,$reads,true)) return;
+    if ($method==='POST' && in_array($path,[
+        '/auth/logout','/shifts','/visits','/vehicles','/packages','/incidents',
+        '/invitations/redeem','/access-events','/offline/events'
+    ],true)) return;
+    if ($method==='POST' && (
+        preg_match('#^/shifts/[0-9]+/close$#',$path)
+        || preg_match('#^/(visits|vehicles)/[0-9]+/exit$#',$path)
+        || preg_match('#^/packages/[0-9]+/(deliver|reject|return|signature)$#',$path)
+        || preg_match('#^/incidents/[0-9]+/(review|close)$#',$path)
+    )) return;
+    json_response(['error'=>'Ruta pendiente de autorización por sede',
+        'error_code'=>'SITE_SCOPE_ROUTE_NOT_ENABLED'],403);
+}

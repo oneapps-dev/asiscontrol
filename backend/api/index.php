@@ -27,6 +27,7 @@ if (!in_array($method, ['GET', 'HEAD', 'OPTIONS'], true) && !$isPublicPost) {
 }
 
 try {
+    enforce_legacy_scope_gate($method,$path);
     handle_multitenant_routes($method, $path);
     handle_plan_routes($method, $path);
     handle_tenant_hierarchy_routes($method, $path);
@@ -1499,6 +1500,7 @@ try {
         $destination = trim((string) ($data['destination'] ?? ''));
         $recipient = trim((string) ($data['recipient'] ?? ''));
         if ($unitId) {
+            require_tenant_scope('unit',$unitId);
             $unit = one_row('SELECT id, tower, unit_code FROM units WHERE id = :id AND tenant_id = :tenant_id AND status = "active" LIMIT 1', ['id' => $unitId, 'tenant_id' => tenant_id()]);
             if (!$unit) json_response(['error' => 'Unidad de destino no encontrada'], 422);
             $destination = trim(($unit['tower'] ? $unit['tower'] . ' - ' : '') . $unit['unit_code']);
@@ -1508,6 +1510,7 @@ try {
             if (!$resident) json_response(['error' => 'Residente destinatario no encontrado'], 422);
             $recipient = $resident['full_name'];
             $unitId = $unitId ?: (int) $resident['unit_id'];
+            require_tenant_scope('unit',$unitId);
         }
         if ($recipient === '' || $destination === '') json_response(['error' => 'Selecciona unidad y persona destinataria'], 422);
         $stmt = db()->prepare(
@@ -1693,6 +1696,10 @@ try {
 
         if (!$invitation) {
             json_response(['error' => 'Invitacion invalida, vencida o usada'], 422);
+        }
+        $currentSite=validated_shift_site((int)$data['shift_id'],$user);
+        if ((int)$invitation['site_id']!==$currentSite) {
+            json_response(['error'=>'Invitación fuera de tu sede','error_code'=>'SCOPE_DENIED'],403);
         }
 
         $pdo = db();
