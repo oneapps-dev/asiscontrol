@@ -9,6 +9,7 @@ require __DIR__ . '/tenant_hierarchy.php';
 require __DIR__ . '/platform_support.php';
 require __DIR__ . '/organization.php';
 require __DIR__ . '/tenant_features.php';
+require __DIR__ . '/audit_structured.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
 $apiStage = 'router';
@@ -39,6 +40,7 @@ try {
     handle_platform_preview_routes($method, $path);
     handle_organization_routes($method, $path);
     handle_tenant_feature_routes($method,$path);
+    handle_structured_audit_routes($method,$path);
     if ($method === 'GET' && $path === '/health') {
         $apiStage = 'health.database';
         try {
@@ -4019,6 +4021,7 @@ function platform_audit(?array $actor, ?int $tenantId, string $action, string $d
             'detail' => substr($detail, 0, 255),
             'metadata_json' => $metadata ? json_encode($metadata, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : null,
         ]);
+        structured_audit_event('platform',$actor,$tenantId,$action,$detail,$metadata);
     } catch (Throwable) {
         // Platform audit must not make an already completed customer operation fail.
     }
@@ -4293,6 +4296,7 @@ function audit(string $action, string $detail): void
         'detail' => $detail,
         'ip_address' => $_SERVER['REMOTE_ADDR'] ?? null,
     ]);
+    structured_audit_event('tenant',$user,(int)$user['tenant_id'],$action,$detail);
 }
 
 function insert_correction(PDO $pdo, int $tenantId, string $entityType, int $entityId, string $field, mixed $previous, mixed $newValue, string $reason, int $userId): void
