@@ -349,6 +349,9 @@ try {
 
     if ($method === 'POST' && preg_match('#^/shifts/(\d+)/force-close$#', $path, $matches)) {
         $user = require_permission('shifts.monitor');
+        // Resolve the persisted shift before any mutation; caller-supplied site IDs are not trusted.
+        // This also enforces a temporarily selected site and delegated tenant scopes.
+        validated_shift_site((int)$matches[1], $user);
         $data = request_json();
         require_fields($data, ['reason']);
         $stmt = db()->prepare('UPDATE guard_shifts SET ended_at = NOW(), notes = CONCAT(COALESCE(notes, ""), :note) WHERE id = :id AND tenant_id = :tenant_id AND ended_at IS NULL');
