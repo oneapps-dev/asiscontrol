@@ -692,6 +692,9 @@ try {
         }
         if (!empty($data['site_id'])) assert_owned_site((int) $data['site_id'], tenant_id());
         validate_role_assignment(require_auth(), tenant_id(), (string)$data['role']);
+        if (in_array((string)$data['role'],['guard','supervisor','coordinator','tech_operator'],true) && empty($data['site_id'])) {
+            json_response(['error'=>'Se requiere sede para un usuario operativo'],422);
+        }
         $stmt = db()->prepare(
             'INSERT INTO users (tenant_id, site_id, name, email, password_hash, role, is_active)
              VALUES (:tenant_id, :site_id, :name, :email, :password_hash, :role, :is_active)'
@@ -710,7 +713,7 @@ try {
         db()->prepare('INSERT INTO user_scopes(tenant_id,user_id,scope_type,scope_id,granted_by) VALUES(:tenant,:user,:type,:scope_id,:actor)')
             ->execute(['tenant'=>tenant_id(),'user'=>$createdId,'type'=>$newScope['type'],'scope_id'=>$newScope['id'],'actor'=>require_auth()['id']]);
         audit('usuario.creado', 'Usuario creado: ' . $data['email']);
-        json_response(['id' => db()->lastInsertId()], 201);
+        json_response(['id' => $createdId], 201);
     }
 
     if ($method === 'PATCH' && preg_match('#^/users/(\d+)$#', $path, $matches)) {
@@ -3810,6 +3813,9 @@ function import_csv_row(PDO $pdo, int $tenantId, string $jobType, array $data): 
             }
         }
         validate_role_assignment(require_auth(), $tenantId, (string)$data['role']);
+        if (in_array((string)$data['role'],['guard','supervisor','coordinator','tech_operator'],true) && empty($data['site_id'])) {
+            throw new RuntimeException('Se requiere sede para un usuario operativo');
+        }
         if (!empty($data['site_id'])) assert_owned_site((int)$data['site_id'],$tenantId);
         $password = (string) ($data['password'] ?? bin2hex(random_bytes(6)));
         $stmt = $pdo->prepare(
