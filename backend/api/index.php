@@ -320,12 +320,12 @@ try {
 
     if ($method === 'GET' && $path === '/shifts') {
         require_permission('shifts.monitor');
-        json_response(['data' => list_rows(
+        json_response(['data' => scope_filter_rows('shifts',list_rows(
             'SELECT gs.*, u.name AS user_name, s.name AS site_name
              FROM guard_shifts gs INNER JOIN users u ON u.id = gs.user_id INNER JOIN sites s ON s.id = gs.site_id
              WHERE gs.tenant_id = :tenant_id ORDER BY gs.ended_at IS NULL DESC, gs.started_at DESC LIMIT 200',
             ['tenant_id' => tenant_id()]
-        )]);
+        ),require_auth())]);
     }
 
     if ($method === 'POST' && preg_match('#^/shifts/(\d+)/force-close$#', $path, $matches)) {
@@ -380,7 +380,7 @@ try {
     }
 
     if ($method === 'GET' && $path === '/people') {
-        require_auth();
+        require_tenant_wide_scope();
         json_response(['data' => list_rows(
             'SELECT p.*, latest.version_no AS latest_version_no
              FROM people p
@@ -562,7 +562,7 @@ try {
 
     if ($method === 'GET' && $path === '/access-points') {
         require_permission('devices.view');
-        json_response(['data' => access_points_for_tenant(tenant_id())]);
+        json_response(['data' => scope_filter_rows('access_points',access_points_for_tenant(tenant_id()),require_auth())]);
     }
 
     if ($method === 'POST' && $path === '/access-points') {
@@ -632,7 +632,7 @@ try {
 
     if ($method === 'GET' && $path === '/devices') {
         require_permission('devices.view');
-        json_response(['data' => devices_for_tenant(tenant_id())]);
+        json_response(['data' => scope_filter_rows('devices',devices_for_tenant(tenant_id()),require_auth())]);
     }
 
     if ($method === 'POST' && $path === '/devices') {
@@ -765,6 +765,7 @@ try {
     }
 
     if ($method === 'GET' && $path === '/restrictions') {
+        require_tenant_wide_scope();
         json_response(['data' => list_rows('SELECT * FROM restrictions WHERE tenant_id = :tenant_id AND is_active = 1 AND (valid_from IS NULL OR valid_from <= NOW()) AND (valid_until IS NULL OR valid_until >= NOW()) ORDER BY created_at DESC', ['tenant_id' => tenant_id()])]);
     }
 
@@ -802,10 +803,10 @@ try {
             $where .= ' AND (space_code LIKE :query OR assigned_to LIKE :query OR plate LIKE :query)';
             $params['query'] = '%' . $query . '%';
         }
-        json_response(['data' => list_rows(
+        json_response(['data' => scope_filter_rows('parking',list_rows(
             'SELECT * FROM parking_assignments WHERE ' . $where . ' ORDER BY space_code LIMIT 200',
             $params
-        )]);
+        ),require_auth())]);
     }
 
     if ($method === 'POST' && $path === '/parking') {
@@ -850,7 +851,7 @@ try {
     }
 
     if ($method === 'GET' && $path === '/booking-resources') {
-        json_response(['data' => booking_resources_for_tenant(tenant_id())]);
+        json_response(['data' => scope_filter_rows('booking_resources',booking_resources_for_tenant(tenant_id()),require_auth())]);
     }
 
     if ($method === 'POST' && $path === '/booking-resources') {
@@ -882,11 +883,11 @@ try {
 
     if ($method === 'GET' && $path === '/bookings') {
         require_permission('bookings.view');
-        json_response(['data' => bookings_for_tenant(tenant_id(), [
+        json_response(['data' => scope_filter_rows('bookings',bookings_for_tenant(tenant_id(), [
             'from' => $_GET['from'] ?? null,
             'to' => $_GET['to'] ?? null,
             'resource_id' => $_GET['resource_id'] ?? null,
-        ])]);
+        ]),require_auth())]);
     }
 
     if ($method === 'POST' && $path === '/bookings') {
@@ -1961,7 +1962,7 @@ try {
             $where[] = 'ae.occurred_at <= :to_date';
             $params['to_date'] = $_GET['to'] . ' 23:59:59';
         }
-        json_response(['data' => list_rows(
+        json_response(['data' => scope_filter_rows('access_events',list_rows(
             'SELECT ae.*, p.full_name, s.name AS site_name, ap.name AS access_point_name, d.name AS device_name
              FROM access_events ae
              LEFT JOIN people p ON p.id = ae.person_id
@@ -1971,7 +1972,7 @@ try {
              WHERE ' . implode(' AND ', $where) . '
              ORDER BY ae.occurred_at DESC LIMIT 500',
             $params
-        )]);
+        ),require_auth())]);
     }
 
     if ($method === 'POST' && $path === '/access-events') {
@@ -2429,6 +2430,7 @@ try {
     }
 
     if ($method === 'GET' && $path === '/dashboard') {
+        require_tenant_wide_scope();
         $tenantId = tenant_id();
         $pdo = db();
         $counts = [];

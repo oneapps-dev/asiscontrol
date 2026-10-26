@@ -255,7 +255,7 @@ function actor_visible_site_ids(array $actor): ?array
  */
 function scoped_row_site(string $resource,array $row,int $tenantId): int
 {
-    if (in_array($resource,['sites','access_points','devices','units','invitations','parking','booking_resources','shifts'],true)) {
+    if (in_array($resource,['sites','access_points','devices','units','invitations','parking','booking_resources','shifts','access_events'],true)) {
         return (int)($resource==='sites'?($row['id']??0):($row['site_id']??0));
     }
     if ($resource==='residents') {
@@ -346,4 +346,15 @@ function validated_shift_site(int $shiftId,array $actor,?int $requestedSite=null
     }
     require_tenant_scope('site',$siteId);
     return $siteId;
+}
+
+
+/** Never expose tenant-global datasets to site-scoped operators. */
+function require_tenant_wide_scope(): void
+{
+    $actor=require_auth();
+    if (($actor['role']??'')==='resident' || actor_visible_site_ids($actor)!==null) {
+        json_response(['error'=>'Se requiere alcance de cliente completo',
+            'error_code'=>'TENANT_WIDE_SCOPE_REQUIRED'],403);
+    }
 }
