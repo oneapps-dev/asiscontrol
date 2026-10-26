@@ -1,0 +1,48 @@
+name: AsisControl CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  php:
+    name: PHP syntax
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check PHP files
+        run: |
+          find backend -type f -name '*.php' -print0 | xargs -0 -n 1 php -l
+
+  frontend:
+    name: TypeScript and production build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Type check
+        run: npm run lint
+      - name: Production build
+        run: npm run build
+        env:
+          VITE_API_REQUIRED: 'true'
+      - name: Verify packaging
+        run: |
+          test -f dist/index.html
+          test -f dist/backend/api/index.php
+          test -f dist/.htaccess
+          test ! -f dist/backend/.env
+          test ! -d dist/backend/storage
