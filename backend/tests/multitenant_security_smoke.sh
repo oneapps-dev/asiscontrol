@@ -41,6 +41,31 @@ test "$status" = "403" || { echo "Cross-site shift creation returned $status"; e
 status=$(curl -sS -o /tmp/audit-denied.json -w '%{http_code}' -b /tmp/siteguard.cookies "$base/audit")
 test "$status" = "403" || { echo "Guard audit read returned $status"; exit 1; }
 
+restricted_visit_id=$(mysql -h 127.0.0.1 -u root vzwquesv_app -N -e "SELECT id FROM visits WHERE reason='VISITA_NO_AUTORIZADA_QA' LIMIT 1")
+status=$(curl -sS -o /tmp/offline-cross-site.json -w '%{http_code}' \
+  -b /tmp/siteguard.cookies -H "X-CSRF-Token: $csrf" \
+  -H 'Content-Type: application/json' \
+  -d "{\"event_uuid\":\"550e8400-e29b-41d4-a716-446655440111\",\"idempotency_key\":\"qa-cross-site-offline\",\"action\":\"visit_exit\",\"payload\":{\"visit_id\":$restricted_visit_id,\"event_type\":\"salida\",\"occurred_at\":\"2026-10-26 12:00:00\"}}" \
+  "$base/offline/events")
+test "$status" = "403" || { echo "Cross-site offline visit exit returned $status"; exit 1; }
+mysql -h 127.0.0.1 -u root vzwquesv_app -N -e \
+  "SELECT status FROM visits WHERE id=$restricted_visit_id" | grep -q '^inside
+# Resident portal sessions must be revoked immediately after deactivation.
+hash=$(php -r 'echo password_hash("qa-portal-pass", PASSWORD_DEFAULT);')
+mysql -h 127.0.0.1 -u root vzwquesv_app -e "UPDATE residents SET password_hash='$hash' WHERE id=1 AND tenant_id=1"
+curl -fsS -c /tmp/portal-qa.cookies -H 'Content-Type: application/json' \
+  -d '{"email":"laura.gomez@asiscontrol.local","password":"qa-portal-pass"}' \
+  "$base/portal/auth/login" >/tmp/portal-qa-login.json
+curl -fsS -b /tmp/portal-qa.cookies "$base/portal/me" >/tmp/portal-qa-before.json
+mysql -h 127.0.0.1 -u root vzwquesv_app -e "UPDATE residents SET status='inactive' WHERE id=1 AND tenant_id=1"
+status=$(curl -sS -o /tmp/portal-revoked.json -w '%{http_code}' \
+  -b /tmp/portal-qa.cookies "$base/portal/me")
+test "$status" = "403" || { echo "Revoked portal session returned $status"; exit 1; }
+grep -q 'RESIDENT_ACCESS_REVOKED' /tmp/portal-revoked.json
+
+echo 'Scope isolation, cross-site denial, audit denial, portal revocation: PASSED'
+
+
 # Resident portal sessions must be revoked immediately after deactivation.
 hash=$(php -r 'echo password_hash("qa-portal-pass", PASSWORD_DEFAULT);')
 mysql -h 127.0.0.1 -u root vzwquesv_app -e "UPDATE residents SET password_hash='$hash' WHERE id=1 AND tenant_id=1"
