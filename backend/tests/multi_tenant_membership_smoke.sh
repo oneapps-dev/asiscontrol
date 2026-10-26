@@ -149,12 +149,16 @@ mysql -h 127.0.0.1 -u root vzwquesv_app -N -e \
 mysql -h 127.0.0.1 -u root vzwquesv_app -N -e \
  "SELECT COUNT(*) FROM platform_audit_logs WHERE actor_user_id=$guard_id AND tenant_id=$industrial_id AND action='contexto.cliente_seleccionado'" | awk '{if ($1 < 1) exit 1}'
 
-# A delegated relationship is not enough when the security operator is commercially suspended.
-# Keep the residential membership active and validate both target discovery and selected access.
+# An operator suspension invalidates an already selected delegated membership.
+status=$(curl -sS -o /tmp/member-operator-select.json -w '%{http_code}'  -c /tmp/multi-guard.cookies -b /tmp/multi-guard.cookies  -H "X-CSRF-Token: $guard_csrf" -H 'Content-Type: application/json'  -d "{\"tenant_id\":$residential_id}" "$base/me/tenant/select")
+test "$status" = "200" || { echo "Operator test selection failed: $status"; exit 1; }
 mysql -h 127.0.0.1 -u root vzwquesv_app -e "UPDATE tenants SET commercial_status='suspended' WHERE id=$security_id"
-status=$(curl -sS -o /tmp/member-suspended-operator.json -w '%{http_code}' -b /tmp/multi-guard.cookies "$base/me/tenants")
-test "$status" != "200" || { echo "Suspended operator retained normal tenant access"; exit 1; }
+status=$(curl -sS -o /tmp/member-suspended-operator.json -w '%{http_code}' -b /tmp/multi-guard.cookies "$base/me")
+test "$status" = "403" || { echo "Suspended operator retained delegated tenant access: $status"; exit 1; }
+grep -q TENANT_CONTEXT_REVOKED /tmp/member-suspended-operator.json
 mysql -h 127.0.0.1 -u root vzwquesv_app -e "UPDATE tenants SET commercial_status='active' WHERE id=$security_id"
+status=$(curl -sS -o /tmp/member-operator-clear.json -w '%{http_code}'  -c /tmp/multi-guard.cookies -b /tmp/multi-guard.cookies  -H "X-CSRF-Token: $guard_csrf" -H 'Content-Type: application/json'  -d '{}' "$base/me/tenant/clear")
+test "$status" = "200" || { echo "Operator test cleanup failed: $status"; exit 1; }
 
 # Target subscription changes invalidate the selected context before any operation.
 status=$(curl -sS -o /tmp/member-residential-reselect.json -w '%{http_code}' \
