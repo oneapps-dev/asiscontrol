@@ -2295,7 +2295,7 @@ try {
              FROM tenants t
              LEFT JOIN client_types ct ON ct.id=t.client_type_id
              LEFT JOIN sites s ON s.tenant_id = t.id AND s.id = (SELECT MIN(s2.id) FROM sites s2 WHERE s2.tenant_id = t.id)
-             LEFT JOIN users u ON u.tenant_id = t.id AND u.role = "admin" AND u.id = (SELECT MIN(u2.id) FROM users u2 WHERE u2.tenant_id = t.id AND u2.role = "admin")
+             LEFT JOIN users u ON u.tenant_id = t.id AND u.role IN ("admin","tech_operator") AND u.id = (SELECT MIN(u2.id) FROM users u2 WHERE u2.tenant_id = t.id AND u2.role IN ("admin","tech_operator"))
              LEFT JOIN tenant_subscriptions ts ON ts.id = (SELECT MAX(ts2.id) FROM tenant_subscriptions ts2 WHERE ts2.tenant_id = t.id)
              LEFT JOIN subscription_plans sp ON sp.id = ts.plan_id
              ORDER BY t.created_at DESC'
@@ -2352,8 +2352,9 @@ try {
             ]);
             $siteId = (int) $pdo->lastInsertId();
             $temporaryHash = password_hash(bin2hex(random_bytes(24)), PASSWORD_DEFAULT);
-            $stmt = $pdo->prepare('INSERT INTO users (tenant_id, site_id, name, email, password_hash, role, is_active) VALUES (:tenant_id, :site_id, :name, :email, :password_hash, "admin", 1)');
-            $stmt->execute(['tenant_id' => $tenantId, 'site_id' => $siteId, 'name' => trim((string) $data['admin_name']), 'email' => $email, 'password_hash' => $temporaryHash]);
+            $primaryRole = $clientTypeCode === 'security_company' ? 'tech_operator' : 'admin';
+            $stmt = $pdo->prepare('INSERT INTO users (tenant_id, site_id, name, email, password_hash, role, is_active) VALUES (:tenant_id, :site_id, :name, :email, :password_hash, :role, 1)');
+            $stmt->execute(['tenant_id' => $tenantId, 'site_id' => $siteId, 'name' => trim((string) $data['admin_name']), 'email' => $email, 'password_hash' => $temporaryHash,'role'=>$primaryRole]);
             $userId = (int) $pdo->lastInsertId();
             $pdo->prepare('INSERT INTO user_scopes(tenant_id,user_id,scope_type,scope_id,granted_by) VALUES(:tenant,:user,"tenant",:scope,:actor)')
                 ->execute(['tenant'=>$tenantId,'user'=>$userId,'scope'=>$tenantId,'actor'=>$actor['id']]);
