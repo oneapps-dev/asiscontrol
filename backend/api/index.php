@@ -910,7 +910,7 @@ try {
             'site_id' => $siteId,
             'name' => $data['name'],
             'resource_type' => $data['resource_type'],
-            'pricing_mode' => in_array(($data['pricing_mode'] ?? 'mixto'), ['hora', 'dia', 'mixto'], true) ? $data['pricing_mode'] : 'mixto',
+            'pricing_mode' => in_array((string)($data['pricing_mode'] ?? 'mixto'), ['hora', 'dia', 'mixto'], true) ? (string)($data['pricing_mode'] ?? 'mixto') : 'mixto',
             'capacity' => (int) ($data['capacity'] ?? 0),
             'price_per_hour' => (float) ($data['price_per_hour'] ?? 0),
             'price_per_day' => (float) ($data['price_per_day'] ?? 0),
