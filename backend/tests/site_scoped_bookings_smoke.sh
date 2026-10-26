@@ -41,7 +41,7 @@ curl -fsS -b /tmp/book-site.cookies "$base/booking-resources" >/tmp/book-resourc
 RES="$resource" OTHER="$other_resource" python3 - <<'PY'
 import json,os
 ids={str(row['id']) for row in json.load(open('/tmp/book-resources-listed.json'))['data']}
-assert os.environ['RES'] in ids and os.environ['OTHER'] not in ids
+assert os.environ['RES'] in ids and os.environ['OTHER'] not in ids, {'allowed':os.environ['RES'],'other':os.environ['OTHER'],'visible_ids':sorted(ids)}
 PY
 
 day=$(date -u -d '+150 days' '+%Y-%m-%d')
