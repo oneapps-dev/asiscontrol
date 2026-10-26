@@ -46,6 +46,18 @@ jobs:
           test -f dist/.htaccess
           test ! -f dist/backend/.env
           test ! -d dist/backend/storage
+          test ! -d dist/backend/database
+          test ! -d dist/backend/tests
+          test ! -d dist/backend/scripts
+          test ! -f dist/backend/README.md
+          test -z "$(find dist/backend -type f \( -name '*.sql' -o -name '*.env*' -o -name '*.zip' \) -print -quit)"
+      - name: Upload QA deploy artifact (not production-certified)
+        uses: actions/upload-artifact@v4
+        with:
+          name: asiscontrol-web-cpanel-qa
+          path: frontend/dist/
+          if-no-files-found: error
+          retention-days: 14
 
   database:
     name: Fresh database integration
