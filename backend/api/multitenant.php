@@ -676,13 +676,21 @@ function handle_contextual_dashboard(string $method,string $path): void
         $metrics['active_access_points']=contextual_metric_count($tenantId,$sites,'active_access_points');
     }
     if (in_array($clientType,['industrial','corporate'],true)) {
-        foreach(['employee_present','contractors_inside','attendance_entries_today','attendance_late_today'] as $key) {
+        foreach(['employee_present','contractors_inside'] as $key) {
             $metrics[$key]=contextual_metric_count($tenantId,$sites,$key);
+        }
+        if (in_array((string)$actor['role'],['admin','supervisor','coordinator','auditor'],true)) {
+            foreach(['attendance_entries_today','attendance_late_today'] as $key) {
+                $metrics[$key]=contextual_metric_count($tenantId,$sites,$key);
+            }
         }
     }
     if (residential_modules_enabled($tenantId)) {
-        foreach(['residents_active','bookings_pending'] as $key) {
-            $metrics[$key]=contextual_metric_count($tenantId,$sites,$key);
+        if (in_array((string)$actor['role'],['admin','supervisor','coordinator','auditor'],true)) {
+            $metrics['bookings_pending']=contextual_metric_count($tenantId,$sites,'bookings_pending');
+        }
+        if (in_array((string)$actor['role'],['admin','auditor'],true)) {
+            $metrics['residents_active']=contextual_metric_count($tenantId,$sites,'residents_active');
         }
     }
     if ($clientType==='security_company' && in_array((string)$actor['role'],['tech_operator','admin','superadmin'],true)) {

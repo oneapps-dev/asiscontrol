@@ -1256,26 +1256,35 @@ function ContextDashboard({ tenantId, role, refreshKey }: { tenantId?: string; r
 
   if (!context) return null;
   const industry = ['industrial','corporate'].includes(context.client_type);
-  const residential = context.client_type === 'residential' || 'residents_active' in context.metrics;
+  const residential = context.client_type === 'residential'
+    || (context.client_type === 'custom' && 'residents_active' in context.metrics);
   const security = context.client_type === 'security_company';
-  const sectorMetrics: Array<[string, number]> = industry ? [
-    ['Empleados en sitio', context.metrics.employee_present || 0],
-    ['Contratistas en sitio', context.metrics.contractors_inside || 0],
-    ['Entradas de empleados hoy', context.metrics.attendance_entries_today || 0],
-    ['Entradas tardías hoy', context.metrics.attendance_late_today || 0],
-  ] : residential ? [
-    ['Unidades activas', context.metrics.units_active || 0],
-    ['Residentes activos', context.metrics.residents_active || 0],
-    ['Reservas pendientes', context.metrics.bookings_pending || 0],
-  ] : security ? [
-    ['Puestos activos', context.metrics.active_access_points || 0],
-    ['Clientes administrados', context.metrics.managed_clients || 0],
-    ['Turnos activos', context.metrics.active_shifts || 0],
-  ] : [['Turnos activos', context.metrics.active_shifts || 0]];
-  const roleMetrics: Array<[string, number]> = context.role === 'guard'
-    ? [['Turnos activos', context.metrics.active_shifts || 0]]
-    : [['Ingresos registrados hoy', context.metrics.visits_today || 0],
-       ['Puestos activos', context.metrics.active_access_points || 0]];
+  const sectorMetrics: Array<[string, number]> = [];
+  const roleMetrics: Array<[string, number]> = [];
+  if (industry) {
+    sectorMetrics.push(['Empleados en sitio', context.metrics.employee_present || 0],
+      ['Contratistas en sitio', context.metrics.contractors_inside || 0]);
+    if ('attendance_entries_today' in context.metrics)
+      sectorMetrics.push(['Entradas de empleados hoy', context.metrics.attendance_entries_today || 0],
+        ['Entradas tardías hoy', context.metrics.attendance_late_today || 0]);
+  } else if (residential) {
+    sectorMetrics.push(['Unidades activas', context.metrics.units_active || 0]);
+    if ('residents_active' in context.metrics)
+      sectorMetrics.push(['Residentes activos', context.metrics.residents_active || 0]);
+    if ('bookings_pending' in context.metrics)
+      sectorMetrics.push(['Reservas pendientes', context.metrics.bookings_pending || 0]);
+  } else if (security && 'managed_clients' in context.metrics) {
+    sectorMetrics.push(['Clientes administrados', context.metrics.managed_clients || 0],
+      ['Turnos activos', context.metrics.active_shifts || 0]);
+  }
+  if (context.role === 'guard') {
+    roleMetrics.push(['Turnos activos', context.metrics.active_shifts || 0]);
+  } else {
+    if ('visits_today' in context.metrics)
+      roleMetrics.push(['Ingresos registrados hoy', context.metrics.visits_today || 0]);
+    if ('active_access_points' in context.metrics)
+      roleMetrics.push(['Puestos activos', context.metrics.active_access_points || 0]);
+  }
   return <section className="panel">
     <div className="panel-head">
       <h3>Indicadores del contexto autorizado</h3>
