@@ -284,3 +284,23 @@ Detectados: 0 pares método-ruta literales y 2 expresiones de ruta dinámicas. L
 - Los tests existentes demuestran **casos específicos**, no cobertura integral: `multitenant_security_smoke.sh`, `platform_preview_smoke.sh`, `client_type_gate_smoke.sh`, `multi_tenant_membership_smoke.sh`, `offline_context_smoke.sh`, entre otros.
 - La siguiente tarea es cruzar cada fila con permiso concreto, control de propiedad y sede, test negativo, test positivo y código de retorno esperado. La ruta marcada «pendiente» no debe calificarse como validada.
 - Mantener el estado **EN DESARROLLO — NO DESPLEGAR** hasta recuperar las funcionalidades legítimas bloqueadas y cerrar la matriz CA-01 a CA-23.
+
+
+## Subconjunto revisado en integración — 26 de octubre de 2026
+
+Las siguientes rutas ahora se prueban con clientes/sedes permitidos y ajenos; el listado general anterior se mantiene pendiente de auditoría para todas las demás rutas.
+
+| Rutas | Verificación de backend | Prueba |
+|---|---|---|
+| GET/POST /files | files.manage, propietario permitido y existente, propiedad de tenant y sede | evidence_owner_scope_smoke.sh |
+| GET /files/{id}/download | Revalidación de propiedad antes de entregar bytes, nunca solo por ID del archivo | evidence_owner_scope_smoke.sh |
+| GET /reports/visits.csv, .xlsx, .html | reports.view y COALESCE entre sede de visita y sede del turno antes de LIMIT | site_scoped_reports_smoke.sh |
+| GET /attendance | attendance.view, tenant de empleado y perfil, filtro de sede antes de LIMIT | site_scoped_reports_smoke.sh |
+| GET /reports/attendance.csv, .xlsx, .html | Igual alcance de asistencia con validaciones de CSV, XML de XLSX y HTML | site_scoped_reports_smoke.sh |
+| GET /reports/summary | Totales de visitas, vehículos, paquetes e incidentes restringidos en SQL | site_scoped_reports_smoke.sh |
+
+El módulo de adjuntos admite solo los tipos de propietario shift_start, visit, visit_exit, vehicle, vehicle_exit, package, package_delivery, incident y booking. Los tipos desconocidos, padres de otros clientes y registros sin sede autorizada se rechazan.
+
+No se autorizó crear nuevas capacidades de acceso para aprobar los tests: la matriz actual de roles se conserva. La primera ejecución verde de este subconjunto fue [GitHub Actions #40378349135](https://github.com/oneapps-dev/asiscontrol/actions/runs/40378349135).
+
+Pendiente: recursos no listados, descargas desde importaciones, eventos offline con concurrencia, modificaciones de personal, integridad de backups, la matriz CA-01 a CA-23, pruebas con navegador real, restauración y migración de una base existente.

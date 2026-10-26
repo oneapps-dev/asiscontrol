@@ -78,6 +78,21 @@ El workflow `.github/workflows/asiscontrol-ci.yml` utiliza MySQL 8 aislado y eje
 Evidencia por ejecución: [GitHub Actions](https://github.com/oneapps-dev/asiscontrol/actions).
 **Solo las ejecuciones que hayan finalizado satisfactoriamente se consideran pruebas aprobadas.**
 
+## Cobertura de autorización recuperada y comprobada (parcial)
+
+| Endpoints | Restricción aplicada | Test |
+|---|---|---|
+| GET /files, POST /files, GET /files/{id}/download | files.manage; tipo de propietario permitido; registro del mismo cliente y sede; validación previa a cada descarga | evidence_owner_scope_smoke.sh |
+| GET /reports/visits.csv, .xlsx, .html | reports.view y filtro SQL por sedes antes de paginar | site_scoped_reports_smoke.sh |
+| GET /attendance y GET /reports/attendance.csv, .xlsx, .html | attendance.view; filtro SQL por sede y joins por cliente | site_scoped_reports_smoke.sh |
+| GET /reports/summary | reports.view; agregados SQL por sede | site_scoped_reports_smoke.sh |
+
+Se corrigió la ruta histórica GET /reports/attendance.html, que estaba definida después del 404 final del enrutador. No se ampliaron los permisos: en la base QA, el Administrador no tiene reports.view, de modo que el test de reportes usa Supervisor autorizado.
+
+Pruebas aprobadas del bloque de reportes: [Actions #40378349135](https://github.com/oneapps-dev/asiscontrol/actions/runs/40378349135). Las nuevas regresiones de evidencias también deben aprobarse en su propia ejecución de CI.
+
+**Esta cobertura es parcial.** Las rutas que todavía no tienen prueba positiva y negativa permanecen bajo revisión. La Fase 9 y los criterios CA-01 a CA-23 NO están cerrados.
+
 ## Prioridades aún pendientes
 
 1. **Cobertura de rutas heredadas**: matriz por endpoint (rol, permiso, tenant, sede, puesto, suscripción, evidencias, errores) y rehabilitación segura de las rutas provisionalmente cerradas. Inventario estático preliminar en `docs/security/route-authorization-review-2026-10-26.md` (118 pares método-ruta literales y 55 patrones dinámicos detectados; no equivalen a cobertura certificada).

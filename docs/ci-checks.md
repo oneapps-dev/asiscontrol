@@ -29,3 +29,12 @@ Activación: push a `main`, pull requests y ejecución manual.
 5. No desplegar mientras `docs/multiclient-implementation-status-2026-10-26.md` mantenga el estado **EN DESARROLLO**.
 
 Ver ejecuciones en: https://github.com/oneapps-dev/asiscontrol/actions
+
+
+## Extensiones de integración: evidencias y reportes
+
+- evidence_owner_scope_smoke.sh verifica carga, listado y descarga, rechazo por sede/propietario, usuario limitado, guardia y selección temporal de sede.
+- site_scoped_reports_smoke.sh verifica SQL filtrado con CSV, XLSX, HTML, API de asistencia y resumen, y compara con un usuario con alcance completo.
+- La prueba de cuotas comerciales se ejecuta antes de crear los dos supervisores QA del test de exportaciones, para no contaminar las capacidades de prueba; no se modificaron los límites para aprobar reportes.
+- Se corrigió el manejador inalcanzable de /reports/attendance.html y se incluye una llamada HTTP en la regresión.
+
