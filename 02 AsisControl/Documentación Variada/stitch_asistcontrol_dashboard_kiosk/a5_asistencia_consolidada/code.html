@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-background": "#1a1c1e",
+                    "outline": "#74777f",
+                    "on-tertiary-fixed-variant": "#60410c",
+                    "on-tertiary-fixed": "#291800",
+                    "error": "#ba1a1a",
+                    "surface-variant": "#e3e2e6",
+                    "outline-variant": "#c4c6cf",
+                    "secondary": "#226296",
+                    "surface-container-high": "#e9e7eb",
+                    "surface-container": "#eeedf1",
+                    "surface-bright": "#faf9fc",
+                    "on-surface-variant": "#43474e",
+                    "surface-tint": "#455f87",
+                    "secondary-fixed-dim": "#9bcbff",
+                    "primary-fixed": "#d5e3ff",
+                    "on-primary-fixed": "#001c3b",
+                    "on-secondary": "#ffffff",
+                    "on-secondary-fixed": "#001d34",
+                    "surface-container-highest": "#e3e2e6",
+                    "secondary-container": "#8bc3fd",
+                    "on-secondary-fixed-variant": "#004a79",
+                    "on-tertiary-container": "#c69b5f",
+                    "inverse-surface": "#2f3033",
+                    "surface-dim": "#dad9dd",
+                    "on-tertiary": "#ffffff",
+                    "error-container": "#ffdad6",
+                    "on-secondary-container": "#005083",
+                    "surface-container-low": "#f4f3f7",
+                    "tertiary-container": "#503300",
+                    "primary": "#022448",
+                    "tertiary": "#341f00",
+                    "primary-container": "#1e3a5f",
+                    "tertiary-fixed-dim": "#edbf7f",
+                    "secondary-fixed": "#d0e4ff",
+                    "inverse-on-surface": "#f1f0f4",
+                    "inverse-primary": "#adc8f5",
+                    "on-error-container": "#93000a",
+                    "primary-fixed-dim": "#adc8f5",
+                    "surface": "#faf9fc",
+                    "on-primary": "#ffffff",
+                    "tertiary-fixed": "#ffddb2",
+                    "background": "#faf9fc",
+                    "on-primary-container": "#8aa4cf",
+                    "surface-container-lowest": "#ffffff",
+                    "on-primary-fixed-variant": "#2d486d",
+                    "on-error": "#ffffff",
+                    "on-surface": "#1a1c1e"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "base": "4px",
+                    "md": "16px",
+                    "gutter": "24px",
+                    "lg": "24px",
+                    "xl": "32px",
+                    "sm": "8px",
+                    "xs": "4px",
+                    "container-margin": "40px"
+            },
+            "fontFamily": {
+                    "data-tabular": ["Inter"],
+                    "h3": ["Inter"],
+                    "label-sm": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "label-md": ["Inter"],
+                    "h1": ["Inter"],
+                    "body-sm": ["Inter"],
+                    "body-md": ["Inter"],
+                    "h2": ["Inter"]
+            },
+            "fontSize": {
+                    "data-tabular": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "h3": ["20px", {"lineHeight": "28px", "letterSpacing": "0", "fontWeight": "600"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "letterSpacing": "0", "fontWeight": "400"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                    "h1": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-sm": ["13px", {"lineHeight": "18px", "letterSpacing": "0", "fontWeight": "400"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0", "fontWeight": "400"}],
+                    "h2": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #F8FBFF; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .custom-shadow { shadow-sm: 0 4px 12px rgba(30, 58, 95, 0.05); }
+    </style>
+</head>
+<body class="bg-background text-on-surface">
+<!-- Sidebar Navigation -->
+<aside class="fixed left-0 top-0 h-full w-[260px] bg-surface shadow-sm flex flex-col py-md px-sm gap-xs z-50">
+<div class="px-md py-lg">
+<h1 class="text-h2 font-h2 text-primary">AsistControl</h1>
+<p class="text-body-sm text-on-surface-variant">Admin Portal</p>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200 rounded-xl" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-body-md text-body-md">Inicio</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200 rounded-xl" href="#">
+<span class="material-symbols-outlined">badge</span>
+<span class="font-body-md text-body-md">Empleados</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm text-primary font-bold border-r-4 border-primary bg-surface-container rounded-r-none rounded-l-xl" href="#">
+<span class="material-symbols-outlined">history_toggle_off</span>
+<span class="font-body-md text-body-md">Asistencia</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200 rounded-xl" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-body-md text-body-md">Reportes</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200 rounded-xl" href="#">
+<span class="material-symbols-outlined">location_on</span>
+<span class="font-body-md text-body-md">Sedes</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200 rounded-xl" href="#">
+<span class="material-symbols-outlined">devices</span>
+<span class="font-body-md text-body-md">Dispositivos</span>
+</a>
+<div class="mt-auto pt-lg border-t border-outline-variant/30">
+<a class="flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200 rounded-xl" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-body-md text-body-md">Configuración</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200 rounded-xl" href="#">
+<span class="material-symbols-outlined">verified</span>
+<span class="font-body-md text-body-md">Licencia</span>
+</a>
+</div>
+</nav>
+</aside>
+<!-- Top Navigation -->
+<header class="ml-[260px] flex justify-between items-center h-16 px-gutter w-[calc(100%-260px)] sticky top-0 z-40 bg-surface-container-lowest border-b border-outline-variant shadow-sm">
+<div class="flex items-center gap-xl">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-xl text-body-md w-64 focus:ring-2 focus:ring-primary/20" placeholder="Buscar..." type="text"/>
+</div>
+<nav class="hidden md:flex gap-lg">
+<a class="text-on-surface-variant font-label-md text-label-md hover:text-secondary transition-colors" href="#">Clientes</a>
+<a class="text-on-surface-variant font-label-md text-label-md hover:text-secondary transition-colors" href="#">Planes</a>
+<a class="text-on-surface-variant font-label-md text-label-md hover:text-secondary transition-colors" href="#">Pagos</a>
+<a class="text-primary font-bold border-b-2 border-primary pb-1 font-label-md text-label-md" href="#">Métricas</a>
+</nav>
+</div>
+<div class="flex items-center gap-md">
+<button class="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:bg-surface-container rounded-full transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<div class="h-8 w-[1px] bg-outline-variant"></div>
+<div class="flex items-center gap-sm">
+<div class="text-right hidden sm:block">
+<p class="text-label-md font-label-md text-primary leading-tight">Admin User</p>
+<p class="text-label-sm font-label-sm text-on-surface-variant">Super Admin</p>
+</div>
+<img alt="Profile" class="w-10 h-10 rounded-full border border-outline-variant" data-alt="A professional headshot of a corporate male administrator in his late 30s, wearing a clean white shirt. The lighting is bright and airy, suggesting a modern high-end office environment. The style is professional and minimalist, with a shallow depth of field focusing on the subject's face against a soft blue-toned background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA3L3eUSBizn_V2duekezZuX1k93aT7YJtWjn9xdECGMtZ7bgbU1_u7cLFAOWlSsJ1go2OKvdbLmvkxFS913m4gne7oSqZsrAi4OM2tD--j3HKSOPiaH8_VB6zC4ZwDvh6QA8Y5LIaGFUz2UvedC9uyqyMbcQ9SCUdwetucNp1tvK_kEYfJzbb4IVQSeQQYyGYtIhq_qrY3x5-6We9zY9d5fhjsxBCrSWqtpCPXcs7mJvBI3BOz4Zl_LpZJeDmp60EA1_N-PIE-urM"/>
+</div>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="ml-[260px] p-gutter min-h-screen">
+<div class="flex flex-col gap-lg">
+<!-- Page Header -->
+<div class="flex justify-between items-end">
+<div>
+<h2 class="text-h1 font-h1 text-primary">Asistencia Consolidada</h2>
+<p class="text-body-lg font-body-lg text-on-surface-variant">Gestión y monitoreo de ingresos y egresos de personal en tiempo real.</p>
+</div>
+<button class="flex items-center gap-sm bg-primary text-on-primary px-lg py-md rounded-xl font-label-md text-label-md shadow-md active:scale-95 transition-transform">
+<span class="material-symbols-outlined">download</span>
+                    Exportar Reporte
+                </button>
+</div>
+<!-- Filter Bar -->
+<section class="bg-surface-container-lowest p-lg rounded-xl border border-outline-variant shadow-sm">
+<div class="grid grid-cols-1 md:grid-cols-5 gap-md">
+<div class="flex flex-col gap-xs">
+<label class="text-label-sm font-label-sm text-on-surface-variant px-1">Rango de Fechas</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">calendar_today</span>
+<input class="w-full pl-9 pr-4 py-2 border border-outline-variant rounded-xl text-body-md focus:border-primary focus:ring-1 focus:ring-primary/20 outline-none" type="text" value="01 Oct - 15 Oct, 2023"/>
+</div>
+</div>
+<div class="flex flex-col gap-xs">
+<label class="text-label-sm font-label-sm text-on-surface-variant px-1">Empleado</label>
+<select class="w-full px-4 py-2 border border-outline-variant rounded-xl text-body-md focus:border-primary focus:ring-1 focus:ring-primary/20 appearance-none bg-surface-container-lowest">
+<option>Todos los empleados</option>
+<option>Carlos Ruiz</option>
+<option>Ana Martinez</option>
+</select>
+</div>
+<div class="flex flex-col gap-xs">
+<label class="text-label-sm font-label-sm text-on-surface-variant px-1">Tipo de Registro</label>
+<select class="w-full px-4 py-2 border border-outline-variant rounded-xl text-body-md focus:border-primary focus:ring-1 focus:ring-primary/20 appearance-none bg-surface-container-lowest">
+<option>Todos los tipos</option>
+<option>Entrada</option>
+<option>Salida</option>
+</select>
+</div>
+<div class="flex flex-col gap-xs">
+<label class="text-label-sm font-label-sm text-on-surface-variant px-1">Estado / Sede</label>
+<div class="flex gap-2">
+<select class="flex-1 px-4 py-2 border border-outline-variant rounded-xl text-body-md focus:border-primary focus:ring-1 focus:ring-primary/20 appearance-none bg-surface-container-lowest">
+<option>Estado</option>
+<option>Puntual</option>
+<option>Tardanza</option>
+</select>
+<select class="flex-1 px-4 py-2 border border-outline-variant rounded-xl text-body-md focus:border-primary focus:ring-1 focus:ring-primary/20 appearance-none bg-surface-container-lowest">
+<option>Sede</option>
+<option>Matriz</option>
+<option>Sur</option>
+</select>
+</div>
+</div>
+<div class="flex items-end">
+<button class="w-full bg-secondary-container text-on-secondary-container py-2 rounded-xl font-label-md text-label-md hover:bg-secondary hover:text-on-secondary transition-colors">
+                            Aplicar filtros
+                        </button>
+</div>
+</div>
+</section>
+<!-- Results Table -->
+<section class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low border-b border-outline-variant">
+<th class="px-md py-lg font-label-md text-label-md text-on-surface-variant">Fecha / Hora</th>
+<th class="px-md py-lg font-label-md text-label-md text-on-surface-variant">Empleado</th>
+<th class="px-md py-lg font-label-md text-label-md text-on-surface-variant">Tipo</th>
+<th class="px-md py-lg font-label-md text-label-md text-on-surface-variant">Sede</th>
+<th class="px-md py-lg font-label-md text-label-md text-on-surface-variant">Estado</th>
+<th class="px-md py-lg font-label-md text-label-md text-on-surface-variant">Dispositivo</th>
+<th class="px-md py-lg font-label-md text-label-md text-on-surface-variant">Foto</th>
+<th class="px-md py-lg font-label-md text-label-md text-on-surface-variant">Observaciones</th>
+<th class="px-md py-lg font-label-md text-label-md text-on-surface-variant text-center">Acciones</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant">
+<!-- Row 1 -->
+<tr class="hover:bg-background transition-colors">
+<td class="px-md py-md font-data-tabular text-data-tabular">15/10/2023 - 08:02 AM</td>
+<td class="px-md py-md">
+<div class="flex items-center gap-sm">
+<div class="w-8 h-8 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center text-xs font-bold">CR</div>
+<span class="font-body-md text-body-md font-medium">Carlos Ruiz</span>
+</div>
+</td>
+<td class="px-md py-md">
+<span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">Entrada</span>
+</td>
+<td class="px-md py-md font-body-sm text-body-sm">Sede Matriz - Lima</td>
+<td class="px-md py-md">
+<span class="px-3 py-1 bg-[#27AE60]/10 text-[#27AE60] rounded-full text-xs font-bold">Puntual</span>
+</td>
+<td class="px-md py-md font-body-sm text-body-sm">ZK-Techo F18</td>
+<td class="px-md py-md text-center">
+<button class="text-primary hover:text-secondary"><span class="material-symbols-outlined">photo_camera</span></button>
+</td>
+<td class="px-md py-md font-body-sm text-body-sm text-on-surface-variant italic">—</td>
+<td class="px-md py-md text-center">
+<button class="p-1 hover:bg-surface-container rounded-full text-on-surface-variant"><span class="material-symbols-outlined">more_vert</span></button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-background transition-colors">
+<td class="px-md py-md font-data-tabular text-data-tabular">15/10/2023 - 08:15 AM</td>
+<td class="px-md py-md">
+<div class="flex items-center gap-sm">
+<div class="w-8 h-8 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center text-xs font-bold">AM</div>
+<span class="font-body-md text-body-md font-medium">Ana Martinez</span>
+</div>
+</td>
+<td class="px-md py-md">
+<span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">Entrada</span>
+</td>
+<td class="px-md py-md font-body-sm text-body-sm">Sede Matriz - Lima</td>
+<td class="px-md py-md">
+<span class="px-3 py-1 bg-error-container text-error rounded-full text-xs font-bold">Tardanza</span>
+</td>
+<td class="px-md py-md font-body-sm text-body-sm">ZK-Techo F18</td>
+<td class="px-md py-md text-center">
+<button class="text-primary hover:text-secondary"><span class="material-symbols-outlined">photo_camera</span></button>
+</td>
+<td class="px-md py-md font-body-sm text-body-sm text-on-surface-variant italic">Tráfico pesado</td>
+<td class="px-md py-md text-center">
+<button class="p-1 hover:bg-surface-container rounded-full text-on-surface-variant"><span class="material-symbols-outlined">more_vert</span></button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-background transition-colors">
+<td class="px-md py-md font-data-tabular text-data-tabular">15/10/2023 - 08:30 AM</td>
+<td class="px-md py-md">
+<div class="flex items-center gap-sm">
+<div class="w-8 h-8 rounded-full bg-tertiary-fixed-dim text-on-tertiary-fixed flex items-center justify-center text-xs font-bold">JP</div>
+<span class="font-body-md text-body-md font-medium">Jorge Ponce</span>
+</div>
+</td>
+<td class="px-md py-md">
+<span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">Entrada</span>
+</td>
+<td class="px-md py-md font-body-sm text-body-sm">Sede Sur - Chorrillos</td>
+<td class="px-md py-md">
+<span class="px-3 py-1 bg-surface-variant text-on-surface-variant rounded-full text-xs font-bold">Ausente</span>
+</td>
+<td class="px-md py-md font-body-sm text-body-sm">—</td>
+<td class="px-md py-md text-center">
+<span class="material-symbols-outlined text-outline-variant">no_photography</span>
+</td>
+<td class="px-md py-md font-body-sm text-body-sm text-on-surface-variant italic">Sin justificar</td>
+<td class="px-md py-md text-center">
+<button class="p-1 hover:bg-surface-container rounded-full text-on-surface-variant"><span class="material-symbols-outlined">more_vert</span></button>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-background transition-colors border-l-4 border-primary">
+<td class="px-md py-md font-data-tabular text-data-tabular">15/10/2023 - 01:05 PM</td>
+<td class="px-md py-md">
+<div class="flex items-center gap-sm">
+<div class="w-8 h-8 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center text-xs font-bold">LG</div>
+<span class="font-body-md text-body-md font-medium">Lucía Gómez</span>
+</div>
+</td>
+<td class="px-md py-md">
+<span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold">Salida</span>
+</td>
+<td class="px-md py-md font-body-sm text-body-sm">Sede Matriz - Lima</td>
+<td class="px-md py-md">
+<span class="px-3 py-1 bg-[#27AE60]/10 text-[#27AE60] rounded-full text-xs font-bold">Puntual</span>
+</td>
+<td class="px-md py-md font-body-sm text-body-sm">ZK-Techo F18</td>
+<td class="px-md py-md text-center">
+<button class="text-primary hover:text-secondary"><span class="material-symbols-outlined">photo_camera</span></button>
+</td>
+<td class="px-md py-md font-body-sm text-body-sm text-on-surface-variant italic">Almuerzo</td>
+<td class="px-md py-md text-center">
+<button class="p-1 hover:bg-surface-container rounded-full text-on-surface-variant"><span class="material-symbols-outlined">more_vert</span></button>
+</td>
+</tr>
+<!-- Row 5 -->
+<tr class="hover:bg-background transition-colors">
+<td class="px-md py-md font-data-tabular text-data-tabular">15/10/2023 - 01:45 PM</td>
+<td class="px-md py-md">
+<div class="flex items-center gap-sm">
+<div class="w-8 h-8 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center text-xs font-bold">RM</div>
+<span class="font-body-md text-body-md font-medium">Roberto Mena</span>
+</div>
+</td>
+<td class="px-md py-md">
+<span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">Entrada</span>
+</td>
+<td class="px-md py-md font-body-sm text-body-sm">Sede Norte - Olivos</td>
+<td class="px-md py-md">
+<span class="px-3 py-1 bg-[#27AE60]/10 text-[#27AE60] rounded-full text-xs font-bold">Puntual</span>
+</td>
+<td class="px-md py-md font-body-sm text-body-sm">FacePass Pro</td>
+<td class="px-md py-md text-center">
+<button class="text-primary hover:text-secondary"><span class="material-symbols-outlined">photo_camera</span></button>
+</td>
+<td class="px-md py-md font-body-sm text-body-sm text-on-surface-variant italic">—</td>
+<td class="px-md py-md text-center">
+<button class="p-1 hover:bg-surface-container rounded-full text-on-surface-variant"><span class="material-symbols-outlined">more_vert</span></button>
+</td>
+</tr>
+<!-- Row 6 -->
+<tr class="hover:bg-background transition-colors">
+<td class="px-md py-md font-data-tabular text-data-tabular">15/10/2023 - 05:00 PM</td>
+<td class="px-md py-md">
+<div class="flex items-center gap-sm">
+<div class="w-8 h-8 rounded-full bg-tertiary-fixed-dim text-on-tertiary-fixed flex items-center justify-center text-xs font-bold">SV</div>
+<span class="font-body-md text-body-md font-medium">Sofía Vargas</span>
+</div>
+</td>
+<td class="px-md py-md">
+<span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold">Salida</span>
+</td>
+<td class="px-md py-md font-body-sm text-body-sm">Sede Matriz - Lima</td>
+<td class="px-md py-md">
+<span class="px-3 py-1 bg-[#27AE60]/10 text-[#27AE60] rounded-full text-xs font-bold">Puntual</span>
+</td>
+<td class="px-md py-md font-body-sm text-body-sm">ZK-Techo F18</td>
+<td class="px-md py-md text-center">
+<button class="text-primary hover:text-secondary"><span class="material-symbols-outlined">photo_camera</span></button>
+</td>
+<td class="px-md py-md font-body-sm text-body-sm text-on-surface-variant italic">Fin de turno</td>
+<td class="px-md py-md text-center">
+<button class="p-1 hover:bg-surface-container rounded-full text-on-surface-variant"><span class="material-symbols-outlined">more_vert</span></button>
+</td>
+</tr>
+<!-- Row 7 -->
+<tr class="hover:bg-background transition-colors">
+<td class="px-md py-md font-data-tabular text-data-tabular">15/10/2023 - 05:15 PM</td>
+<td class="px-md py-md">
+<div class="flex items-center gap-sm">
+<div class="w-8 h-8 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center text-xs font-bold">MD</div>
+<span class="font-body-md text-body-md font-medium">Mario Diaz</span>
+</div>
+</td>
+<td class="px-md py-md">
+<span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold">Salida</span>
+</td>
+<td class="px-md py-md font-body-sm text-body-sm">Sede Matriz - Lima</td>
+<td class="px-md py-md">
+<span class="px-3 py-1 bg-[#27AE60]/10 text-[#27AE60] rounded-full text-xs font-bold">Puntual</span>
+</td>
+<td class="px-md py-md font-body-sm text-body-sm">App Móvil (GPS)</td>
+<td class="px-md py-md text-center">
+<button class="text-primary hover:text-secondary"><span class="material-symbols-outlined">location_searching</span></button>
+</td>
+<td class="px-md py-md font-body-sm text-body-sm text-on-surface-variant italic">Trabajo remoto</td>
+<td class="px-md py-md text-center">
+<button class="p-1 hover:bg-surface-container rounded-full text-on-surface-variant"><span class="material-symbols-outlined">more_vert</span></button>
+</td>
+</tr>
+<!-- Row 8 -->
+<tr class="hover:bg-background transition-colors">
+<td class="px-md py-md font-data-tabular text-data-tabular">15/10/2023 - 06:30 PM</td>
+<td class="px-md py-md">
+<div class="flex items-center gap-sm">
+<div class="w-8 h-8 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center text-xs font-bold">PC</div>
+<span class="font-body-md text-body-md font-medium">Paula Castro</span>
+</div>
+</td>
+<td class="px-md py-md">
+<span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold">Salida</span>
+</td>
+<td class="px-md py-md font-body-sm text-body-sm">Sede Sur - Chorrillos</td>
+<td class="px-md py-md">
+<span class="px-3 py-1 bg-error-container text-error rounded-full text-xs font-bold">Extra</span>
+</td>
+<td class="px-md py-md font-body-sm text-body-sm">ZK-Techo F18</td>
+<td class="px-md py-md text-center">
+<button class="text-primary hover:text-secondary"><span class="material-symbols-outlined">photo_camera</span></button>
+</td>
+<td class="px-md py-md font-body-sm text-body-sm text-on-surface-variant italic">Horas extras autorizadas</td>
+<td class="px-md py-md text-center">
+<button class="p-1 hover:bg-surface-container rounded-full text-on-surface-variant"><span class="material-symbols-outlined">more_vert</span></button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination -->
+<div class="flex items-center justify-between px-lg py-md bg-surface-container-low">
+<p class="text-body-sm text-on-surface-variant">Mostrando 1 a 8 de 124 registros</p>
+<div class="flex items-center gap-xs">
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors"><span class="material-symbols-outlined">chevron_left</span></button>
+<button class="w-8 h-8 flex items-center justify-center bg-primary text-on-primary rounded-lg font-label-sm text-label-sm">1</button>
+<button class="w-8 h-8 flex items-center justify-center hover:bg-surface-container-high rounded-lg font-label-sm text-label-sm">2</button>
+<button class="w-8 h-8 flex items-center justify-center hover:bg-surface-container-high rounded-lg font-label-sm text-label-sm">3</button>
+<span class="px-2">...</span>
+<button class="w-8 h-8 flex items-center justify-center hover:bg-surface-container-high rounded-lg font-label-sm text-label-sm">16</button>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors"><span class="material-symbols-outlined">chevron_right</span></button>
+</div>
+</div>
+</section>
+</div>
+</main>
+<!-- FAB (Suppressed as per rules for detailed screen, but included here for reference if it were home) -->
+<!-- <button class="fixed bottom-8 right-8 w-14 h-14 bg-primary text-on-primary rounded-full shadow-lg flex items-center justify-center active:scale-95 transition-transform">
+        <span class="material-symbols-outlined">add</span>
+    </button> -->
+</body></html>

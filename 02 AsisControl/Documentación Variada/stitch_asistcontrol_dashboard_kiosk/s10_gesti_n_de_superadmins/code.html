@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AsistControl - Gestión de Superadmins</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-background": "#1a1c1e",
+                    "outline": "#74777f",
+                    "on-tertiary-fixed-variant": "#60410c",
+                    "on-tertiary-fixed": "#291800",
+                    "error": "#ba1a1a",
+                    "surface-variant": "#e3e2e6",
+                    "outline-variant": "#c4c6cf",
+                    "secondary": "#226296",
+                    "surface-container-high": "#e9e7eb",
+                    "surface-container": "#eeedf1",
+                    "surface-bright": "#faf9fc",
+                    "on-surface-variant": "#43474e",
+                    "surface-tint": "#455f87",
+                    "secondary-fixed-dim": "#9bcbff",
+                    "primary-fixed": "#d5e3ff",
+                    "on-primary-fixed": "#001c3b",
+                    "on-secondary": "#ffffff",
+                    "on-secondary-fixed": "#001d34",
+                    "surface-container-highest": "#e3e2e6",
+                    "secondary-container": "#8bc3fd",
+                    "on-secondary-fixed-variant": "#004a79",
+                    "on-tertiary-container": "#c69b5f",
+                    "inverse-surface": "#2f3033",
+                    "surface-dim": "#dad9dd",
+                    "on-tertiary": "#ffffff",
+                    "error-container": "#ffdad6",
+                    "on-secondary-container": "#005083",
+                    "surface-container-low": "#f4f3f7",
+                    "tertiary-container": "#503300",
+                    "primary": "#022448",
+                    "tertiary": "#341f00",
+                    "primary-container": "#1e3a5f",
+                    "tertiary-fixed-dim": "#edbf7f",
+                    "secondary-fixed": "#d0e4ff",
+                    "inverse-on-surface": "#f1f0f4",
+                    "inverse-primary": "#adc8f5",
+                    "on-error-container": "#93000a",
+                    "primary-fixed-dim": "#adc8f5",
+                    "surface": "#faf9fc",
+                    "on-primary": "#ffffff",
+                    "tertiary-fixed": "#ffddb2",
+                    "background": "#faf9fc",
+                    "on-primary-container": "#8aa4cf",
+                    "surface-container-lowest": "#ffffff",
+                    "on-primary-fixed-variant": "#2d486d",
+                    "on-error": "#ffffff",
+                    "on-surface": "#1a1c1e"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "base": "4px",
+                    "md": "16px",
+                    "gutter": "24px",
+                    "lg": "24px",
+                    "xl": "32px",
+                    "sm": "8px",
+                    "xs": "4px",
+                    "container-margin": "40px"
+            },
+            "fontFamily": {
+                    "data-tabular": ["Inter"],
+                    "h3": ["Inter"],
+                    "label-sm": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "label-md": ["Inter"],
+                    "h1": ["Inter"],
+                    "body-sm": ["Inter"],
+                    "body-md": ["Inter"],
+                    "h2": ["Inter"]
+            },
+            "fontSize": {
+                    "data-tabular": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "h3": ["20px", {"lineHeight": "28px", "letterSpacing": "0", "fontWeight": "600"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "letterSpacing": "0", "fontWeight": "400"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                    "h1": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-sm": ["13px", {"lineHeight": "18px", "letterSpacing": "0", "fontWeight": "400"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0", "fontWeight": "400"}],
+                    "h2": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #F8FBFF; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .card-shadow { box-shadow: 0 4px 12px rgba(30, 58, 95, 0.05); }
+    </style>
+</head>
+<body class="flex min-h-screen text-on-surface">
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-0 h-full w-[260px] bg-surface dark:bg-on-background shadow-sm flex flex-col py-md px-sm gap-xs z-50">
+<div class="mb-xl px-md">
+<h1 class="text-h2 font-h2 text-primary dark:text-primary-fixed-dim">AsistControl</h1>
+<p class="text-body-sm text-outline-variant">Admin Portal</p>
+</div>
+<nav class="flex flex-col gap-xs">
+<div class="flex items-center gap-md py-sm px-md rounded-xl text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high transition-colors duration-200 cursor-pointer active:scale-95 transition-transform">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-body-md text-body-md">Inicio</span>
+</div>
+<div class="flex items-center gap-md py-sm px-md rounded-xl text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high transition-colors duration-200 cursor-pointer active:scale-95 transition-transform">
+<span class="material-symbols-outlined">badge</span>
+<span class="font-body-md text-body-md">Empleados</span>
+</div>
+<div class="flex items-center gap-md py-sm px-md rounded-xl text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high transition-colors duration-200 cursor-pointer active:scale-95 transition-transform">
+<span class="material-symbols-outlined">history_toggle_off</span>
+<span class="font-body-md text-body-md">Asistencia</span>
+</div>
+<div class="flex items-center gap-md py-sm px-md rounded-xl text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high transition-colors duration-200 cursor-pointer active:scale-95 transition-transform">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-body-md text-body-md">Reportes</span>
+</div>
+<div class="flex items-center gap-md py-sm px-md rounded-xl text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high transition-colors duration-200 cursor-pointer active:scale-95 transition-transform">
+<span class="material-symbols-outlined">location_on</span>
+<span class="font-body-md text-body-md">Sedes</span>
+</div>
+<div class="flex items-center gap-md py-sm px-md rounded-xl text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high transition-colors duration-200 cursor-pointer active:scale-95 transition-transform">
+<span class="material-symbols-outlined">devices</span>
+<span class="font-body-md text-body-md">Dispositivos</span>
+</div>
+<div class="flex items-center gap-md py-sm px-md rounded-xl text-primary dark:text-primary-fixed-dim font-bold border-r-4 border-primary dark:border-primary-fixed-dim bg-surface-container dark:bg-primary-container/20 cursor-pointer active:scale-95 transition-transform">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-body-md text-body-md">Configuración</span>
+</div>
+<div class="flex items-center gap-md py-sm px-md rounded-xl text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high transition-colors duration-200 cursor-pointer active:scale-95 transition-transform">
+<span class="material-symbols-outlined">verified</span>
+<span class="font-body-md text-body-md">Licencia</span>
+</div>
+</nav>
+<div class="mt-auto p-md bg-surface-container-low rounded-xl flex items-center gap-md">
+<img alt="Admin Avatar" class="w-10 h-10 rounded-full object-cover" data-alt="A professional headshot of a mature male executive with a confident smile, wearing a sharp navy blue suit and white shirt. The background is a blurred high-end corporate office with soft, natural lighting. The overall image has a clean, premium, and professional aesthetic that matches a corporate software brand." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDSL0dvxX3NqTfZzqfe0C7RY2ZqmlPwibJmvUueNWPr2B1aCQWxHBpDOp-j_GGDLzCLps2AYQu3x1zbNaQozg9ElJnw2nfRxFlmHFNL_9GGYAjXb9bxtBOLW-I_-XNXuAYQQWElgf8xmG4mxQLTYE9gKAuT6d7jkWDqyJLdWtARshFSSTR_X6gItcYAnD39LdzBEiOEskwyWvrNabeVakeHWOsLTcQR7iyLlrMPTvwZ5ZD5Y-1yOsU2Had-PyZTwu5kNZe78Jbv8Eo"/>
+<div>
+<p class="text-label-md font-label-md text-primary">Carlos Ruiz</p>
+<p class="text-label-sm text-outline">Super Admin</p>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="ml-[260px] flex-1 flex flex-col">
+<!-- TopNavBar -->
+<header class="flex justify-between items-center h-16 px-gutter w-full sticky top-0 z-40 bg-surface-container-lowest dark:bg-on-background border-b border-outline-variant dark:border-outline shadow-sm">
+<div class="flex items-center gap-xl">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
+<input class="pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-xl text-body-md focus:ring-2 focus:ring-primary-container w-64" placeholder="Buscar administrador..." type="text"/>
+</div>
+<nav class="hidden md:flex gap-lg">
+<a class="text-on-surface-variant dark:text-outline-variant hover:text-secondary transition-colors font-label-md text-label-md" href="#">Clientes</a>
+<a class="text-on-surface-variant dark:text-outline-variant hover:text-secondary transition-colors font-label-md text-label-md" href="#">Planes</a>
+<a class="text-on-surface-variant dark:text-outline-variant hover:text-secondary transition-colors font-label-md text-label-md" href="#">Pagos</a>
+<a class="text-primary dark:text-primary-fixed-dim font-bold border-b-2 border-primary dark:border-primary-fixed-dim pb-1 font-label-md text-label-md" href="#">Métricas</a>
+<a class="text-on-surface-variant dark:text-outline-variant hover:text-secondary transition-colors font-label-md text-label-md" href="#">Auditoría</a>
+</nav>
+</div>
+<div class="flex items-center gap-md">
+<button class="p-2 hover:bg-surface-container-high rounded-full transition-colors">
+<span class="material-symbols-outlined text-outline">notifications</span>
+</button>
+<button class="p-2 hover:bg-surface-container-high rounded-full transition-colors">
+<span class="material-symbols-outlined text-outline">location_on</span>
+</button>
+<div class="h-8 w-[1px] bg-outline-variant mx-2"></div>
+<img alt="User Profile" class="w-8 h-8 rounded-full cursor-pointer" data-alt="Close-up portrait of a professional woman with a friendly expression, styled in business casual attire. The lighting is soft and diffused, highlighting a modern office environment in the background with a blue and white color palette. The image conveys accessibility, intelligence, and professionalism." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBSgusLa9mtfGIvWa0DugEKBICuuf9Gq8IbCn6FegNGEbvzaVjjyOgFclt6aPf2yp5Mjbmj6LmxW4sqmx4kKgozZKG6BALogvTDbMEVmWUFx9htDc4qwObV_TG1GTgethvgZV-smFhWT3RNlng-jex7AbB6aj-0M6WybL8-lwzBVYWgfHd5lwId42SbYhXzZEfGBFTGorY0eR8ta9-z6k6q1VMeA4CGUJWlkGMWO53a4Vau6o08Jc8HukP6WDI-WxkqqA5Acc1yJD0"/>
+</div>
+</header>
+<!-- Canvas Container -->
+<div class="p-gutter max-w-7xl w-full mx-auto space-y-lg">
+<!-- Page Header Section -->
+<div class="flex justify-between items-end">
+<div>
+<h2 class="text-h1 font-h1 text-primary">Gestión de Superadmins</h2>
+<p class="text-body-lg text-outline mt-xs">Administra los accesos de nivel superior para la plataforma AsistControl.</p>
+</div>
+<button class="flex items-center gap-sm bg-primary text-on-primary px-lg py-md rounded-xl font-label-md shadow-lg hover:opacity-90 active:scale-95 transition-all">
+<span class="material-symbols-outlined">add</span>
+<span>Agregar superadmin</span>
+</button>
+</div>
+<!-- Main Table Section -->
+<div class="bg-surface-container-lowest rounded-xl card-shadow overflow-hidden border border-outline-variant">
+<table class="w-full text-left border-collapse">
+<thead class="bg-surface-container-low">
+<tr>
+<th class="px-lg py-md text-label-md text-primary font-bold">Nombre</th>
+<th class="px-lg py-md text-label-md text-primary font-bold">Correo</th>
+<th class="px-lg py-md text-label-md text-primary font-bold">Rol</th>
+<th class="px-lg py-md text-label-md text-primary font-bold">Estado</th>
+<th class="px-lg py-md text-label-md text-primary font-bold">Último acceso</th>
+<th class="px-lg py-md text-label-md text-primary font-bold text-right">Acciones</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant">
+<!-- Row 1 -->
+<tr class="hover:bg-surface transition-colors cursor-default">
+<td class="px-lg py-lg">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold">AM</div>
+<span class="font-body-md text-on-surface font-semibold">Alejandro Mendoza</span>
+</div>
+</td>
+<td class="px-lg py-lg text-body-md text-outline">a.mendoza@asistcontrol.com</td>
+<td class="px-lg py-lg">
+<span class="px-sm py-xs bg-primary-container/10 text-primary-container rounded-full text-label-sm font-bold border border-primary-container/20">Owner</span>
+</td>
+<td class="px-lg py-lg">
+<span class="flex items-center gap-xs text-label-sm font-bold text-[#27AE60] bg-[#27AE60]/10 px-sm py-xs rounded-full w-fit">
+<span class="w-2 h-2 rounded-full bg-[#27AE60]"></span>
+                                    Activo
+                                </span>
+</td>
+<td class="px-lg py-lg text-data-tabular font-data-tabular">Hoy, 08:45 AM</td>
+<td class="px-lg py-lg text-right">
+<button class="p-2 hover:bg-surface-container-high rounded-lg text-outline">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface transition-colors cursor-default">
+<td class="px-lg py-lg">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center font-bold">BV</div>
+<span class="font-body-md text-on-surface font-semibold">Beatriz Valencia</span>
+</div>
+</td>
+<td class="px-lg py-lg text-body-md text-outline">b.valencia@asistcontrol.com</td>
+<td class="px-lg py-lg">
+<span class="px-sm py-xs bg-tertiary-fixed text-on-tertiary-fixed-variant rounded-full text-label-sm font-bold">Billing</span>
+</td>
+<td class="px-lg py-lg">
+<span class="flex items-center gap-xs text-label-sm font-bold text-[#27AE60] bg-[#27AE60]/10 px-sm py-xs rounded-full w-fit">
+<span class="w-2 h-2 rounded-full bg-[#27AE60]"></span>
+                                    Activo
+                                </span>
+</td>
+<td class="px-lg py-lg text-data-tabular font-data-tabular">Ayer, 14:20 PM</td>
+<td class="px-lg py-lg text-right">
+<button class="p-2 hover:bg-surface-container-high rounded-lg text-outline">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-surface transition-colors cursor-default">
+<td class="px-lg py-lg">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 rounded-full bg-outline-variant text-on-surface-variant flex items-center justify-center font-bold">RG</div>
+<span class="font-body-md text-on-surface font-semibold">Ricardo Gómez</span>
+</div>
+</td>
+<td class="px-lg py-lg text-body-md text-outline">r.gomez@support.com</td>
+<td class="px-lg py-lg">
+<span class="px-sm py-xs bg-secondary-fixed text-on-secondary-fixed-variant rounded-full text-label-sm font-bold">Support</span>
+</td>
+<td class="px-lg py-lg">
+<span class="flex items-center gap-xs text-label-sm font-bold text-outline bg-surface-container-high px-sm py-xs rounded-full w-fit">
+<span class="w-2 h-2 rounded-full bg-outline"></span>
+                                    Inactivo
+                                </span>
+</td>
+<td class="px-lg py-lg text-data-tabular font-data-tabular">12 Oct 2023</td>
+<td class="px-lg py-lg text-right">
+<button class="p-2 hover:bg-surface-container-high rounded-lg text-outline">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-surface transition-colors cursor-default">
+<td class="px-lg py-lg">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold">EL</div>
+<span class="font-body-md text-on-surface font-semibold">Elena Landa</span>
+</div>
+</td>
+<td class="px-lg py-lg text-body-md text-outline">e.landa@asistcontrol.com</td>
+<td class="px-lg py-lg">
+<span class="px-sm py-xs bg-primary-container/10 text-primary-container rounded-full text-label-sm font-bold border border-primary-container/20">Owner</span>
+</td>
+<td class="px-lg py-lg">
+<span class="flex items-center gap-xs text-label-sm font-bold text-[#27AE60] bg-[#27AE60]/10 px-sm py-xs rounded-full w-fit">
+<span class="w-2 h-2 rounded-full bg-[#27AE60]"></span>
+                                    Activo
+                                </span>
+</td>
+<td class="px-lg py-lg text-data-tabular font-data-tabular">Hoy, 10:15 AM</td>
+<td class="px-lg py-lg text-right">
+<button class="p-2 hover:bg-surface-container-high rounded-lg text-outline">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="p-md bg-surface-container-lowest flex justify-between items-center px-lg border-t border-outline-variant">
+<span class="text-body-sm text-outline">Mostrando 4 de 12 superadministradores</span>
+<div class="flex gap-xs">
+<button class="p-2 rounded-lg border border-outline-variant hover:bg-surface-container-low disabled:opacity-50" disabled="">
+<span class="material-symbols-outlined text-body-md">chevron_left</span>
+</button>
+<button class="p-2 rounded-lg border border-outline-variant hover:bg-surface-container-low">
+<span class="material-symbols-outlined text-body-md">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Role Legend Card -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-lg">
+<div class="bg-surface-container-low p-lg rounded-xl border-l-4 border-primary">
+<div class="flex items-center gap-sm mb-md">
+<span class="px-sm py-xs bg-primary-container/10 text-primary-container rounded-full text-label-sm font-bold">Owner</span>
+<h3 class="text-label-md text-primary">Acceso Total</h3>
+</div>
+<p class="text-body-sm text-on-surface-variant">Control absoluto de la plataforma, gestión de otros superadmins, configuración global y acceso a toda la data financiera y operativa.</p>
+</div>
+<div class="bg-surface-container-low p-lg rounded-xl border-l-4 border-tertiary-fixed-dim">
+<div class="flex items-center gap-sm mb-md">
+<span class="px-sm py-xs bg-tertiary-fixed text-on-tertiary-fixed-variant rounded-full text-label-sm font-bold">Billing</span>
+<h3 class="text-label-md text-primary">Gestión Financiera</h3>
+</div>
+<p class="text-body-sm text-on-surface-variant">Acceso exclusivo a facturación, suscripciones, métodos de pago y reportes de ingresos. No puede modificar configuraciones técnicas.</p>
+</div>
+<div class="bg-surface-container-low p-lg rounded-xl border-l-4 border-secondary-container">
+<div class="flex items-center gap-sm mb-md">
+<span class="px-sm py-xs bg-secondary-fixed text-on-secondary-fixed-variant rounded-full text-label-sm font-bold">Support</span>
+<h3 class="text-label-md text-primary">Soporte Técnico</h3>
+</div>
+<p class="text-body-sm text-on-surface-variant">Capacidad para visualizar logs, estados de dispositivos y métricas de asistencia para resolver incidencias de clientes finales.</p>
+</div>
+</div>
+</div>
+</main>
+</body></html>

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-background": "#1a1c1e",
+                    "outline": "#74777f",
+                    "on-tertiary-fixed-variant": "#60410c",
+                    "on-tertiary-fixed": "#291800",
+                    "error": "#ba1a1a",
+                    "surface-variant": "#e3e2e6",
+                    "outline-variant": "#c4c6cf",
+                    "secondary": "#226296",
+                    "surface-container-high": "#e9e7eb",
+                    "surface-container": "#eeedf1",
+                    "surface-bright": "#faf9fc",
+                    "on-surface-variant": "#43474e",
+                    "surface-tint": "#455f87",
+                    "secondary-fixed-dim": "#9bcbff",
+                    "primary-fixed": "#d5e3ff",
+                    "on-primary-fixed": "#001c3b",
+                    "on-secondary": "#ffffff",
+                    "on-secondary-fixed": "#001d34",
+                    "surface-container-highest": "#e3e2e6",
+                    "secondary-container": "#8bc3fd",
+                    "on-secondary-fixed-variant": "#004a79",
+                    "on-tertiary-container": "#c69b5f",
+                    "inverse-surface": "#2f3033",
+                    "surface-dim": "#dad9dd",
+                    "on-tertiary": "#ffffff",
+                    "error-container": "#ffdad6",
+                    "on-secondary-container": "#005083",
+                    "surface-container-low": "#f4f3f7",
+                    "tertiary-container": "#503300",
+                    "primary": "#022448",
+                    "tertiary": "#341f00",
+                    "primary-container": "#1e3a5f",
+                    "tertiary-fixed-dim": "#edbf7f",
+                    "secondary-fixed": "#d0e4ff",
+                    "inverse-on-surface": "#f1f0f4",
+                    "inverse-primary": "#adc8f5",
+                    "on-error-container": "#93000a",
+                    "primary-fixed-dim": "#adc8f5",
+                    "surface": "#faf9fc",
+                    "on-primary": "#ffffff",
+                    "tertiary-fixed": "#ffddb2",
+                    "background": "#faf9fc",
+                    "on-primary-container": "#8aa4cf",
+                    "surface-container-lowest": "#ffffff",
+                    "on-primary-fixed-variant": "#2d486d",
+                    "on-error": "#ffffff",
+                    "on-surface": "#1a1c1e"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "base": "4px",
+                    "md": "16px",
+                    "gutter": "24px",
+                    "lg": "24px",
+                    "xl": "32px",
+                    "sm": "8px",
+                    "xs": "4px",
+                    "container-margin": "40px"
+            },
+            "fontFamily": {
+                    "data-tabular": ["Inter"],
+                    "h3": ["Inter"],
+                    "label-sm": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "label-md": ["Inter"],
+                    "h1": ["Inter"],
+                    "body-sm": ["Inter"],
+                    "body-md": ["Inter"],
+                    "h2": ["Inter"]
+            },
+            "fontSize": {
+                    "data-tabular": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "h3": ["20px", {"lineHeight": "28px", "letterSpacing": "0", "fontWeight": "600"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "letterSpacing": "0", "fontWeight": "400"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                    "h1": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-sm": ["13px", {"lineHeight": "18px", "letterSpacing": "0", "fontWeight": "400"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0", "fontWeight": "400"}],
+                    "h2": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .geometric-bg {
+            background-color: #1E3A5F;
+            background-image: radial-gradient(circle at 2px 2px, rgba(255,255,255,0.05) 1px, transparent 0);
+            background-size: 32px 32px;
+        }
+        .main-card {
+            box-shadow: 0 12px 32px rgba(30, 58, 95, 0.12);
+        }
+    </style>
+</head>
+<body class="geometric-bg min-h-screen flex items-center justify-center font-body-md text-body-md overflow-hidden">
+<!-- Kiosk Blocked Main Container -->
+<main class="flex flex-col items-center gap-xl w-full max-w-[480px] px-gutter">
+<!-- Header Brand (Outside Card) -->
+<div class="flex flex-col items-center gap-xs">
+<h1 class="font-h1 text-h1 text-on-primary select-none tracking-tight">AsistControl</h1>
+<p class="font-body-md text-body-md text-on-primary-container opacity-80">Terminal de Asistencia</p>
+</div>
+<!-- Content Card -->
+<section class="main-card bg-surface-container-lowest w-full rounded-xl p-xl flex flex-col items-center text-center">
+<!-- Alert Icon -->
+<div class="mb-lg">
+<span class="material-symbols-outlined text-[64px]" style="color: #E74C3C; font-variation-settings: 'FILL' 1;">
+                    shield_lock
+                </span>
+</div>
+<!-- Title -->
+<h2 class="font-h2 text-h2 text-[#1C2B3A] mb-md leading-tight">
+                Dispositivo no autorizado
+            </h2>
+<!-- Body Message -->
+<div class="space-y-sm mb-xl">
+<p class="font-body-lg text-body-lg text-[#1C2B3A]">
+                    Este equipo no está habilitado para registrar asistencia.
+                </p>
+<p class="font-body-md text-body-md text-on-surface-variant">
+                    Contacta al administrador para activar este dispositivo.
+                </p>
+</div>
+<!-- Action Button -->
+<button class="w-full py-md px-lg border-2 border-outline-variant text-secondary font-label-md text-label-md rounded-lg hover:bg-surface-container-low active:scale-95 transition-all duration-200">
+                Solicitar autorización
+            </button>
+<!-- Metadata Info -->
+<div class="mt-xl pt-lg border-t border-outline-variant w-full flex flex-col gap-xs">
+<div class="flex justify-between items-center text-on-surface-variant font-label-sm text-label-sm">
+<span>ID de Hardware:</span>
+<span class="font-data-tabular">AC-K-992-881</span>
+</div>
+<div class="flex justify-between items-center text-on-surface-variant font-label-sm text-label-sm">
+<span>IP Local:</span>
+<span class="font-data-tabular">192.168.1.105</span>
+</div>
+</div>
+</section>
+<!-- Footer -->
+<footer class="text-on-primary-container opacity-60 font-label-sm text-label-sm uppercase tracking-widest flex items-center gap-sm">
+<span>AsistControl</span>
+<span class="w-1 h-1 bg-on-primary-container rounded-full"></span>
+<span>Soporte técnico</span>
+</footer>
+</main>
+<!-- Visual Polish: Decorative Corner Gradients -->
+<div class="fixed top-0 right-0 w-[500px] h-[500px] bg-primary-container/10 rounded-full blur-[120px] pointer-events-none -translate-y-1/2 translate-x-1/2"></div>
+<div class="fixed bottom-0 left-0 w-[500px] h-[500px] bg-secondary-container/10 rounded-full blur-[120px] pointer-events-none translate-y-1/2 -translate-x-1/2"></div>
+</body></html>

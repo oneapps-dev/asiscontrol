@@ -1,0 +1,36 @@
+# Sistema operativo y editores
+.DS_Store
+**/.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Secretos y configuración local
+.env
+.env.*
+!.env.example
+!.env.*.example
+**/.env
+**/.env.*
+!**/.env.example
+!**/.env.*.example
+
+# Dependencias generadas
+node_modules/
+**/node_modules/
+
+# Logs, temporales y archivos locales
+*.log
+*.tmp
+*.cache
+backend/storage/uploads/
+backend/storage/backups/
+backend/storage/signatures/
+backend/storage/tmp/
+
+# Perfiles y artefactos locales de herramientas
+.phpunit.result.cache
+coverage/
+.codex/
+.agents/
+

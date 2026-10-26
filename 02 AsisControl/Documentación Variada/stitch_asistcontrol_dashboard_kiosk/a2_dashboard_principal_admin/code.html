@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-background": "#1a1c1e",
+                    "outline": "#74777f",
+                    "on-tertiary-fixed-variant": "#60410c",
+                    "on-tertiary-fixed": "#291800",
+                    "error": "#ba1a1a",
+                    "surface-variant": "#e3e2e6",
+                    "outline-variant": "#c4c6cf",
+                    "secondary": "#226296",
+                    "surface-container-high": "#e9e7eb",
+                    "surface-container": "#eeedf1",
+                    "surface-bright": "#faf9fc",
+                    "on-surface-variant": "#43474e",
+                    "surface-tint": "#455f87",
+                    "secondary-fixed-dim": "#9bcbff",
+                    "primary-fixed": "#d5e3ff",
+                    "on-primary-fixed": "#001c3b",
+                    "on-secondary": "#ffffff",
+                    "on-secondary-fixed": "#001d34",
+                    "surface-container-highest": "#e3e2e6",
+                    "secondary-container": "#8bc3fd",
+                    "on-secondary-fixed-variant": "#004a79",
+                    "on-tertiary-container": "#c69b5f",
+                    "inverse-surface": "#2f3033",
+                    "surface-dim": "#dad9dd",
+                    "on-tertiary": "#ffffff",
+                    "error-container": "#ffdad6",
+                    "on-secondary-container": "#005083",
+                    "surface-container-low": "#f4f3f7",
+                    "tertiary-container": "#503300",
+                    "primary": "#022448",
+                    "tertiary": "#341f00",
+                    "primary-container": "#1e3a5f",
+                    "tertiary-fixed-dim": "#edbf7f",
+                    "secondary-fixed": "#d0e4ff",
+                    "inverse-on-surface": "#f1f0f4",
+                    "inverse-primary": "#adc8f5",
+                    "on-error-container": "#93000a",
+                    "primary-fixed-dim": "#adc8f5",
+                    "surface": "#faf9fc",
+                    "on-primary": "#ffffff",
+                    "tertiary-fixed": "#ffddb2",
+                    "background": "#faf9fc",
+                    "on-primary-container": "#8aa4cf",
+                    "surface-container-lowest": "#ffffff",
+                    "on-primary-fixed-variant": "#2d486d",
+                    "on-error": "#ffffff",
+                    "on-surface": "#1a1c1e"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "8px",
+                    "xl": "12px",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "base": "4px",
+                    "md": "16px",
+                    "gutter": "24px",
+                    "lg": "24px",
+                    "xl": "32px",
+                    "sm": "8px",
+                    "xs": "4px",
+                    "container-margin": "40px"
+            },
+            "fontFamily": {
+                    "data-tabular": ["Inter"],
+                    "h3": ["Inter"],
+                    "label-sm": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "label-md": ["Inter"],
+                    "h1": ["Inter"],
+                    "body-sm": ["Inter"],
+                    "body-md": ["Inter"],
+                    "h2": ["Inter"]
+            },
+            "fontSize": {
+                    "data-tabular": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "h3": ["20px", {"lineHeight": "28px", "letterSpacing": "0", "fontWeight": "600"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "letterSpacing": "0", "fontWeight": "400"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                    "h1": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-sm": ["13px", {"lineHeight": "18px", "letterSpacing": "0", "fontWeight": "400"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0", "fontWeight": "400"}],
+                    "h2": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #F8FBFF; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .ambient-shadow { shadow-sm: 0 4px 12px rgba(30, 58, 95, 0.05); }
+        .modal-shadow { box-shadow: 0 12px 32px rgba(30, 58, 95, 0.12); }
+        .custom-card { background: #FFFFFF; border: 1px solid #D6E4F0; border-radius: 12px; box-shadow: 0 4px 12px rgba(30, 58, 95, 0.05); }
+    </style>
+</head>
+<body class="text-on-surface">
+<!-- SideNavBar (Shared Component) -->
+<aside class="fixed left-0 top-0 h-full w-[260px] bg-surface-container-low dark:bg-on-background shadow-sm flex flex-col py-md px-sm gap-xs z-50">
+<div class="mb-xl px-md">
+<h1 class="text-h2 font-h2 text-primary dark:text-primary-fixed-dim">AsistControl</h1>
+<p class="text-body-sm text-on-surface-variant">Admin Portal</p>
+</div>
+<nav class="flex-1 flex flex-col gap-xs">
+<!-- Active Tab: Inicio -->
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-primary dark:text-primary-fixed-dim font-bold border-r-4 border-primary dark:border-primary-fixed-dim bg-surface-container dark:bg-primary-container/20 transition-transform active:scale-95" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-body-md text-body-md">Inicio</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-colors duration-200 active:scale-95" href="#">
+<span class="material-symbols-outlined" data-icon="badge">badge</span>
+<span class="font-body-md text-body-md">Empleados</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-colors duration-200 active:scale-95" href="#">
+<span class="material-symbols-outlined" data-icon="history_toggle_off">history_toggle_off</span>
+<span class="font-body-md text-body-md">Asistencia</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-colors duration-200 active:scale-95" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="font-body-md text-body-md">Reportes</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-colors duration-200 active:scale-95" href="#">
+<span class="material-symbols-outlined" data-icon="location_on">location_on</span>
+<span class="font-body-md text-body-md">Sedes</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-colors duration-200 active:scale-95" href="#">
+<span class="material-symbols-outlined" data-icon="devices">devices</span>
+<span class="font-body-md text-body-md">Dispositivos</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-colors duration-200 active:scale-95" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-body-md text-body-md">Configuración</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-colors duration-200 active:scale-95" href="#">
+<span class="material-symbols-outlined" data-icon="verified">verified</span>
+<span class="font-body-md text-body-md">Licencia</span>
+</a>
+</nav>
+<div class="mt-auto px-md py-md border-t border-outline-variant">
+<div class="flex items-center gap-md">
+<img alt="Company Logo" class="w-10 h-10 rounded-full object-cover border-2 border-primary-container" data-alt="A professional headshot of a corporate manager in a clean, modern office environment. The lighting is soft and professional, with a blue and white color palette that reflects a high-end SaaS corporate identity. The individual is wearing a dark navy blazer and has a confident, approachable expression." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC1SkUHfpLHjH4Wk7eTdpM2dW7mVkEmlJWzV5SK1uzfRpcSL0xUCi9yJjRiOLReaucctMFwvweHw55LKt_ZVHOW6Nw8EKmTpbHByF_xxuV3ddvVEobMujLYai5BK1fk64z3jL67XNd9MuxMt-OtBrRx0LP2RDKtKU_jpJLB_FqHL1vlNePJnkoibJji5IAOnyU5t2nHV1aKecJ8uJVCG0FZj9RK1OCqv023YWCJE-ku_Q3tnBvKKhCTYixoHsFRa0L1tgfwW2GqIh0"/>
+<div>
+<p class="font-label-md text-label-md text-primary">Carlos Ruiz</p>
+<p class="text-xs text-on-surface-variant">Admin Principal</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Wrapper -->
+<main class="ml-[260px] min-h-screen">
+<!-- TopNavBar (Shared Component) -->
+<header class="flex justify-between items-center h-16 px-gutter w-full sticky top-0 z-40 bg-surface-container-lowest dark:bg-on-background border-b border-outline-variant shadow-sm">
+<div class="flex items-center gap-xl">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline" data-icon="search">search</span>
+<input class="pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-lg w-64 focus:ring-2 focus:ring-primary/20 text-body-sm" placeholder="Buscar empleados, reportes..." type="text"/>
+</div>
+<nav class="hidden md:flex gap-lg items-center">
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-secondary transition-colors" href="#">Clientes</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-secondary transition-colors" href="#">Planes</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-secondary transition-colors" href="#">Pagos</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-secondary transition-colors" href="#">Métricas</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-secondary transition-colors" href="#">Auditoría</a>
+</nav>
+</div>
+<div class="flex items-center gap-md">
+<button class="w-10 h-10 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container transition-colors relative">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full"></span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined" data-icon="location_on">location_on</span>
+</button>
+<div class="h-8 w-[1px] bg-outline-variant mx-2"></div>
+<div class="flex items-center gap-sm">
+<img alt="User Profile" class="w-8 h-8 rounded-full border border-outline-variant object-cover" data-alt="A close-up portrait of a corporate executive with a friendly smile, set against a blurred background of a modern glass-walled office. The lighting is bright and natural, emphasizing a professional yet accessible atmosphere. The color scheme is dominated by clean whites and deep blues, maintaining consistency with the corporate branding." src="https://lh3.googleusercontent.com/aida-public/AB6AXuALS3U30XUNtDa6jUIon3knuJWRLQbSCscH0aGJKfOVC-7s-kpjk5PcU1eCLmEbPTBdn_Ps5t5LzFbsaJinCobczqfe6bVurgFEwldAiMnvH23bq7FxymUXt34UXQmiRDtZE_UWwlHoPB8XElbYlMTS_0leP3aTyA32iUFOVlX0SFiWgXkPSoXMXstM9ApaFH1h_dbNmoZNjp4T6cEF8khLBAacGHxrGcH9mqI4SKwrzX2Vj_M6GXRWq8KE8bDGEdJupBtxqGyrZHg"/>
+<span class="material-symbols-outlined text-outline" data-icon="keyboard_arrow_down">keyboard_arrow_down</span>
+</div>
+</div>
+</header>
+<!-- Dashboard Content -->
+<div class="p-gutter space-y-gutter">
+<!-- Row 1: KPI Cards -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-md">
+<!-- KPI 1 -->
+<div class="custom-card p-md flex items-center gap-md border-l-4 border-primary">
+<div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" data-icon="groups">groups</span>
+</div>
+<div>
+<p class="text-label-sm font-label-sm text-on-surface-variant">Empleados activos</p>
+<h4 class="text-h3 font-h3 text-primary">24</h4>
+</div>
+</div>
+<!-- KPI 2 -->
+<div class="custom-card p-md flex items-center gap-md border-l-4 border-secondary">
+<div class="w-12 h-12 rounded-xl bg-secondary/10 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined" data-icon="person_check">person_check</span>
+</div>
+<div>
+<p class="text-label-sm font-label-sm text-on-surface-variant">Presentes ahora</p>
+<h4 class="text-h3 font-h3 text-secondary">18</h4>
+</div>
+</div>
+<!-- KPI 3 -->
+<div class="custom-card p-md flex items-center gap-md border-l-4 border-outline">
+<div class="w-12 h-12 rounded-xl bg-outline/10 flex items-center justify-center text-outline">
+<span class="material-symbols-outlined" data-icon="person_off">person_off</span>
+</div>
+<div>
+<p class="text-label-sm font-label-sm text-on-surface-variant">Ausentes hoy</p>
+<h4 class="text-h3 font-h3 text-on-surface">4</h4>
+</div>
+</div>
+<!-- KPI 4 -->
+<div class="custom-card p-md flex items-center gap-md border-l-4 border-tertiary-container">
+<div class="w-12 h-12 rounded-xl bg-tertiary-fixed/30 flex items-center justify-center text-on-tertiary-fixed-variant">
+<span class="material-symbols-outlined" data-icon="schedule">schedule</span>
+</div>
+<div>
+<p class="text-label-sm font-label-sm text-on-surface-variant">Tardanzas hoy</p>
+<h4 class="text-h3 font-h3 text-on-tertiary-fixed-variant">2</h4>
+</div>
+</div>
+<!-- KPI 5 -->
+<div class="custom-card p-md flex items-center gap-md border-l-4 border-error">
+<div class="w-12 h-12 rounded-xl bg-error/10 flex items-center justify-center text-error">
+<span class="material-symbols-outlined" data-icon="assignment_late">assignment_late</span>
+</div>
+<div>
+<p class="text-label-sm font-label-sm text-on-surface-variant">Turnos incompletos</p>
+<h4 class="text-h3 font-h3 text-error">1</h4>
+</div>
+</div>
+<!-- KPI 6 -->
+<div class="custom-card p-md flex items-center gap-md border-l-4 border-primary-container">
+<div class="w-12 h-12 rounded-xl bg-primary-container/10 flex items-center justify-center text-primary-container">
+<span class="material-symbols-outlined" data-icon="timer">timer</span>
+</div>
+<div>
+<p class="text-label-sm font-label-sm text-on-surface-variant">Horas hoy</p>
+<h4 class="text-h3 font-h3 text-primary-container">142h</h4>
+</div>
+</div>
+</div>
+<!-- Row 2: Charts & Lists -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+<!-- Bar Chart (60%) -->
+<div class="lg:col-span-7 custom-card p-xl flex flex-col">
+<div class="flex justify-between items-center mb-xl">
+<h3 class="text-h3 font-h3 text-primary">Horas trabajadas — últimos 7 días</h3>
+<button class="text-label-md text-secondary hover:underline">Ver detalle</button>
+</div>
+<div class="flex-1 flex items-end justify-between gap-md h-[300px]">
+<!-- Simple Visual Bar Chart Representation -->
+<div class="flex-1 flex flex-col items-center gap-sm">
+<div class="w-full bg-secondary-container rounded-t-lg" style="height: 65%;"></div>
+<span class="text-xs text-on-surface-variant">Lun</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-sm">
+<div class="w-full bg-secondary-container rounded-t-lg" style="height: 85%;"></div>
+<span class="text-xs text-on-surface-variant">Mar</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-sm">
+<div class="w-full bg-secondary-container rounded-t-lg" style="height: 75%;"></div>
+<span class="text-xs text-on-surface-variant">Mie</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-sm">
+<div class="w-full bg-primary-container rounded-t-lg" style="height: 95%;"></div>
+<span class="text-xs text-on-surface-variant font-bold">Hoy</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-sm">
+<div class="w-full bg-secondary-container/40 rounded-t-lg" style="height: 40%;"></div>
+<span class="text-xs text-on-surface-variant">Vie</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-sm">
+<div class="w-full bg-secondary-container/40 rounded-t-lg" style="height: 20%;"></div>
+<span class="text-xs text-on-surface-variant">Sab</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-sm">
+<div class="w-full bg-secondary-container/40 rounded-t-lg" style="height: 10%;"></div>
+<span class="text-xs text-on-surface-variant">Dom</span>
+</div>
+</div>
+</div>
+<!-- Present Employees List (40%) -->
+<div class="lg:col-span-5 custom-card flex flex-col overflow-hidden">
+<div class="p-xl bg-surface-container-low border-b border-outline-variant flex justify-between items-center">
+<h3 class="text-h3 font-h3 text-primary">Presentes ahora</h3>
+<span class="bg-secondary/10 text-secondary text-label-sm px-md py-xs rounded-full font-bold">18 en línea</span>
+</div>
+<div class="flex-1 overflow-y-auto max-h-[380px]">
+<table class="w-full">
+<tbody class="divide-y divide-outline-variant">
+<!-- Employee Row 1 -->
+<tr class="hover:bg-surface transition-colors cursor-pointer group">
+<td class="px-xl py-md">
+<div class="flex items-center gap-md">
+<div class="relative">
+<img class="w-10 h-10 rounded-full object-cover" data-alt="A clean and professional headshot of a young male employee in a bright office setting. He is wearing a white button-up shirt and has a focused, professional demeanor. The image is bright with high contrast, following the clean corporate aesthetic of the brand with soft shadows and sharp focus." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAecgdM5yUuSKK-JnO0bBY117gZXF8lGNrZOHyXF5Uy3HcCGAd3mxC7EmjUdYjSrAKfMYRH7o4hzwNwpSaOMLr1OQLUQAxr2EATPRBOVOmDqFoGizGAyONOHfVkYApNye7YY1WPv2HO9ySoJZmle8DP7YTYABrJ2Dp6Kk3nLAP28Xe_vTvDH8_5mnr0moyqCXNAja7RLb5izqdK9E0zB-tWLQ_HecoF9Y6n684y7dXv76tBXmcKXk2TQGnKkugIXYdvbyJjrTk5RGA"/>
+<div class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
+</div>
+<div>
+<p class="font-label-md text-label-md text-on-surface group-hover:text-primary transition-colors">Ricardo Gomez</p>
+<p class="text-body-sm text-on-surface-variant">Entrada: 08:02 AM</p>
+</div>
+</div>
+</td>
+<td class="px-xl py-md text-right">
+<span class="inline-flex items-center gap-xs px-md py-xs rounded-lg bg-surface-container-high text-on-surface-variant text-label-sm">
+<span class="material-symbols-outlined text-[16px]" data-icon="location_on">location_on</span>
+                                            Sede Norte
+                                        </span>
+</td>
+</tr>
+<!-- Employee Row 2 -->
+<tr class="hover:bg-surface transition-colors cursor-pointer group">
+<td class="px-xl py-md">
+<div class="flex items-center gap-md">
+<div class="relative">
+<img class="w-10 h-10 rounded-full object-cover" data-alt="A professional portrait of a female professional in a modern office, characterized by a soft blue and grey color palette. She has a confident smile and is dressed in professional business attire. The lighting is even and soft, emphasizing a high-quality, professional corporate look consistent with the software's UI design." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBz9J1uPOHZ8O1hUZm_kYc9UdI9k6Y2zEsA8dl3BkEpKyTqHug3jeNDU1wOcNPGQ8Li6y1jVuLdoGtBUr6qRZPM6Pdtcimxc0CszyhjTuq37fZc5VVW9qZyTRMxt8RJpcPQ4HlGXy5fa8b50dYvbaXq8vm46FJCQ6g0RSSG0RRjWvf4LN8-AGbO9TpJeVLHiawUy7kpRp-DWuuj-j2E4mU8nykuaGgTuyaaJf0W9WazLTBrmWVym5WKArJgvYAn9QaOBjv6bQ9lJBc"/>
+<div class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
+</div>
+<div>
+<p class="font-label-md text-label-md text-on-surface group-hover:text-primary transition-colors">Maria Elena Salas</p>
+<p class="text-body-sm text-on-surface-variant">Entrada: 07:55 AM</p>
+</div>
+</div>
+</td>
+<td class="px-xl py-md text-right">
+<span class="inline-flex items-center gap-xs px-md py-xs rounded-lg bg-surface-container-high text-on-surface-variant text-label-sm">
+<span class="material-symbols-outlined text-[16px]" data-icon="location_on">location_on</span>
+                                            Remoto
+                                        </span>
+</td>
+</tr>
+<!-- Employee Row 3 -->
+<tr class="hover:bg-surface transition-colors cursor-pointer group">
+<td class="px-xl py-md">
+<div class="flex items-center gap-md">
+<div class="relative">
+<img class="w-10 h-10 rounded-full object-cover" data-alt="Close-up of a middle-aged male executive in a corporate setting, featuring a backdrop of modern architectural glass. The styling is minimal and sharp, using deep blues and cool tones to convey trust and reliability. The lighting is professional studio-grade, fitting the clean and high-end feel of the AsistControl brand." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA6vAzbBergziUYBYHRR2nz8citKlN1trpwrSFXClIF0StwiqKj6D_jWUdkt0DlaILeTdzQHJlu1ArvQtri_ZcJe0Ok15riDVFQ_o8g9cmxvnRyi4UOCnOr8tO_9Ftw9R-BH3vbdfsgiNBvKbs2oPOPXIKZjDkIHJdLqinDRcLiTAetX-53-EdLLTe52M_gqfXhHJ4ZBz1eBkgfYnYbUxDY5Sj36Z_mnEB4OCnFSymHA51inBtMcZ8Zz27meX0MJz11x_gZvfKbuTY"/>
+<div class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
+</div>
+<div>
+<p class="font-label-md text-label-md text-on-surface group-hover:text-primary transition-colors">Luis Alberto Ortiz</p>
+<p class="text-body-sm text-on-surface-variant">Entrada: 08:15 AM</p>
+</div>
+</div>
+</td>
+<td class="px-xl py-md text-right">
+<span class="inline-flex items-center gap-xs px-md py-xs rounded-lg bg-surface-container-high text-on-surface-variant text-label-sm">
+<span class="material-symbols-outlined text-[16px]" data-icon="location_on">location_on</span>
+                                            Sede Central
+                                        </span>
+</td>
+</tr>
+<!-- Employee Row 4 -->
+<tr class="hover:bg-surface transition-colors cursor-pointer group">
+<td class="px-xl py-md">
+<div class="flex items-center gap-md">
+<div class="relative">
+<img class="w-10 h-10 rounded-full object-cover" data-alt="A professional headshot of a woman with a confident and serious expression in a modern, brightly lit office space. The image follows a high-key lighting style with a palette of whites, soft greys, and navy blue accents, reflecting the precision and professionalism of an enterprise attendance management system." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA7zXVOKV_dJpqVLFJFQtdVbHAcMzxbE33mEEaJZBHxuZQ9QRwK6GzYHbnkg7UKfr3BtFz1FcSVu8ZHRZ-aoi1kbydOFQNTUD_f-kT__ahnqLGI99LqmaKcLeNpHK2RzL9nwhrdNkiLfuguGDHjgkwyxR3_jAc9dhgkKJTeFolSBQ6sj6Qf0KnKI9AIAcVL7RfnSFok6oDlp7Q-zjgapPv25K_OpfK6A1_K9kPc3__ZtXCODJGTziujfxdZ9IcaCX2RKKaValaTIEo"/>
+<div class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
+</div>
+<div>
+<p class="font-label-md text-label-md text-on-surface group-hover:text-primary transition-colors">Carla Villalta</p>
+<p class="text-body-sm text-on-surface-variant">Entrada: 08:10 AM</p>
+</div>
+</div>
+</td>
+<td class="px-xl py-md text-right">
+<span class="inline-flex items-center gap-xs px-md py-xs rounded-lg bg-surface-container-high text-on-surface-variant text-label-sm">
+<span class="material-symbols-outlined text-[16px]" data-icon="location_on">location_on</span>
+                                            Sede Sur
+                                        </span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<!-- Row 3: Full Width Line Chart -->
+<div class="custom-card p-xl">
+<div class="flex flex-col md:flex-row md:items-center justify-between mb-xl gap-md">
+<div>
+<h3 class="text-h3 font-h3 text-primary">Puntualidad semanal — hora promedio de entrada</h3>
+<p class="text-body-sm text-on-surface-variant">Comparativa respecto al inicio de jornada (08:00 AM)</p>
+</div>
+<div class="flex items-center gap-lg">
+<div class="flex items-center gap-xs">
+<div class="w-3 h-3 bg-primary rounded-full"></div>
+<span class="text-label-sm text-on-surface-variant">Promedio Real</span>
+</div>
+<div class="flex items-center gap-xs">
+<div class="w-3 h-[2px] bg-error border-dashed"></div>
+<span class="text-label-sm text-on-surface-variant">Límite 08:00</span>
+</div>
+</div>
+</div>
+<div class="relative h-[300px] w-full mt-lg">
+<!-- Grid Lines -->
+<div class="absolute inset-0 flex flex-col justify-between pointer-events-none opacity-20">
+<div class="border-b border-outline-variant w-full h-[1px]"></div>
+<div class="border-b border-outline-variant w-full h-[1px]"></div>
+<div class="border-b border-outline-variant w-full h-[1px]"></div>
+<div class="border-b border-outline-variant w-full h-[1px]"></div>
+<div class="border-b border-outline-variant w-full h-[1px]"></div>
+</div>
+<!-- Reference Line (08:00) -->
+<div class="absolute top-1/2 left-0 w-full h-[2px] border-b-2 border-dashed border-error/40 z-10">
+<span class="absolute -top-6 right-0 text-[10px] text-error font-bold bg-white px-2">HORARIO INICIO (08:00)</span>
+</div>
+<!-- Line Chart SVG (Manual representation for visualization) -->
+<svg class="absolute inset-0 w-full h-full" preserveaspectratio="none" viewbox="0 0 1000 300">
+<path d="M0,160 L200,140 L400,170 L600,130 L800,150 L1000,120" fill="none" stroke="#022448" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"></path>
+<circle cx="0" cy="160" fill="#022448" r="4"></circle>
+<circle cx="200" cy="140" fill="#022448" r="4"></circle>
+<circle cx="400" cy="170" fill="#022448" r="4"></circle>
+<circle cx="600" cy="130" fill="#022448" r="4"></circle>
+<circle cx="800" cy="150" fill="#022448" r="4"></circle>
+<circle cx="1000" cy="120" fill="#022448" r="4"></circle>
+</svg>
+<!-- X-Axis Labels -->
+<div class="absolute -bottom-8 left-0 w-full flex justify-between text-xs text-on-surface-variant px-2">
+<span>Lun</span>
+<span>Mar</span>
+<span>Mie</span>
+<span>Jue</span>
+<span>Vie</span>
+<span>Sab</span>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

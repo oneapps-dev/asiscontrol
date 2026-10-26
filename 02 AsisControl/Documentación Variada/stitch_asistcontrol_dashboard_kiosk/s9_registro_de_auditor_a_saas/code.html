@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-background": "#1a1c1e",
+                    "outline": "#74777f",
+                    "on-tertiary-fixed-variant": "#60410c",
+                    "on-tertiary-fixed": "#291800",
+                    "error": "#ba1a1a",
+                    "surface-variant": "#e3e2e6",
+                    "outline-variant": "#c4c6cf",
+                    "secondary": "#226296",
+                    "surface-container-high": "#e9e7eb",
+                    "surface-container": "#eeedf1",
+                    "surface-bright": "#faf9fc",
+                    "on-surface-variant": "#43474e",
+                    "surface-tint": "#455f87",
+                    "secondary-fixed-dim": "#9bcbff",
+                    "primary-fixed": "#d5e3ff",
+                    "on-primary-fixed": "#001c3b",
+                    "on-secondary": "#ffffff",
+                    "on-secondary-fixed": "#001d34",
+                    "surface-container-highest": "#e3e2e6",
+                    "secondary-container": "#8bc3fd",
+                    "on-secondary-fixed-variant": "#004a79",
+                    "on-tertiary-container": "#c69b5f",
+                    "inverse-surface": "#2f3033",
+                    "surface-dim": "#dad9dd",
+                    "on-tertiary": "#ffffff",
+                    "error-container": "#ffdad6",
+                    "on-secondary-container": "#005083",
+                    "surface-container-low": "#f4f3f7",
+                    "tertiary-container": "#503300",
+                    "primary": "#022448",
+                    "tertiary": "#341f00",
+                    "primary-container": "#1e3a5f",
+                    "tertiary-fixed-dim": "#edbf7f",
+                    "secondary-fixed": "#d0e4ff",
+                    "inverse-on-surface": "#f1f0f4",
+                    "inverse-primary": "#adc8f5",
+                    "on-error-container": "#93000a",
+                    "primary-fixed-dim": "#adc8f5",
+                    "surface": "#faf9fc",
+                    "on-primary": "#ffffff",
+                    "tertiary-fixed": "#ffddb2",
+                    "background": "#faf9fc",
+                    "on-primary-container": "#8aa4cf",
+                    "surface-container-lowest": "#ffffff",
+                    "on-primary-fixed-variant": "#2d486d",
+                    "on-error": "#ffffff",
+                    "on-surface": "#1a1c1e"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "base": "4px",
+                    "md": "16px",
+                    "gutter": "24px",
+                    "lg": "24px",
+                    "xl": "32px",
+                    "sm": "8px",
+                    "xs": "4px",
+                    "container-margin": "40px"
+            },
+            "fontFamily": {
+                    "data-tabular": ["Inter"],
+                    "h3": ["Inter"],
+                    "label-sm": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "label-md": ["Inter"],
+                    "h1": ["Inter"],
+                    "body-sm": ["Inter"],
+                    "body-md": ["Inter"],
+                    "h2": ["Inter"]
+            },
+            "fontSize": {
+                    "data-tabular": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "h3": ["20px", {"lineHeight": "28px", "letterSpacing": "0", "fontWeight": "600"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "letterSpacing": "0", "fontWeight": "400"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                    "h1": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-sm": ["13px", {"lineHeight": "18px", "letterSpacing": "0", "fontWeight": "400"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0", "fontWeight": "400"}],
+                    "h2": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Inter', sans-serif; background-color: #F8FBFF; }
+    </style>
+</head>
+<body class="bg-background text-on-surface">
+<!-- TopNavBar -->
+<header class="flex justify-between items-center h-16 px-gutter w-full sticky top-0 z-40 bg-surface-container-lowest dark:bg-on-background border-b border-outline-variant dark:border-outline shadow-sm">
+<div class="flex items-center gap-xl">
+<h1 class="text-h3 font-h3 text-primary dark:text-primary-fixed">AsistControl</h1>
+<nav class="hidden md:flex gap-lg">
+<a class="text-on-surface-variant dark:text-outline-variant font-label-md text-label-md hover:text-secondary transition-colors" href="#">Clientes</a>
+<a class="text-on-surface-variant dark:text-outline-variant font-label-md text-label-md hover:text-secondary transition-colors" href="#">Planes</a>
+<a class="text-on-surface-variant dark:text-outline-variant font-label-md text-label-md hover:text-secondary transition-colors" href="#">Pagos</a>
+<a class="text-on-surface-variant dark:text-outline-variant font-label-md text-label-md hover:text-secondary transition-colors" href="#">Métricas</a>
+<a class="text-primary dark:text-primary-fixed-dim font-bold border-b-2 border-primary dark:border-primary-fixed-dim pb-1 font-label-md text-label-md" href="#">Auditoría</a>
+</nav>
+</div>
+<div class="flex items-center gap-md">
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-on-surface-variant">notifications</span>
+<span class="material-symbols-outlined text-on-surface-variant">location_on</span>
+</div>
+<div class="h-8 w-8 rounded-full bg-primary-container flex items-center justify-center text-primary-fixed overflow-hidden border border-outline-variant">
+<img alt="User Profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAgAgvGVyH5rxLHp_f2cSk3WJv3HLcP1h8OaLOIHdUS4SdKdhMZUFAF9b8yb1Qyb7IXGsqrryalddGCcXt9dvIfpcwU0as64IL6d5FxscjXuWp66qQFW3PfnagGN_eKOerc_ZFfn5PFBHFRV2U2TJGUlSQ0erkRZ1H9k3TpWLBl2cYAFcY4MXPqvbEn65ZaDzT9SCtLJ6nT5oM6BG_KF8XiuiPbPxSXn8mmjqzqkYchKka49eN_ZuFq6tOvgBTmZX8HFxr4R4W2qXY"/>
+</div>
+</div>
+</header>
+<div class="flex">
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-16 h-[calc(100vh-64px)] w-[260px] flex flex-col py-md px-sm gap-xs bg-surface dark:bg-on-background bg-surface-container-low dark:bg-on-background shadow-sm">
+<div class="flex flex-col gap-xs flex-1">
+<a class="flex items-center gap-md p-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-body-md text-body-md">Inicio</span>
+</a>
+<a class="flex items-center gap-md p-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors" href="#">
+<span class="material-symbols-outlined">badge</span>
+<span class="font-body-md text-body-md">Empleados</span>
+</a>
+<a class="flex items-center gap-md p-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors" href="#">
+<span class="material-symbols-outlined">history_toggle_off</span>
+<span class="font-body-md text-body-md">Asistencia</span>
+</a>
+<a class="flex items-center gap-md p-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-body-md text-body-md">Reportes</span>
+</a>
+<a class="flex items-center gap-md p-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors" href="#">
+<span class="material-symbols-outlined">location_on</span>
+<span class="font-body-md text-body-md">Sedes</span>
+</a>
+<a class="flex items-center gap-md p-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors" href="#">
+<span class="material-symbols-outlined">devices</span>
+<span class="font-body-md text-body-md">Dispositivos</span>
+</a>
+<a class="flex items-center gap-md p-sm rounded-lg text-primary dark:text-primary-fixed-dim font-bold border-r-4 border-primary bg-surface-container" href="#">
+<span class="material-symbols-outlined">verified</span>
+<span class="font-body-md text-body-md">Licencia</span>
+</a>
+<a class="flex items-center gap-md p-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-body-md text-body-md">Configuración</span>
+</a>
+</div>
+<div class="mt-auto p-md bg-secondary-container/10 rounded-xl border border-outline-variant">
+<p class="font-label-sm text-label-sm text-on-secondary-container mb-2">Estado del Servidor</p>
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-[#27AE60]"></div>
+<span class="text-body-sm font-body-sm">Operacional</span>
+</div>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-[260px] w-full p-gutter">
+<!-- Page Header & Actions -->
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-xl gap-md">
+<div>
+<h2 class="text-h1 font-h1 text-primary">Auditoría del Sistema</h2>
+<p class="text-body-md font-body-md text-on-surface-variant">Seguimiento de cambios críticos y acciones de administradores.</p>
+</div>
+<button class="flex items-center gap-2 bg-primary text-on-primary px-lg py-md rounded-xl shadow-md active:scale-95 transition-transform">
+<span class="material-symbols-outlined">download</span>
+<span class="font-label-md text-label-md">Exportar log CSV</span>
+</button>
+</div>
+<!-- Filter Bar Component -->
+<div class="bg-surface-container-lowest p-md rounded-xl border border-outline-variant shadow-sm mb-lg flex flex-wrap gap-md items-center">
+<div class="flex-1 min-w-[200px]">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-white border border-outline-variant rounded-xl focus:ring-2 focus:ring-secondary/20 focus:border-secondary outline-none text-body-md font-body-md" placeholder="Buscar por detalle o IP..." type="text"/>
+</div>
+</div>
+<div class="flex gap-md items-center flex-wrap">
+<select class="bg-white border border-outline-variant rounded-xl px-4 py-2 text-body-md font-body-md focus:ring-2 focus:ring-secondary/20 outline-none">
+<option>Todo Superadmin</option>
+<option>admin_central</option>
+<option>sys_manager</option>
+<option>it_support_2</option>
+</select>
+<select class="bg-white border border-outline-variant rounded-xl px-4 py-2 text-body-md font-body-md focus:ring-2 focus:ring-secondary/20 outline-none">
+<option>Tipo de Acción</option>
+<option>Creación</option>
+<option>Modificación</option>
+<option>Eliminación</option>
+<option>Login/Logout</option>
+</select>
+<div class="flex items-center gap-2 bg-white border border-outline-variant rounded-xl px-4 py-2">
+<span class="material-symbols-outlined text-outline text-[20px]">calendar_today</span>
+<input class="border-none bg-transparent text-body-md font-body-md focus:ring-0 p-0 cursor-pointer" type="date"/>
+</div>
+</div>
+</div>
+<!-- Audit Table -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden">
+<table class="w-full text-left border-collapse">
+<thead class="bg-surface-container-low border-b border-outline-variant">
+<tr>
+<th class="px-gutter py-md font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Fecha/Hora</th>
+<th class="px-gutter py-md font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Superadmin</th>
+<th class="px-gutter py-md font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Acción</th>
+<th class="px-gutter py-md font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Entidad</th>
+<th class="px-gutter py-md font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Detalle</th>
+<th class="px-gutter py-md font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">IP</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant font-data-tabular text-data-tabular">
+<tr class="hover:bg-surface transition-colors">
+<td class="px-gutter py-md">2023-10-27 14:22:10</td>
+<td class="px-gutter py-md font-semibold text-primary">admin_central</td>
+<td class="px-gutter py-md">
+<span class="bg-[#27AE60]/10 text-[#27AE60] px-3 py-1 rounded-full text-[12px] font-bold">CREAR</span>
+</td>
+<td class="px-gutter py-md italic">Sede_Norte</td>
+<td class="px-gutter py-md max-w-xs truncate">Nueva sede agregada con 12 terminales biométricos.</td>
+<td class="px-gutter py-md font-mono text-outline">192.168.1.104</td>
+</tr>
+<tr class="hover:bg-surface transition-colors">
+<td class="px-gutter py-md">2023-10-27 13:45:02</td>
+<td class="px-gutter py-md font-semibold text-primary">sys_manager</td>
+<td class="px-gutter py-md">
+<span class="bg-[#2D6A9F]/10 text-[#2D6A9F] px-3 py-1 rounded-full text-[12px] font-bold">LOGIN</span>
+</td>
+<td class="px-gutter py-md italic">Sistema</td>
+<td class="px-gutter py-md max-w-xs truncate">Inicio de sesión exitoso mediante 2FA.</td>
+<td class="px-gutter py-md font-mono text-outline">201.141.56.22</td>
+</tr>
+<tr class="hover:bg-surface transition-colors">
+<td class="px-gutter py-md">2023-10-27 12:15:30</td>
+<td class="px-gutter py-md font-semibold text-primary">it_support_2</td>
+<td class="px-gutter py-md">
+<span class="bg-[#F2994A]/10 text-[#F2994A] px-3 py-1 rounded-full text-[12px] font-bold">MODIFICAR</span>
+</td>
+<td class="px-gutter py-md italic">Plan_Premium</td>
+<td class="px-gutter py-md max-w-xs truncate">Actualización de cuota de almacenamiento a 50GB.</td>
+<td class="px-gutter py-md font-mono text-outline">172.16.0.45</td>
+</tr>
+<tr class="hover:bg-surface transition-colors">
+<td class="px-gutter py-md">2023-10-27 10:05:44</td>
+<td class="px-gutter py-md font-semibold text-primary">admin_central</td>
+<td class="px-gutter py-md">
+<span class="bg-[#EB5757]/10 text-[#EB5757] px-3 py-1 rounded-full text-[12px] font-bold">ELIMINAR</span>
+</td>
+<td class="px-gutter py-md italic">Disp_4452</td>
+<td class="px-gutter py-md max-w-xs truncate">Dispositivo desvinculado por fin de vida útil.</td>
+<td class="px-gutter py-md font-mono text-outline">192.168.1.104</td>
+</tr>
+<tr class="hover:bg-surface transition-colors">
+<td class="px-gutter py-md">2023-10-27 09:12:11</td>
+<td class="px-gutter py-md font-semibold text-primary">sys_manager</td>
+<td class="px-gutter py-md">
+<span class="bg-[#2D6A9F]/10 text-[#2D6A9F] px-3 py-1 rounded-full text-[12px] font-bold">CONFIG</span>
+</td>
+<td class="px-gutter py-md italic">Seguridad</td>
+<td class="px-gutter py-md max-w-xs truncate">Cambio en política de contraseñas: min 12 chars.</td>
+<td class="px-gutter py-md font-mono text-outline">201.141.56.22</td>
+</tr>
+<tr class="hover:bg-surface transition-colors">
+<td class="px-gutter py-md">2023-10-27 08:30:00</td>
+<td class="px-gutter py-md font-semibold text-primary">sys_manager</td>
+<td class="px-gutter py-md">
+<span class="bg-[#27AE60]/10 text-[#27AE60] px-3 py-1 rounded-full text-[12px] font-bold">BACKUP</span>
+</td>
+<td class="px-gutter py-md italic">BaseDatos</td>
+<td class="px-gutter py-md max-w-xs truncate">Respaldo incremental semanal completado.</td>
+<td class="px-gutter py-md font-mono text-outline">localhost</td>
+</tr>
+<tr class="hover:bg-surface transition-colors">
+<td class="px-gutter py-md">2023-10-26 17:45:33</td>
+<td class="px-gutter py-md font-semibold text-primary">it_support_2</td>
+<td class="px-gutter py-md">
+<span class="bg-[#F2994A]/10 text-[#F2994A] px-3 py-1 rounded-full text-[12px] font-bold">UPDATE</span>
+</td>
+<td class="px-gutter py-md italic">Empleado_334</td>
+<td class="px-gutter py-md max-w-xs truncate">Permisos de acceso extendidos a Zona Franca.</td>
+<td class="px-gutter py-md font-mono text-outline">172.16.0.45</td>
+</tr>
+<tr class="hover:bg-surface transition-colors">
+<td class="px-gutter py-md">2023-10-26 16:10:05</td>
+<td class="px-gutter py-md font-semibold text-primary">admin_central</td>
+<td class="px-gutter py-md">
+<span class="bg-[#EB5757]/10 text-[#EB5757] px-3 py-1 rounded-full text-[12px] font-bold">ALERTA</span>
+</td>
+<td class="px-gutter py-md italic">API_Gateway</td>
+<td class="px-gutter py-md max-w-xs truncate">Intento fallido de acceso forzado detectado.</td>
+<td class="px-gutter py-md font-mono text-outline">45.22.102.11</td>
+</tr>
+</tbody>
+</table>
+<!-- Pagination Footer -->
+<div class="px-gutter py-md bg-surface-container-low border-t border-outline-variant flex items-center justify-between">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Mostrando 1-8 de 1,244 registros</span>
+<div class="flex gap-2">
+<button class="p-1 rounded hover:bg-surface-container-high transition-colors disabled:opacity-30" disabled="">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg bg-primary text-on-primary font-label-md text-label-md">1</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-surface-container-high font-label-md text-label-md text-on-surface-variant">2</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-surface-container-high font-label-md text-label-md text-on-surface-variant">3</button>
+<span class="px-2 self-end">...</span>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-surface-container-high font-label-md text-label-md text-on-surface-variant">156</button>
+<button class="p-1 rounded hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Audit Insight Cards (Bento Style) -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-lg mt-xl">
+<div class="bg-primary text-on-primary p-lg rounded-xl shadow-md border-l-4 border-secondary-container">
+<p class="font-label-md text-label-md opacity-80 mb-1">Acciones Críticas (24h)</p>
+<p class="text-h2 font-h2">24</p>
+<p class="text-body-sm font-body-sm mt-md">+12% respecto a ayer</p>
+</div>
+<div class="bg-surface-container-lowest p-lg rounded-xl shadow-sm border border-outline-variant">
+<p class="font-label-md text-label-md text-on-surface-variant mb-1">Logins Exitosos</p>
+<p class="text-h2 font-h2 text-primary">312</p>
+<p class="text-body-sm font-body-sm mt-md text-[#27AE60]">Seguridad estable</p>
+</div>
+<div class="bg-surface-container-lowest p-lg rounded-xl shadow-sm border border-outline-variant">
+<p class="font-label-md text-label-md text-on-surface-variant mb-1">Actividad por IP</p>
+<div class="mt-md space-y-2">
+<div class="flex justify-between items-center">
+<span class="font-mono text-body-sm">192.168.1.104</span>
+<span class="font-bold">42%</span>
+</div>
+<div class="w-full bg-surface-container h-1.5 rounded-full overflow-hidden">
+<div class="bg-secondary h-full" style="width: 42%"></div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

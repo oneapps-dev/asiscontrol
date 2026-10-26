@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+
+<html lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F8FBFF;
+        }
+        .custom-shadow {
+            box-shadow: 0 4px 12px rgba(30, 58, 95, 0.05);
+        }
+        .overlay-shadow {
+            box-shadow: 0 12px 32px rgba(30, 58, 95, 0.12);
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-background": "#1a1c1e",
+                        "outline": "#74777f",
+                        "on-tertiary-fixed-variant": "#60410c",
+                        "on-tertiary-fixed": "#291800",
+                        "error": "#ba1a1a",
+                        "surface-variant": "#e3e2e6",
+                        "outline-variant": "#c4c6cf",
+                        "secondary": "#226296",
+                        "surface-container-high": "#e9e7eb",
+                        "surface-container": "#eeedf1",
+                        "surface-bright": "#faf9fc",
+                        "on-surface-variant": "#43474e",
+                        "surface-tint": "#455f87",
+                        "secondary-fixed-dim": "#9bcbff",
+                        "primary-fixed": "#d5e3ff",
+                        "on-primary-fixed": "#001c3b",
+                        "on-secondary": "#ffffff",
+                        "on-secondary-fixed": "#001d34",
+                        "surface-container-highest": "#e3e2e6",
+                        "secondary-container": "#8bc3fd",
+                        "on-secondary-fixed-variant": "#004a79",
+                        "on-tertiary-container": "#c69b5f",
+                        "inverse-surface": "#2f3033",
+                        "surface-dim": "#dad9dd",
+                        "on-tertiary": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "on-secondary-container": "#005083",
+                        "surface-container-low": "#f4f3f7",
+                        "tertiary-container": "#503300",
+                        "primary": "#022448",
+                        "tertiary": "#341f00",
+                        "primary-container": "#1e3a5f",
+                        "tertiary-fixed-dim": "#edbf7f",
+                        "secondary-fixed": "#d0e4ff",
+                        "inverse-on-surface": "#f1f0f4",
+                        "inverse-primary": "#adc8f5",
+                        "on-error-container": "#93000a",
+                        "primary-fixed-dim": "#adc8f5",
+                        "surface": "#faf9fc",
+                        "on-primary": "#ffffff",
+                        "tertiary-fixed": "#ffddb2",
+                        "background": "#faf9fc",
+                        "on-primary-container": "#8aa4cf",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary-fixed-variant": "#2d486d",
+                        "on-error": "#ffffff",
+                        "on-surface": "#1a1c1e"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "base": "4px",
+                        "md": "16px",
+                        "gutter": "24px",
+                        "lg": "24px",
+                        "xl": "32px",
+                        "sm": "8px",
+                        "xs": "4px",
+                        "container-margin": "40px"
+                    },
+                    "fontFamily": {
+                        "data-tabular": ["Inter"],
+                        "h3": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "label-md": ["Inter"],
+                        "h1": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "body-md": ["Inter"],
+                        "h2": ["Inter"]
+                    },
+                    "fontSize": {
+                        "data-tabular": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "h3": ["20px", {"lineHeight": "28px", "letterSpacing": "0", "fontWeight": "600"}],
+                        "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "letterSpacing": "0", "fontWeight": "400"}],
+                        "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                        "h1": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-sm": ["13px", {"lineHeight": "18px", "letterSpacing": "0", "fontWeight": "400"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0", "fontWeight": "400"}],
+                        "h2": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-surface">
+<aside class="fixed left-0 top-0 h-full w-[260px] bg-surface dark:bg-on-background shadow-sm flex flex-col py-md px-sm gap-xs z-50">
+<div class="px-md py-sm mb-md">
+<h1 class="text-h2 font-h2 text-primary dark:text-primary-fixed-dim">AsistControl</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">Admin Portal</p>
+</div>
+<nav class="flex-grow space-y-1">
+<a class="flex items-center gap-md px-md py-sm text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-colors duration-200 font-body-md text-body-md active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span>Inicio</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high transition-colors duration-200 font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined">badge</span>
+<span>Empleados</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high transition-colors duration-200 font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined">history_toggle_off</span>
+<span>Asistencia</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high transition-colors duration-200 font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span>Reportes</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high transition-colors duration-200 font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined">location_on</span>
+<span>Sedes</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high transition-colors duration-200 font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined">devices</span>
+<span>Dispositivos</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high transition-colors duration-200 font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span>Configuración</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm text-primary dark:text-primary-fixed-dim font-bold border-r-4 border-primary dark:border-primary-fixed-dim bg-surface-container dark:bg-primary-container/20 font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">verified</span>
+<span>Licencia</span>
+</a>
+</nav>
+<div class="mt-auto px-md py-sm border-t border-outline-variant">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container">
+<span class="material-symbols-outlined">account_circle</span>
+</div>
+<div>
+<p class="font-label-md text-label-md">Admin Name</p>
+<p class="text-xs text-on-surface-variant">Soporte técnico</p>
+</div>
+</div>
+</div>
+</aside>
+<main class="ml-[260px] min-h-screen p-gutter flex flex-col gap-gutter">
+<header class="flex justify-between items-center mb-md">
+<div>
+<h2 class="font-h1 text-h1 text-primary">Licencia del Sistema</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Gestiona los parámetros y validez de tu suscripción actual.</p>
+</div>
+<div class="flex gap-sm">
+<button class="bg-surface-container-lowest border border-outline-variant px-md py-sm rounded-xl font-label-md text-label-md flex items-center gap-xs hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined text-[20px]">help_outline</span>
+                    Centro de Ayuda
+                </button>
+</div>
+</header>
+<section class="bg-surface-container-lowest rounded-xl p-xl custom-shadow border-l-4 border-primary grid grid-cols-1 md:grid-cols-3 gap-xl">
+<div class="md:col-span-2 flex flex-col gap-md">
+<div class="flex items-center gap-md">
+<span class="px-md py-xs bg-primary text-white rounded-full font-label-md text-label-md">Plan Estándar</span>
+<span class="px-md py-xs bg-emerald-50 text-emerald-700 rounded-full font-label-md text-label-md flex items-center gap-xs border border-emerald-100">
+<span class="material-symbols-outlined text-[16px]">check_circle</span>
+                        Licencia Activa
+                    </span>
+</div>
+<div class="grid grid-cols-2 gap-gutter mt-sm">
+<div>
+<p class="text-xs text-on-surface-variant uppercase tracking-wider font-bold">Fecha de Inicio</p>
+<p class="font-h3 text-h3">12 Ene, 2024</p>
+</div>
+<div>
+<p class="text-xs text-on-surface-variant uppercase tracking-wider font-bold">Fecha de Vencimiento</p>
+<p class="font-h3 text-h3 text-primary">12 Ene, 2025</p>
+</div>
+</div>
+<div class="mt-md">
+<div class="flex justify-between items-center mb-xs">
+<p class="font-label-md text-label-md text-on-surface-variant">Días restantes: 145</p>
+<p class="font-label-md text-label-md font-bold text-primary">39% consumido</p>
+</div>
+<div class="w-full h-3 bg-surface-container-high rounded-full overflow-hidden">
+<div class="bg-primary h-full rounded-full" style="width: 39%"></div>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-low rounded-xl p-md flex flex-col gap-md">
+<p class="font-label-md text-label-md font-bold border-b border-outline-variant pb-xs">Límites del Plan</p>
+<div class="flex flex-col gap-sm">
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary">badge</span>
+<span class="font-body-md text-body-md">Empleados</span>
+</div>
+<span class="font-label-md text-label-md font-bold">42 / 100</span>
+</div>
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary">location_on</span>
+<span class="font-body-md text-body-md">Sedes</span>
+</div>
+<span class="font-label-md text-label-md font-bold">3 / 5</span>
+</div>
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary">devices</span>
+<span class="font-body-md text-body-md">Dispositivos</span>
+</div>
+<span class="font-label-md text-label-md font-bold">8 / 15</span>
+</div>
+</div>
+</div>
+</section>
+<section class="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+<div class="lg:col-span-5 bg-surface-container-lowest rounded-xl p-xl custom-shadow flex flex-col gap-md h-fit">
+<h3 class="font-h3 text-h3 text-primary">Activar nueva licencia</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">Si has adquirido un nuevo paquete o extensión, ingresa el código de activación aquí.</p>
+<div class="flex flex-col gap-sm mt-sm">
+<label class="font-label-md text-label-md">Código de Licencia</label>
+<div class="flex gap-sm">
+<input class="flex-grow bg-white border border-outline-variant rounded-xl px-md py-sm focus:ring-2 focus:ring-secondary focus:outline-none font-data-tabular" placeholder="XXXX-XXXX-XXXX-XXXX" type="text"/>
+<button class="bg-primary text-white px-xl py-sm rounded-xl font-label-md text-label-md hover:bg-primary-container transition-all active:scale-95">
+                            Validar
+                        </button>
+</div>
+<p class="text-[11px] text-on-surface-variant italic">El proceso de validación puede tardar hasta 60 segundos.</p>
+</div>
+</div>
+<div class="lg:col-span-7 bg-surface-container-lowest rounded-xl custom-shadow overflow-hidden">
+<div class="p-md border-b border-outline-variant flex justify-between items-center">
+<h3 class="font-label-md text-label-md font-bold">Historial de Transacciones</h3>
+<button class="text-secondary font-label-md text-label-md hover:underline flex items-center gap-xs">
+                        Descargar Reporte
+                        <span class="material-symbols-outlined text-[18px]">download</span>
+</button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full border-collapse">
+<thead class="bg-surface-container-low">
+<tr>
+<th class="text-left font-label-md text-label-md p-md text-on-surface-variant">ID Pago</th>
+<th class="text-left font-label-md text-label-md p-md text-on-surface-variant">Plan</th>
+<th class="text-left font-label-md text-label-md p-md text-on-surface-variant">Fecha</th>
+<th class="text-left font-label-md text-label-md p-md text-on-surface-variant">Estado</th>
+<th class="text-right font-label-md text-label-md p-md text-on-surface-variant">Monto</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant">
+<tr class="hover:bg-background transition-colors">
+<td class="p-md font-data-tabular text-data-tabular">#AC-98210</td>
+<td class="p-md font-body-sm text-body-sm">Plan Estándar (Anual)</td>
+<td class="p-md font-body-sm text-body-sm">12 Ene 2024</td>
+<td class="p-md">
+<span class="text-[11px] font-bold px-sm py-xs bg-emerald-100 text-emerald-700 rounded-full uppercase">Completado</span>
+</td>
+<td class="p-md text-right font-data-tabular font-bold">$450.00</td>
+</tr>
+<tr class="hover:bg-background transition-colors">
+<td class="p-md font-data-tabular text-data-tabular">#AC-44129</td>
+<td class="p-md font-body-sm text-body-sm">Extensión Sedes (+2)</td>
+<td class="p-md font-body-sm text-body-sm">05 Oct 2023</td>
+<td class="p-md">
+<span class="text-[11px] font-bold px-sm py-xs bg-emerald-100 text-emerald-700 rounded-full uppercase">Completado</span>
+</td>
+<td class="p-md text-right font-data-tabular font-bold">$120.00</td>
+</tr>
+<tr class="hover:bg-background transition-colors">
+<td class="p-md font-data-tabular text-data-tabular">#AC-12003</td>
+<td class="p-md font-body-sm text-body-sm">Plan Inicial</td>
+<td class="p-md font-body-sm text-body-sm">12 Ene 2023</td>
+<td class="p-md">
+<span class="text-[11px] font-bold px-sm py-xs bg-outline-variant text-on-surface-variant rounded-full uppercase">Expirado</span>
+</td>
+<td class="p-md text-right font-data-tabular font-bold">$290.00</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<section class="bg-primary text-white rounded-xl p-xl flex flex-col md:flex-row items-center justify-between gap-xl">
+<div class="flex items-center gap-xl">
+<div class="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-[32px]">support_agent</span>
+</div>
+<div>
+<h3 class="font-h3 text-h3">¿Necesitas renovar o cambiar de plan?</h3>
+<p class="font-body-md text-body-md text-primary-fixed/80 max-w-md">Contáctanos para recibir una oferta personalizada según el crecimiento de tu organización. Estamos aquí para ayudarte.</p>
+</div>
+</div>
+<div class="flex flex-col items-center md:items-end gap-sm">
+<div class="flex items-center gap-md mb-xs">
+<div class="text-right">
+<p class="font-label-md text-label-md opacity-80">Escríbenos a:</p>
+<p class="font-bold">ventas@asistcontrol.com</p>
+</div>
+<div class="h-10 w-[1px] bg-white/20"></div>
+<div class="text-right">
+<p class="font-label-md text-label-md opacity-80">Llámanos:</p>
+<p class="font-bold">+34 900 123 456</p>
+</div>
+</div>
+<button class="bg-white text-primary px-xl py-sm rounded-xl font-label-md text-label-md font-bold hover:bg-secondary-fixed transition-all shadow-lg active:scale-95 flex items-center gap-sm">
+<span class="material-symbols-outlined text-[20px]">rocket_launch</span>
+                    Solicitar Renovación
+                </button>
+</div>
+</section>
+</main>
+<div class="fixed bottom-0 right-0 p-gutter z-50">
+<button class="w-14 h-14 bg-secondary text-white rounded-full flex items-center justify-center shadow-xl hover:scale-110 transition-transform active:scale-90">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">chat</span>
+</button>
+</div>
+</body></html>

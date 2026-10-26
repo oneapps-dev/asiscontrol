@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-background": "#1a1c1e",
+                    "outline": "#74777f",
+                    "on-tertiary-fixed-variant": "#60410c",
+                    "on-tertiary-fixed": "#291800",
+                    "error": "#ba1a1a",
+                    "surface-variant": "#e3e2e6",
+                    "outline-variant": "#c4c6cf",
+                    "secondary": "#226296",
+                    "surface-container-high": "#e9e7eb",
+                    "surface-container": "#eeedf1",
+                    "surface-bright": "#faf9fc",
+                    "on-surface-variant": "#43474e",
+                    "surface-tint": "#455f87",
+                    "secondary-fixed-dim": "#9bcbff",
+                    "primary-fixed": "#d5e3ff",
+                    "on-primary-fixed": "#001c3b",
+                    "on-secondary": "#ffffff",
+                    "on-secondary-fixed": "#001d34",
+                    "surface-container-highest": "#e3e2e6",
+                    "secondary-container": "#8bc3fd",
+                    "on-secondary-fixed-variant": "#004a79",
+                    "on-tertiary-container": "#c69b5f",
+                    "inverse-surface": "#2f3033",
+                    "surface-dim": "#dad9dd",
+                    "on-tertiary": "#ffffff",
+                    "error-container": "#ffdad6",
+                    "on-secondary-container": "#005083",
+                    "surface-container-low": "#f4f3f7",
+                    "tertiary-container": "#503300",
+                    "primary": "#022448",
+                    "tertiary": "#341f00",
+                    "primary-container": "#1e3a5f",
+                    "tertiary-fixed-dim": "#edbf7f",
+                    "secondary-fixed": "#d0e4ff",
+                    "inverse-on-surface": "#f1f0f4",
+                    "inverse-primary": "#adc8f5",
+                    "on-error-container": "#93000a",
+                    "primary-fixed-dim": "#adc8f5",
+                    "surface": "#faf9fc",
+                    "on-primary": "#ffffff",
+                    "tertiary-fixed": "#ffddb2",
+                    "background": "#faf9fc",
+                    "on-primary-container": "#8aa4cf",
+                    "surface-container-lowest": "#ffffff",
+                    "on-primary-fixed-variant": "#2d486d",
+                    "on-error": "#ffffff",
+                    "on-surface": "#1a1c1e"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "base": "4px",
+                    "md": "16px",
+                    "gutter": "24px",
+                    "lg": "24px",
+                    "xl": "32px",
+                    "sm": "8px",
+                    "xs": "4px",
+                    "container-margin": "40px"
+            },
+            "fontFamily": {
+                    "data-tabular": ["Inter"],
+                    "h3": ["Inter"],
+                    "label-sm": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "label-md": ["Inter"],
+                    "h1": ["Inter"],
+                    "body-sm": ["Inter"],
+                    "body-md": ["Inter"],
+                    "h2": ["Inter"]
+            },
+            "fontSize": {
+                    "data-tabular": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "h3": ["20px", {"lineHeight": "28px", "letterSpacing": "0", "fontWeight": "600"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "letterSpacing": "0", "fontWeight": "400"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                    "h1": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-sm": ["13px", {"lineHeight": "18px", "letterSpacing": "0", "fontWeight": "400"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0", "fontWeight": "400"}],
+                    "h2": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1E3A5F;
+            background-image: radial-gradient(circle at 20% 30%, rgba(45, 106, 159, 0.15) 0%, transparent 50%),
+                              radial-gradient(circle at 80% 70%, rgba(74, 144, 217, 0.1) 0%, transparent 50%);
+            overflow: hidden;
+        }
+        .pattern-bg {
+            position: absolute;
+            inset: 0;
+            opacity: 0.05;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+    </style>
+</head>
+<body class="h-screen w-screen flex flex-col relative">
+<!-- Geometric Pattern Overlay -->
+<div class="pattern-bg pointer-events-none"></div>
+<!-- Top Header Elements -->
+<header class="relative z-10 flex justify-between items-start p-xl w-full">
+<!-- Company Logo Placeholder -->
+<div class="w-[120px] h-[40px] bg-white rounded-lg flex items-center justify-center shadow-sm">
+<span class="font-h3 text-primary text-label-md">Logo</span>
+</div>
+<!-- Live Clock Display -->
+<div class="text-right flex flex-col">
+<span class="font-h1 text-white text-[64px] leading-tight font-extrabold tracking-tight">09:41 AM</span>
+<span class="font-h2 text-primary-fixed-dim text-h2 font-semibold">Jueves, 7 Mayo 2026</span>
+</div>
+</header>
+<!-- Main Content: Login Kiosk Card -->
+<main class="flex-grow flex items-center justify-center relative z-10 px-gutter">
+<div class="w-full max-w-[500px] bg-surface-container-lowest rounded-[20px] p-xl flex flex-col shadow-[0_12px_48px_rgba(0,0,0,0.3)] border border-outline-variant/30">
+<!-- Header section of card -->
+<div class="mb-lg">
+<h1 class="font-h2 text-h2 text-primary mb-xs">Registra tu asistencia</h1>
+<p class="font-body-md text-on-surface-variant">Ingresa tus datos para marcar tu turno</p>
+</div>
+<hr class="border-outline-variant mb-lg"/>
+<!-- Form Fields -->
+<div class="space-y-lg">
+<div class="space-y-xs">
+<label class="font-label-md text-on-surface-variant block ml-xs">Usuario</label>
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-md top-1/2 -translate-y-1/2 text-outline group-focus-within:text-secondary" data-icon="person">person</span>
+<input class="w-full h-[52px] pl-12 pr-md border border-outline-variant rounded-xl focus:ring-2 focus:ring-secondary/20 focus:border-secondary outline-none transition-all font-body-lg text-primary placeholder:text-outline-variant" placeholder="ID de empleado o email" type="text"/>
+</div>
+</div>
+<div class="space-y-xs">
+<label class="font-label-md text-on-surface-variant block ml-xs">Contraseña</label>
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-md top-1/2 -translate-y-1/2 text-outline group-focus-within:text-secondary" data-icon="lock">lock</span>
+<input class="w-full h-[52px] pl-12 pr-[52px] border border-outline-variant rounded-xl focus:ring-2 focus:ring-secondary/20 focus:border-secondary outline-none transition-all font-body-lg text-primary placeholder:text-outline-variant" placeholder="••••••••" type="password"/>
+<button class="absolute right-md top-1/2 -translate-y-1/2 text-outline hover:text-secondary transition-colors" type="button">
+<span class="material-symbols-outlined" data-icon="visibility">visibility</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Action Button -->
+<div class="mt-xl flex flex-col items-center">
+<button class="w-full h-[54px] bg-primary text-white font-label-md rounded-xl hover:bg-primary-container active:scale-[0.98] transition-all flex items-center justify-center gap-sm shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined text-[20px]" data-icon="check_circle" data-weight="fill">check_circle</span>
+<span class="text-lg">Registrar</span>
+</button>
+<div class="mt-md flex items-center gap-xs">
+<span class="material-symbols-outlined text-outline-variant text-[18px]" data-icon="photo_camera">photo_camera</span>
+<p class="font-body-sm text-on-surface-variant">Tu cámara se activará automáticamente</p>
+</div>
+</div>
+<!-- Footer section of card -->
+<div class="mt-xl pt-lg border-t border-outline-variant/30 flex justify-center">
+<span class="font-label-sm text-outline-variant text-[10px] tracking-wider uppercase">Licencia activa hasta 31 Dic 2026</span>
+</div>
+</div>
+</main>
+<!-- Footer Information -->
+<footer class="relative z-10 p-xl flex justify-between items-end">
+<div class="flex items-center gap-sm">
+<div class="w-2 h-2 rounded-full bg-[#4A90D9] animate-pulse"></div>
+<span class="font-label-md text-[#4A90D9] tracking-wide">Sede Centro</span>
+</div>
+<!-- Decorative Info/Status Icon -->
+<div class="flex items-center gap-md">
+<div class="flex flex-col text-right">
+<span class="font-label-sm text-primary-fixed-dim/60">Sistema Operativo</span>
+<span class="font-label-md text-white">V. 4.2.0-STABLE</span>
+</div>
+<div class="p-sm bg-white/5 rounded-full border border-white/10">
+<span class="material-symbols-outlined text-white" data-icon="cell_tower">cell_tower</span>
+</div>
+</div>
+</footer>
+<!-- Background Decoration -->
+<div class="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-primary-container/20 rounded-full blur-[100px] pointer-events-none"></div>
+<div class="absolute top-[-5%] left-[-5%] w-[300px] h-[300px] bg-secondary-container/10 rounded-full blur-[80px] pointer-events-none"></div>
+</body></html>

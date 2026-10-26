@@ -1,0 +1,6 @@
+{
+  "name": "Asiscontrol",
+  "description": "Sistema web de control de accesos, asistencia y operación de portería.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

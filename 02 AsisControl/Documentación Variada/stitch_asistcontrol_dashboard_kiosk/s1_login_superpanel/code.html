@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+
+<html lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AsistControl - Superpanel Access</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-background": "#1a1c1e",
+                        "outline": "#74777f",
+                        "on-tertiary-fixed-variant": "#60410c",
+                        "on-tertiary-fixed": "#291800",
+                        "error": "#ba1a1a",
+                        "surface-variant": "#e3e2e6",
+                        "outline-variant": "#c4c6cf",
+                        "secondary": "#226296",
+                        "surface-container-high": "#e9e7eb",
+                        "surface-container": "#eeedf1",
+                        "surface-bright": "#faf9fc",
+                        "on-surface-variant": "#43474e",
+                        "surface-tint": "#455f87",
+                        "secondary-fixed-dim": "#9bcbff",
+                        "primary-fixed": "#d5e3ff",
+                        "on-primary-fixed": "#001c3b",
+                        "on-secondary": "#ffffff",
+                        "on-secondary-fixed": "#001d34",
+                        "surface-container-highest": "#e3e2e6",
+                        "secondary-container": "#8bc3fd",
+                        "on-secondary-fixed-variant": "#004a79",
+                        "on-tertiary-container": "#c69b5f",
+                        "inverse-surface": "#2f3033",
+                        "surface-dim": "#dad9dd",
+                        "on-tertiary": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "on-secondary-container": "#005083",
+                        "surface-container-low": "#f4f3f7",
+                        "tertiary-container": "#503300",
+                        "primary": "#022448",
+                        "tertiary": "#341f00",
+                        "primary-container": "#1E3A5F",
+                        "tertiary-fixed-dim": "#edbf7f",
+                        "secondary-fixed": "#d0e4ff",
+                        "inverse-on-surface": "#f1f0f4",
+                        "inverse-primary": "#adc8f5",
+                        "on-error-container": "#93000a",
+                        "primary-fixed-dim": "#adc8f5",
+                        "surface": "#faf9fc",
+                        "on-primary": "#ffffff",
+                        "tertiary-fixed": "#ffddb2",
+                        "background": "#faf9fc",
+                        "on-primary-container": "#8aa4cf",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary-fixed-variant": "#2d486d",
+                        "on-error": "#ffffff",
+                        "on-surface": "#1a1c1e"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "xxl": "16px",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "base": "4px",
+                        "md": "16px",
+                        "gutter": "24px",
+                        "lg": "24px",
+                        "xl": "32px",
+                        "sm": "8px",
+                        "xs": "4px",
+                        "container-margin": "40px"
+                    },
+                    "fontFamily": {
+                        "data-tabular": ["Inter"],
+                        "h3": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "label-md": ["Inter"],
+                        "h1": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "body-md": ["Inter"],
+                        "h2": ["Inter"]
+                    },
+                    "fontSize": {
+                        "data-tabular": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "h3": ["20px", {"lineHeight": "28px", "letterSpacing": "0", "fontWeight": "600"}],
+                        "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "letterSpacing": "0", "fontWeight": "400"}],
+                        "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                        "h1": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-sm": ["13px", {"lineHeight": "18px", "letterSpacing": "0", "fontWeight": "400"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0", "fontWeight": "400"}],
+                        "h2": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .login-shadow {
+            box-shadow: 0 12px 32px rgba(30, 58, 95, 0.12);
+        }
+    </style>
+</head>
+<body class="bg-primary-container min-h-screen flex items-center justify-center p-md">
+<!-- Supress SideNav and TopNavBar for transactional Login Page as per filter rule -->
+<main class="w-full max-w-[400px]">
+<div class="bg-surface-container-lowest rounded-xxl login-shadow p-xl flex flex-col gap-lg border border-outline-variant/30">
+<!-- Header Section -->
+<div class="flex flex-col items-center text-center gap-md">
+<div class="flex flex-col items-center gap-sm">
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-primary text-[32px]">verified</span>
+<span class="font-h2 text-h2 text-primary tracking-tight">AsistControl</span>
+</div>
+<span class="bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-label-sm px-sm py-xs rounded-full uppercase tracking-wider">
+                        Panel Proveedor
+                    </span>
+</div>
+<div class="space-y-xs">
+<h1 class="font-h2 text-h2 text-on-background">Acceso Exclusivo</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">Solo personal autorizado</p>
+</div>
+</div>
+<!-- Login Form -->
+<form class="flex flex-col gap-md">
+<div class="space-y-xs">
+<label class="font-label-md text-label-md text-on-surface-variant ml-xs" for="identity">Usuario o Email</label>
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-md text-outline">person</span>
+<input class="w-full h-12 pl-11 pr-md bg-surface border border-outline-variant rounded-xl font-body-md text-body-md focus:outline-none focus:ring-2 focus:ring-secondary-container focus:border-secondary transition-all" id="identity" name="identity" placeholder="admin@asistcontrol.com" type="text"/>
+</div>
+</div>
+<div class="space-y-xs">
+<label class="font-label-md text-label-md text-on-surface-variant ml-xs" for="password">Contraseña</label>
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-md text-outline">lock</span>
+<input class="w-full h-12 pl-11 pr-md bg-surface border border-outline-variant rounded-xl font-body-md text-body-md focus:outline-none focus:ring-2 focus:ring-secondary-container focus:border-secondary transition-all" id="password" name="password" placeholder="••••••••" type="password"/>
+</div>
+</div>
+<div class="flex justify-end -mt-xs">
+<a class="font-label-sm text-label-sm text-secondary hover:underline" href="#">¿Olvidó su contraseña?</a>
+</div>
+<button class="w-full h-12 bg-primary-container text-on-primary font-label-md text-label-md rounded-xl hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-sm" type="submit">
+<span>Ingresar al Superpanel</span>
+<span class="material-symbols-outlined text-[20px]">login</span>
+</button>
+</form>
+<!-- Footer Compliance Text -->
+<div class="flex flex-col items-center gap-md">
+<div class="w-16 h-px bg-outline-variant"></div>
+<div class="flex items-center gap-xs text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px]">gavel</span>
+<p class="font-label-sm text-label-sm">Todas las acciones quedan registradas</p>
+</div>
+</div>
+</div>
+<!-- System Status Indicator (Subtle) -->
+<div class="mt-xl text-center">
+<p class="font-label-sm text-label-sm text-on-primary-container opacity-60">
+                v2.4.0 — Secure Gateway Active
+            </p>
+</div>
+</main>
+<!-- Background Decoration (Abstract Corporate Aesthetic) -->
+<div class="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+<div class="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-secondary-container/10 rounded-full blur-3xl"></div>
+<div class="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-primary/20 rounded-full blur-3xl"></div>
+</div>
+</body></html>

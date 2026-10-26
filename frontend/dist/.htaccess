@@ -1,0 +1,22 @@
+RewriteEngine On
+
+# Runtime flags only; secrets remain in backend/.env and are never published here.
+SetEnv APP_ENV production
+SetEnv FORCE_HTTPS 1
+SetEnv SECURE_COOKIES 1
+SetEnv COOKIE_SAMESITE Lax
+
+# The Vite build is the document root. Route the public API directly to the
+# PHP entrypoint; backend/public/.htaccess is only for installations where
+# backend/public is configured as the document root itself.
+RewriteRule ^api/?(.*)$ backend/api/index.php [QSA,L]
+
+# Do not expose PHP source, configuration or storage through the web root.
+# THE_REQUEST prevents this guard from blocking the internal /api rewrite.
+RewriteCond %{THE_REQUEST} \s/+backend/(?!public(?:/|$)) [NC]
+RewriteRule ^backend/ - [F,L]
+
+# SPA fallback for client-side routes.
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . /index.html [L]

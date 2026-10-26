@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-background": "#1a1c1e",
+                        "outline": "#74777f",
+                        "on-tertiary-fixed-variant": "#60410c",
+                        "on-tertiary-fixed": "#291800",
+                        "error": "#ba1a1a",
+                        "surface-variant": "#e3e2e6",
+                        "outline-variant": "#c4c6cf",
+                        "secondary": "#226296",
+                        "surface-container-high": "#e9e7eb",
+                        "surface-container": "#eeedf1",
+                        "surface-bright": "#faf9fc",
+                        "on-surface-variant": "#43474e",
+                        "surface-tint": "#455f87",
+                        "secondary-fixed-dim": "#9bcbff",
+                        "primary-fixed": "#d5e3ff",
+                        "on-primary-fixed": "#001c3b",
+                        "on-secondary": "#ffffff",
+                        "on-secondary-fixed": "#001d34",
+                        "surface-container-highest": "#e3e2e6",
+                        "secondary-container": "#8bc3fd",
+                        "on-secondary-container": "#005083",
+                        "surface-container-low": "#f4f3f7",
+                        "tertiary-container": "#503300",
+                        "primary": "#022448",
+                        "tertiary": "#341f00",
+                        "primary-container": "#1e3a5f",
+                        "tertiary-fixed-dim": "#edbf7f",
+                        "secondary-fixed": "#d0e4ff",
+                        "inverse-on-surface": "#f1f0f4",
+                        "inverse-primary": "#adc8f5",
+                        "on-error-container": "#93000a",
+                        "primary-fixed-dim": "#adc8f5",
+                        "surface": "#faf9fc",
+                        "on-primary": "#ffffff",
+                        "tertiary-fixed": "#ffddb2",
+                        "background": "#faf9fc",
+                        "on-primary-container": "#8aa4cf",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary-fixed-variant": "#2d486d",
+                        "on-error": "#ffffff",
+                        "on-surface": "#1a1c1e"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "base": "4px",
+                        "md": "16px",
+                        "gutter": "24px",
+                        "lg": "24px",
+                        "xl": "32px",
+                        "sm": "8px",
+                        "xs": "4px",
+                        "container-margin": "40px"
+                    },
+                    "fontFamily": {
+                        "data-tabular": ["Inter"],
+                        "h3": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "label-md": ["Inter"],
+                        "h1": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "body-md": ["Inter"],
+                        "h2": ["Inter"]
+                    },
+                    "fontSize": {
+                        "data-tabular": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "h3": ["20px", {"lineHeight": "28px", "letterSpacing": "0", "fontWeight": "600"}],
+                        "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "letterSpacing": "0", "fontWeight": "400"}],
+                        "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                        "h1": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-sm": ["13px", {"lineHeight": "18px", "letterSpacing": "0", "fontWeight": "400"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0", "fontWeight": "400"}],
+                        "h2": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #F8FBFF; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .attendance-card-shadow { shadow: 0 4px 12px rgba(30, 58, 95, 0.05); }
+    </style>
+</head>
+<body class="bg-background text-on-surface">
+<!-- Sidebar Navigation -->
+<aside class="fixed left-0 top-0 h-full w-[260px] bg-surface-container-low dark:bg-on-background shadow-sm flex flex-col py-md px-sm gap-xs z-50">
+<div class="mb-xl px-md">
+<h1 class="text-h2 font-h2 text-primary dark:text-primary-fixed-dim">AsistControl</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">Admin Portal</p>
+</div>
+<nav class="flex flex-col gap-xs flex-grow">
+<!-- Active: Empleados -->
+<a class="flex items-center gap-md px-md py-sm rounded-lg transition-colors duration-200 text-on-surface-variant dark:text-outline-variant hover:text-primary hover:bg-surface-container-high" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-body-md">Inicio</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm rounded-lg transition-all text-primary dark:text-primary-fixed-dim font-bold border-r-4 border-primary dark:border-primary-fixed-dim bg-surface-container dark:bg-primary-container/20" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">badge</span>
+<span class="font-body-md">Empleados</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm rounded-lg transition-colors duration-200 text-on-surface-variant dark:text-outline-variant hover:text-primary hover:bg-surface-container-high" href="#">
+<span class="material-symbols-outlined">history_toggle_off</span>
+<span class="font-body-md">Asistencia</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm rounded-lg transition-colors duration-200 text-on-surface-variant dark:text-outline-variant hover:text-primary hover:bg-surface-container-high" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-body-md">Reportes</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm rounded-lg transition-colors duration-200 text-on-surface-variant dark:text-outline-variant hover:text-primary hover:bg-surface-container-high" href="#">
+<span class="material-symbols-outlined">location_on</span>
+<span class="font-body-md">Sedes</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm rounded-lg transition-colors duration-200 text-on-surface-variant dark:text-outline-variant hover:text-primary hover:bg-surface-container-high" href="#">
+<span class="material-symbols-outlined">devices</span>
+<span class="font-body-md">Dispositivos</span>
+</a>
+</nav>
+<div class="mt-auto flex flex-col gap-xs">
+<a class="flex items-center gap-md px-md py-sm rounded-lg transition-colors duration-200 text-on-surface-variant dark:text-outline-variant hover:text-primary hover:bg-surface-container-high" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-body-md">Configuración</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm rounded-lg transition-colors duration-200 text-on-surface-variant dark:text-outline-variant hover:text-primary hover:bg-surface-container-high" href="#">
+<span class="material-symbols-outlined">verified</span>
+<span class="font-body-md">Licencia</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-[260px] min-h-screen">
+<!-- Top Bar -->
+<header class="flex justify-between items-center h-16 px-gutter w-full sticky top-0 z-40 bg-surface-container-lowest border-b border-outline-variant shadow-sm">
+<div class="flex items-center gap-lg">
+<h2 class="text-h3 font-h3 text-primary">Empleados</h2>
+<div class="hidden md:flex gap-md">
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-secondary" href="#">Clientes</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-secondary" href="#">Planes</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-secondary" href="#">Pagos</a>
+</div>
+</div>
+<div class="flex items-center gap-md">
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-surface-container rounded-full p-xs">notifications</button>
+<div class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center overflow-hidden">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="A close-up professional portrait of a smiling executive with a friendly and trustworthy expression. He is set against a clean, softly blurred office background that emphasizes a high-end corporate environment. The lighting is warm and natural, reinforcing the brand's accessible and reliable personality. The color palette is composed of soft blues and crisp whites to match the modern SaaS aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDZwXp09RijUEySjl5hNyExpP43sHgFebNjuPcbSMS1i5GI1fc-6X5xkVq8vIyPA-5R50QIPzDUmyWdTi7PIJ9eNFc2wlGnWI_WCpZyYgPEY9nzaJC097DrPu-hsJ6t3S_GQKn2UA42jZTrpgSRP7QpF7qJqxrg2TlBwcXc9DiuVZ0yzfFizo9R6fIbUQDFq_tNVrfVSyO7ndMIKKrQHKC_ZAOrCu1Xv8OJYXJlQplrnF3mjYXZ9Wng1YSxGQq2aNPG7w_HGNzdXP8"/>
+</div>
+</div>
+</header>
+<!-- Content Area -->
+<div class="p-gutter max-w-7xl mx-auto">
+<!-- Filters and Actions Header -->
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-md mb-lg">
+<div class="flex flex-wrap items-center gap-md w-full md:w-auto">
+<div class="relative w-full md:w-80">
+<span class="material-symbols-outlined absolute left-md top-1/2 -translate-y-1/2 text-outline">search</span>
+<input class="w-full pl-[48px] pr-md py-sm bg-surface-container-lowest border border-outline-variant rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none font-body-md" placeholder="Buscar por nombre o ID..." type="text"/>
+</div>
+<select class="px-md py-sm bg-surface-container-lowest border border-outline-variant rounded-xl font-body-md text-on-surface-variant outline-none focus:ring-2 focus:ring-primary">
+<option>Estado: Todos</option>
+<option>Activo</option>
+<option>Inactivo</option>
+</select>
+<select class="px-md py-sm bg-surface-container-lowest border border-outline-variant rounded-xl font-body-md text-on-surface-variant outline-none focus:ring-2 focus:ring-primary">
+<option>Sede: Todas</option>
+<option>Sede Central</option>
+<option>Planta Norte</option>
+<option>Oficinas Sur</option>
+</select>
+</div>
+<button class="flex items-center gap-xs px-lg py-md bg-primary text-on-primary rounded-xl font-label-md shadow-sm active:scale-95 transition-transform">
+<span class="material-symbols-outlined">add</span>
+                    Nuevo empleado
+                </button>
+</div>
+<!-- Data Table Card -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-[0_4px_12px_rgba(30,58,95,0.05)] overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low border-b border-outline-variant">
+<th class="px-lg py-md font-label-md text-on-surface-variant uppercase tracking-wider text-[11px]">Empleado</th>
+<th class="px-lg py-md font-label-md text-on-surface-variant uppercase tracking-wider text-[11px]">Usuario</th>
+<th class="px-lg py-md font-label-md text-on-surface-variant uppercase tracking-wider text-[11px]">Horario esperado</th>
+<th class="px-lg py-md font-label-md text-on-surface-variant uppercase tracking-wider text-[11px]">Estado</th>
+<th class="px-lg py-md font-label-md text-on-surface-variant uppercase tracking-wider text-[11px]">Hoy</th>
+<th class="px-lg py-md font-label-md text-on-surface-variant uppercase tracking-wider text-[11px]">Sede habitual</th>
+<th class="px-lg py-md font-label-md text-on-surface-variant uppercase tracking-wider text-[11px] text-right">Acciones</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant">
+<!-- Row 1 -->
+<tr class="hover:bg-background transition-colors">
+<td class="px-lg py-md">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 rounded-full bg-surface-container overflow-hidden">
+<img alt="Avatar" class="w-full h-full object-cover" data-alt="A professional headshot of a middle-aged male employee with a warm, approachable demeanor. He is wearing business casual attire in a modern, brightly lit office environment. The lighting is clean and professional, using high-key tones and soft shadows. The overall aesthetic is corporate but friendly, fitting the high-end SaaS theme with a blue-tinted atmosphere." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCBIu4C_PQDke1cVOYYDGn7azC0FCvk6_7xfz8w-UC34_SHzTFDQNZedxRxkwlZdKtBrneT0-bUlhMjSHXelPw6W9_uyQCqa78IEaxhZxVC-okkbJfloX86q7r5N6N3ksPBV5HuR10AeDVTIhukMfwNGo-CXX9gYqvFtr8ZI64mlyqhZ7ZFxMNouHLwJ8VCZUWEAl_pDQA_PhAE7n1NdWKPm3x7iBp5jR_BBpFXc0Zhtzyl2fR9ZKlLT3Wsq8RzsyVpBMbXRzE4DOY"/>
+</div>
+<div>
+<p class="font-label-md text-primary">Carlos Rodriguez</p>
+<p class="font-body-sm text-outline">ID: 45012</p>
+</div>
+</div>
+</td>
+<td class="px-lg py-md font-data-tabular text-data-tabular">crodriguez.hr</td>
+<td class="px-lg py-md font-data-tabular text-data-tabular">08:00 - 17:00</td>
+<td class="px-lg py-md">
+<span class="inline-flex items-center px-sm py-[2px] rounded-full bg-[#27AE60]/10 text-[#27AE60] font-label-sm text-[11px]">Activo</span>
+</td>
+<td class="px-lg py-md">
+<span class="inline-flex items-center px-sm py-[2px] rounded-full bg-[#27AE60]/10 text-[#27AE60] font-label-sm text-[11px]">Presente</span>
+</td>
+<td class="px-lg py-md font-body-md">Sede Central</td>
+<td class="px-lg py-md text-right">
+<div class="flex justify-end gap-sm">
+<button class="material-symbols-outlined text-outline hover:text-primary p-xs rounded-lg transition-colors">edit</button>
+<button class="material-symbols-outlined text-outline hover:text-primary p-xs rounded-lg transition-colors">visibility</button>
+<button class="material-symbols-outlined text-outline hover:text-error p-xs rounded-lg transition-colors">no_accounts</button>
+</div>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-background transition-colors">
+<td class="px-lg py-md">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 rounded-full bg-surface-container overflow-hidden">
+<img alt="Avatar" class="w-full h-full object-cover" data-alt="A modern corporate portrait of a female professional with an organized and confident look. She is positioned in a contemporary architectural setting with clean glass and steel backgrounds. The image style is bright, with soft professional lighting that highlights her features clearly. The colors are crisp, leaning into a professional blue and white palette to align with the software interface." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAPWS81-Nm0Uz03HiYOIQNyvqvk7IvTqcXhCwKB8-R_-Jkh_YPRwGu5Ga3xfrd1OXoCmnOCF-RqCFiSJL6V0fMyqRbMKGT8l6aP_N_wH-vBgkSYz0m-GIb4XQCETSWvCPC2mVe_ge5YVieP2MYI_ZDuaSWZlxbl1ZNcEDKxP4Im7fYqdbttQ3ZbI0RSwwPM24BhtY-Vz1YbmQdtYJSR0YOysgTpE3LRGVSHfALnkiCKog_efs9UTNLW4CP63jCoLYAQ1VX5SbVePqk"/>
+</div>
+<div>
+<p class="font-label-md text-primary">Ana Martinez</p>
+<p class="font-body-sm text-outline">ID: 45015</p>
+</div>
+</div>
+</td>
+<td class="px-lg py-md font-data-tabular text-data-tabular">amartinez.tech</td>
+<td class="px-lg py-md font-data-tabular text-data-tabular">09:00 - 18:00</td>
+<td class="px-lg py-md">
+<span class="inline-flex items-center px-sm py-[2px] rounded-full bg-[#27AE60]/10 text-[#27AE60] font-label-sm text-[11px]">Activo</span>
+</td>
+<td class="px-lg py-md">
+<span class="inline-flex items-center px-sm py-[2px] rounded-full bg-tertiary-fixed text-on-tertiary-fixed-variant font-label-sm text-[11px]">Tardanza</span>
+</td>
+<td class="px-lg py-md font-body-md">Planta Norte</td>
+<td class="px-lg py-md text-right">
+<div class="flex justify-end gap-sm">
+<button class="material-symbols-outlined text-outline hover:text-primary p-xs rounded-lg transition-colors">edit</button>
+<button class="material-symbols-outlined text-outline hover:text-primary p-xs rounded-lg transition-colors">visibility</button>
+<button class="material-symbols-outlined text-outline hover:text-error p-xs rounded-lg transition-colors">no_accounts</button>
+</div>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-background transition-colors">
+<td class="px-lg py-md">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 rounded-full bg-surface-container overflow-hidden">
+<img alt="Avatar" class="w-full h-full object-cover" data-alt="A sharp, professional headshot of a young male employee in a creative workspace. The background shows a soft-focus collaborative area with warm accents. The lighting is bright and even, characteristic of high-end corporate photography. The mood is energetic and professional, perfectly integrating with the clean, modern aesthetic of the attendance management platform." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBvPF8p-aOU03I5jjTLXu8pazIBqQlmSDEjSgZgzNX31r9dDulGe69tmkCj9YX_Bdi-ykD6Q6lpAXWypSrRn88F9SEUijc-7i-TJlClxUY5J1EHnkJxNrPhvVlD690ou7ZDgtiyw0t0EhJ-EqmG5xmun54bidZBU9bsK4F2snQd7asn4KQcBA96ChiP1AW7ZPVCesc0Y_Hcd68o7vF0H8_xjF-G9Ha6Qc97C8G7k-EzuaptwQgut1UgXQ0ZuXvrThhNTV9sj2ptFug"/>
+</div>
+<div>
+<p class="font-label-md text-primary">Luis Forero</p>
+<p class="font-body-sm text-outline">ID: 45022</p>
+</div>
+</div>
+</td>
+<td class="px-lg py-md font-data-tabular text-data-tabular">lforero.ops</td>
+<td class="px-lg py-md font-data-tabular text-data-tabular">07:00 - 16:00</td>
+<td class="px-lg py-md">
+<span class="inline-flex items-center px-sm py-[2px] rounded-full bg-[#27AE60]/10 text-[#27AE60] font-label-sm text-[11px]">Activo</span>
+</td>
+<td class="px-lg py-md">
+<span class="inline-flex items-center px-sm py-[2px] rounded-full bg-error-container text-error font-label-sm text-[11px]">Ausente</span>
+</td>
+<td class="px-lg py-md font-body-md">Oficinas Sur</td>
+<td class="px-lg py-md text-right">
+<div class="flex justify-end gap-sm">
+<button class="material-symbols-outlined text-outline hover:text-primary p-xs rounded-lg transition-colors">edit</button>
+<button class="material-symbols-outlined text-outline hover:text-primary p-xs rounded-lg transition-colors">visibility</button>
+<button class="material-symbols-outlined text-outline hover:text-error p-xs rounded-lg transition-colors">no_accounts</button>
+</div>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-background transition-colors">
+<td class="px-lg py-md">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 rounded-full bg-surface-container overflow-hidden">
+<img alt="Avatar" class="w-full h-full object-cover" data-alt="A professional headshot of a woman in a leadership role, set in a bright and airy corporate office. Her expression is focused and capable. The lighting is crisp and modern, emphasizing the clean lines of her professional attire. The entire scene is designed to reflect high standards and corporate reliability, utilizing the brand's core blue and white color palette." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDFGQ5E17ZSR3L_QHHrOeKgAOnJ0o7DwvT1R3ce6Cv7gkcZaET0I5rZEYlon9SlX6KzyHWu05spjl7X_-CTv8IwL_8G0eKdw8NfH-lsZ46sji549g5MmD9xPqK5uVaab9zo6K1L2kAC_EcC4pGYcdXg71_9W-K7KjjToNRYF6PZ9LJ_ScWgpmoM_1UhWQrEd_dyzE0vDXnCtGL3lUaPAx3LVfo5rTi-zA5ZQvjMDQBVMIcIpT4yeq2EfSn5-h2RpkqEMjK9tGLUA_A"/>
+</div>
+<div>
+<p class="font-label-md text-primary">Marta Lopez</p>
+<p class="font-body-sm text-outline">ID: 45028</p>
+</div>
+</div>
+</td>
+<td class="px-lg py-md font-data-tabular text-data-tabular">mlopez.admin</td>
+<td class="px-lg py-md font-data-tabular text-data-tabular">08:00 - 17:00</td>
+<td class="px-lg py-md">
+<span class="inline-flex items-center px-sm py-[2px] rounded-full bg-outline-variant/30 text-on-surface-variant font-label-sm text-[11px]">Inactivo</span>
+</td>
+<td class="px-lg py-md">
+<span class="inline-flex items-center px-sm py-[2px] rounded-full bg-surface-container text-outline font-label-sm text-[11px]">Sin registro</span>
+</td>
+<td class="px-lg py-md font-body-md">Sede Central</td>
+<td class="px-lg py-md text-right">
+<div class="flex justify-end gap-sm">
+<button class="material-symbols-outlined text-outline hover:text-primary p-xs rounded-lg transition-colors">edit</button>
+<button class="material-symbols-outlined text-outline hover:text-primary p-xs rounded-lg transition-colors">visibility</button>
+<button class="material-symbols-outlined text-outline hover:text-error p-xs rounded-lg transition-colors">person_add</button>
+</div>
+</td>
+</tr>
+<!-- Row 5 -->
+<tr class="hover:bg-background transition-colors">
+<td class="px-lg py-md">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 rounded-full bg-surface-container overflow-hidden">
+<img alt="Avatar" class="w-full h-full object-cover" data-alt="A professional portrait of a male employee with a calm and intellectual look, wearing glasses and professional office wear. He is sitting in a modern, light-filled meeting room with minimalist furniture. The lighting is diffused and natural, highlighting a calm, efficient work atmosphere. The color scheme is predominantly clean whites and deep blues, matching the corporate software interface." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCyh6--e40SF57wr3h1VbmhfoT5qaCuGORza_EwfCBh7i5UQkc_BEIUXMZ6RHtcvUmOPVq67UxtYWLaAvpCwOF0583H9bkcUXTCK3ZI_jvszY2JogDG0aE79WDZOzn7ewXE6hPHWP5_tIPIoUSoksII9XqeXOyGSuYSBB1-OcCFAoVOr_yzycLDQ6UiokJ5Fdu3eRUU8ckJFCsv1bZ4V9k9K9UdQnfp-4whBjp7cBRkC3AGaFhiqLclS2MTrLnRfIdWBI8RI68YmFU"/>
+</div>
+<div>
+<p class="font-label-md text-primary">Jorge Peña</p>
+<p class="font-body-sm text-outline">ID: 45035</p>
+</div>
+</div>
+</td>
+<td class="px-lg py-md font-data-tabular text-data-tabular">jpena.logistics</td>
+<td class="px-lg py-md font-data-tabular text-data-tabular">22:00 - 06:00</td>
+<td class="px-lg py-md">
+<span class="inline-flex items-center px-sm py-[2px] rounded-full bg-[#27AE60]/10 text-[#27AE60] font-label-sm text-[11px]">Activo</span>
+</td>
+<td class="px-lg py-md">
+<span class="inline-flex items-center px-sm py-[2px] rounded-full bg-[#27AE60]/10 text-[#27AE60] font-label-sm text-[11px]">Presente</span>
+</td>
+<td class="px-lg py-md font-body-md">Planta Norte</td>
+<td class="px-lg py-md text-right">
+<div class="flex justify-end gap-sm">
+<button class="material-symbols-outlined text-outline hover:text-primary p-xs rounded-lg transition-colors">edit</button>
+<button class="material-symbols-outlined text-outline hover:text-primary p-xs rounded-lg transition-colors">visibility</button>
+<button class="material-symbols-outlined text-outline hover:text-error p-xs rounded-lg transition-colors">no_accounts</button>
+</div>
+</td>
+</tr>
+<!-- Row 6 -->
+<tr class="hover:bg-background transition-colors border-none">
+<td class="px-lg py-md">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 rounded-full bg-surface-container overflow-hidden">
+<img alt="Avatar" class="w-full h-full object-cover" data-alt="A professional headshot of a confident female office employee with a bright, welcoming expression. The setting is a minimalist, white-walled contemporary office with subtle blue lighting accents. The photography is clean, sharp, and corporate, emphasizing reliability and professional elegance. The visual style aligns perfectly with the soft professionalism of the AsistControl brand." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDzMAenqJDq9M171mAsPIYFGuG69D4VGHQvwRDC6JYzPxvnTJUn2BNxTGTFvp0TzYNUXPTihRknKIg5KMBr-_DE03ba_iUk4EQwkz6qh1BYA1bGQCzN-8sRuee3S82TAdSTVneRRwjYhvP4Qk5qFiZWmWqZfpDMmAmD81t5Fyle_Ux8y262mCGfsQl7BM4YLfSOyzWXTysKvm-ZxUcUDLmq7nnixJwpSOq25A6s4toqDZ4SWZplWOBwHEVCmMWQlDHjU-NpdRKrso8"/>
+</div>
+<div>
+<p class="font-label-md text-primary">Diana Ruiz</p>
+<p class="font-body-sm text-outline">ID: 45041</p>
+</div>
+</div>
+</td>
+<td class="px-lg py-md font-data-tabular text-data-tabular">druiz.mkt</td>
+<td class="px-lg py-md font-data-tabular text-data-tabular">08:30 - 17:30</td>
+<td class="px-lg py-md">
+<span class="inline-flex items-center px-sm py-[2px] rounded-full bg-[#27AE60]/10 text-[#27AE60] font-label-sm text-[11px]">Activo</span>
+</td>
+<td class="px-lg py-md">
+<span class="inline-flex items-center px-sm py-[2px] rounded-full bg-[#27AE60]/10 text-[#27AE60] font-label-sm text-[11px]">Presente</span>
+</td>
+<td class="px-lg py-md font-body-md">Sede Central</td>
+<td class="px-lg py-md text-right">
+<div class="flex justify-end gap-sm">
+<button class="material-symbols-outlined text-outline hover:text-primary p-xs rounded-lg transition-colors">edit</button>
+<button class="material-symbols-outlined text-outline hover:text-primary p-xs rounded-lg transition-colors">visibility</button>
+<button class="material-symbols-outlined text-outline hover:text-error p-xs rounded-lg transition-colors">no_accounts</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination Footer -->
+<div class="px-lg py-md flex flex-col md:flex-row items-center justify-between gap-md border-t border-outline-variant bg-surface-container-lowest">
+<p class="font-body-sm text-outline">Mostrando 6 de 142 empleados</p>
+<div class="flex items-center gap-xs">
+<button class="material-symbols-outlined w-8 h-8 flex items-center justify-center rounded-lg border border-outline-variant text-outline hover:bg-surface-container transition-colors disabled:opacity-50" disabled="">chevron_left</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg bg-primary text-on-primary font-label-sm">1</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-surface-container text-on-surface-variant font-label-sm transition-colors">2</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-surface-container text-on-surface-variant font-label-sm transition-colors">3</button>
+<span class="px-xs text-outline">...</span>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-surface-container text-on-surface-variant font-label-sm transition-colors">24</button>
+<button class="material-symbols-outlined w-8 h-8 flex items-center justify-center rounded-lg border border-outline-variant text-outline hover:bg-surface-container transition-colors">chevron_right</button>
+</div>
+</div>
+</div>
+<!-- Contextual Note (Bento-style secondary info) -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-md mt-lg">
+<div class="bg-primary-container p-md rounded-xl flex items-center gap-md">
+<div class="w-12 h-12 rounded-full bg-on-primary-fixed-variant flex items-center justify-center">
+<span class="material-symbols-outlined text-white" style="font-variation-settings: 'FILL' 1;">groups</span>
+</div>
+<div>
+<p class="text-on-primary-container font-label-md">Total Activos</p>
+<p class="text-white text-h2 font-h2">128</p>
+</div>
+</div>
+<div class="bg-secondary-container p-md rounded-xl flex items-center gap-md">
+<div class="w-12 h-12 rounded-full bg-on-secondary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-white" style="font-variation-settings: 'FILL' 1;">today</span>
+</div>
+<div>
+<p class="text-on-secondary-container font-label-md">Presentes Hoy</p>
+<p class="text-on-secondary-fixed text-h2 font-h2">112</p>
+</div>
+</div>
+<div class="bg-surface-container-high p-md rounded-xl flex items-center gap-md">
+<div class="w-12 h-12 rounded-full bg-outline flex items-center justify-center">
+<span class="material-symbols-outlined text-white" style="font-variation-settings: 'FILL' 1;">error_outline</span>
+</div>
+<div>
+<p class="text-on-surface-variant font-label-md">Sin registro</p>
+<p class="text-on-surface text-h2 font-h2">16</p>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

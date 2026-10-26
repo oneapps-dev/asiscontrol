@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-background": "#1a1c1e",
+                    "outline": "#74777f",
+                    "on-tertiary-fixed-variant": "#60410c",
+                    "on-tertiary-fixed": "#291800",
+                    "error": "#ba1a1a",
+                    "surface-variant": "#e3e2e6",
+                    "outline-variant": "#c4c6cf",
+                    "secondary": "#226296",
+                    "surface-container-high": "#e9e7eb",
+                    "surface-container": "#eeedf1",
+                    "surface-bright": "#faf9fc",
+                    "on-surface-variant": "#43474e",
+                    "surface-tint": "#455f87",
+                    "secondary-fixed-dim": "#9bcbff",
+                    "primary-fixed": "#d5e3ff",
+                    "on-primary-fixed": "#001c3b",
+                    "on-secondary": "#ffffff",
+                    "on-secondary-fixed": "#001d34",
+                    "surface-container-highest": "#e3e2e6",
+                    "secondary-container": "#8bc3fd",
+                    "on-secondary-fixed-variant": "#004a79",
+                    "on-tertiary-container": "#c69b5f",
+                    "inverse-surface": "#2f3033",
+                    "surface-dim": "#dad9dd",
+                    "on-tertiary": "#ffffff",
+                    "error-container": "#ffdad6",
+                    "on-secondary-container": "#005083",
+                    "surface-container-low": "#f4f3f7",
+                    "tertiary-container": "#503300",
+                    "primary": "#022448",
+                    "tertiary": "#341f00",
+                    "primary-container": "#1e3a5f",
+                    "tertiary-fixed-dim": "#edbf7f",
+                    "secondary-fixed": "#d0e4ff",
+                    "inverse-on-surface": "#f1f0f4",
+                    "inverse-primary": "#adc8f5",
+                    "on-error-container": "#93000a",
+                    "primary-fixed-dim": "#adc8f5",
+                    "surface": "#faf9fc",
+                    "on-primary": "#ffffff",
+                    "tertiary-fixed": "#ffddb2",
+                    "background": "#faf9fc",
+                    "on-primary-container": "#8aa4cf",
+                    "surface-container-lowest": "#ffffff",
+                    "on-primary-fixed-variant": "#2d486d",
+                    "on-error": "#ffffff",
+                    "on-surface": "#1a1c1e"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "base": "4px",
+                    "md": "16px",
+                    "gutter": "24px",
+                    "lg": "24px",
+                    "xl": "32px",
+                    "sm": "8px",
+                    "xs": "4px",
+                    "container-margin": "40px"
+            },
+            "fontFamily": {
+                    "data-tabular": ["Inter"],
+                    "h3": ["Inter"],
+                    "label-sm": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "label-md": ["Inter"],
+                    "h1": ["Inter"],
+                    "body-sm": ["Inter"],
+                    "body-md": ["Inter"],
+                    "h2": ["Inter"]
+            },
+            "fontSize": {
+                    "data-tabular": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "h3": ["20px", {"lineHeight": "28px", "letterSpacing": "0", "fontWeight": "600"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "letterSpacing": "0", "fontWeight": "400"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                    "h1": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-sm": ["13px", {"lineHeight": "18px", "letterSpacing": "0", "fontWeight": "400"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0", "fontWeight": "400"}],
+                    "h2": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .custom-shadow { box-shadow: 0 4px 12px rgba(30, 58, 95, 0.05); }
+        .nav-active {
+            color: #022448; /* primary */
+            font-weight: 700;
+            border-right-width: 4px;
+            border-color: #022448;
+            background-color: #eeedf1; /* surface-container */
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface">
+<!-- SideNavBar Anchor -->
+<aside class="fixed left-0 top-0 h-full w-[260px] bg-surface-container-low flex flex-col py-md px-sm gap-xs shadow-sm z-50">
+<div class="flex items-center gap-sm px-sm py-md mb-md">
+<div class="w-10 h-10 rounded-lg bg-primary flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined">verified</span>
+</div>
+<div>
+<h1 class="text-h2 font-h2 text-primary leading-tight">AsistControl</h1>
+<p class="text-body-sm text-on-surface-variant">Admin Portal</p>
+</div>
+</div>
+<nav class="flex flex-col gap-xs flex-grow">
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200 active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-body-md text-body-md">Inicio</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200 active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined">badge</span>
+<span class="font-body-md text-body-md">Empleados</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200 active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined">history_toggle_off</span>
+<span class="font-body-md text-body-md">Asistencia</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200 active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-body-md text-body-md">Reportes</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200 active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined">location_on</span>
+<span class="font-body-md text-body-md">Sedes</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200 active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined">devices</span>
+<span class="font-body-md text-body-md">Dispositivos</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm rounded-lg nav-active active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-body-md text-body-md">Configuración</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200 active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined">verified</span>
+<span class="font-body-md text-body-md">Licencia</span>
+</a>
+</nav>
+<div class="mt-auto p-sm border-t border-outline-variant pt-md">
+<div class="flex items-center gap-sm">
+<img alt="User Profile" class="w-10 h-10 rounded-full border border-outline-variant" data-alt="A professional headshot of a mature male HR administrator with a kind smile, wearing a professional navy blue blazer over a crisp white shirt. The background is a blurred corporate office setting with soft, natural morning light casting a clean and reliable aura. The image quality is high-definition, reflecting a modern and institutional professional aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA2ITUQkTJ9_KsKxRhW7pVyQDGZ6z__SuU_XH39idn2opTNAW5G62clIHQbf7S27WxIQjYq3UyM1wMphHXhDfipikwtY_id1fq155AbknZ_yt9hFL0aVYJR2cX8-9wNXTOHT-VD04QodomVDU27eCK4qUbu7KiXW2sSAUXWKjKFlxSmCcrwEJEr2eBsV60HWEnjnwt6IDnv0nJW0OP-DvlT6ApxBnTF0lL65o2_XZpzT5XXK0Q029N74BqGryYzq9JiOZymvObvfpE"/>
+<div class="overflow-hidden">
+<p class="text-label-md font-label-md text-on-surface truncate">Admin Global</p>
+<p class="text-label-sm font-label-sm text-on-surface-variant truncate">admin@asistcontrol.com</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- TopNavBar Anchor (For branding in header) -->
+<header class="ml-[260px] flex justify-between items-center h-16 px-gutter w-[calc(100%-260px)] sticky top-0 z-40 bg-surface-container-lowest border-b border-outline-variant shadow-sm">
+<h2 class="text-h3 font-h3 text-primary">Configuración del Sistema</h2>
+<div class="flex items-center gap-md">
+<button class="text-on-surface-variant hover:text-secondary transition-colors cursor-pointer active:opacity-80">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:text-secondary transition-colors cursor-pointer active:opacity-80">
+<span class="material-symbols-outlined">location_on</span>
+</button>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-[260px] p-gutter pb-32">
+<div class="max-w-6xl mx-auto grid grid-cols-12 gap-gutter">
+<!-- CARD 1: Empresa -->
+<section class="col-span-12 md:col-span-6 bg-surface-container-lowest rounded-xl border border-outline-variant custom-shadow overflow-hidden">
+<div class="bg-primary-container p-md flex items-center gap-sm">
+<span class="material-symbols-outlined text-on-primary-container">business</span>
+<h3 class="font-h3 text-on-primary-container">Empresa</h3>
+</div>
+<div class="p-lg space-y-md">
+<div class="flex flex-col items-center gap-sm">
+<div class="w-24 h-24 border-2 border-dashed border-outline-variant rounded-xl flex flex-col items-center justify-center bg-surface-container-low hover:bg-surface-container transition-colors cursor-pointer group">
+<span class="material-symbols-outlined text-outline-variant group-hover:text-primary mb-1">upload</span>
+<span class="text-label-sm font-label-sm text-outline-variant group-hover:text-primary">Subir Logo</span>
+</div>
+<p class="text-label-sm font-label-sm text-outline">Formatos sugeridos: PNG, JPG (Máx 2MB)</p>
+</div>
+<div class="space-y-sm">
+<label class="block text-label-md font-label-md text-on-surface">Nombre comercial</label>
+<input class="w-full px-md py-sm bg-surface-container-lowest border border-outline-variant rounded-xl focus:ring-2 focus:ring-primary-container focus:border-primary outline-none transition-all" type="text" value="Soluciones Tecnológicas S.A."/>
+</div>
+<div class="space-y-sm">
+<label class="block text-label-md font-label-md text-on-surface">NIT</label>
+<input class="w-full px-md py-sm bg-surface-container-lowest border border-outline-variant rounded-xl focus:ring-2 focus:ring-primary-container focus:border-primary outline-none transition-all" type="text" value="900.123.456-7"/>
+</div>
+<div class="space-y-sm">
+<label class="block text-label-md font-label-md text-on-surface">Zona horaria</label>
+<select class="w-full px-md py-sm bg-surface-container-lowest border border-outline-variant rounded-xl focus:ring-2 focus:ring-primary-container focus:border-primary outline-none transition-all">
+<option>Bogotá, Lima, Quito (GMT-5)</option>
+<option>México DF (GMT-6)</option>
+<option>Santiago (GMT-4)</option>
+<option>Madrid (GMT+1)</option>
+</select>
+</div>
+</div>
+</section>
+<!-- CARD 2: Reglas -->
+<section class="col-span-12 md:col-span-6 bg-surface-container-lowest rounded-xl border border-outline-variant custom-shadow overflow-hidden">
+<div class="bg-primary-container p-md flex items-center gap-sm">
+<span class="material-symbols-outlined text-on-primary-container">gavel</span>
+<h3 class="font-h3 text-on-primary-container">Reglas de Asistencia</h3>
+</div>
+<div class="p-lg space-y-md">
+<div class="grid grid-cols-2 gap-md">
+<div class="space-y-sm">
+<label class="block text-label-md font-label-md text-on-surface">Entrada</label>
+<div class="relative">
+<input class="w-full px-md py-sm bg-surface-container-lowest border border-outline-variant rounded-xl focus:ring-2 focus:ring-primary-container focus:border-primary outline-none transition-all" type="time" value="08:00"/>
+</div>
+</div>
+<div class="space-y-sm">
+<label class="block text-label-md font-label-md text-on-surface">Salida</label>
+<div class="relative">
+<input class="w-full px-md py-sm bg-surface-container-lowest border border-outline-variant rounded-xl focus:ring-2 focus:ring-primary-container focus:border-primary outline-none transition-all" type="time" value="17:00"/>
+</div>
+</div>
+</div>
+<div class="space-y-sm">
+<label class="block text-label-md font-label-md text-on-surface">Tolerancia (Minutos)</label>
+<div class="flex items-center gap-sm">
+<input class="w-full px-md py-sm bg-surface-container-lowest border border-outline-variant rounded-xl focus:ring-2 focus:ring-primary-container focus:border-primary outline-none transition-all" type="number" value="10"/>
+<span class="text-on-surface-variant font-label-md">min</span>
+</div>
+</div>
+<div class="space-y-sm">
+<label class="block text-label-md font-label-md text-on-surface">Horas para incompleto</label>
+<div class="flex items-center gap-sm">
+<input class="w-full px-md py-sm bg-surface-container-lowest border border-outline-variant rounded-xl focus:ring-2 focus:ring-primary-container focus:border-primary outline-none transition-all" type="number" value="14"/>
+<span class="text-on-surface-variant font-label-md">hrs</span>
+</div>
+<p class="text-label-sm font-label-sm text-outline italic">Tiempo máximo sin marcar salida antes de anular jornada.</p>
+</div>
+<div class="flex items-center justify-between pt-md">
+<span class="text-body-md font-label-md text-on-surface">Permitir correcciones</span>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-outline-variant peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+</div>
+</section>
+<!-- CARD 3: Kiosk -->
+<section class="col-span-12 md:col-span-7 bg-surface-container-lowest rounded-xl border border-outline-variant custom-shadow overflow-hidden">
+<div class="bg-primary-container p-md flex items-center gap-sm">
+<span class="material-symbols-outlined text-on-primary-container">ad_units</span>
+<h3 class="font-h3 text-on-primary-container">Kiosk &amp; Pantalla</h3>
+</div>
+<div class="p-lg space-y-lg">
+<div class="flex items-center justify-between">
+<div>
+<p class="text-label-md font-label-md text-on-surface">Reloj en Pantalla</p>
+<p class="text-label-sm font-label-sm text-on-surface-variant">Mostrar reloj digital gigante en el punto de acceso.</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-outline-variant peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+<div class="flex items-center justify-between">
+<div>
+<p class="text-label-md font-label-md text-on-surface">Mostrar Segundos</p>
+<p class="text-label-sm font-label-sm text-on-surface-variant">Precisión absoluta en la visualización del tiempo.</p>
+</div>
+<select class="px-md py-sm bg-surface-container-low border border-outline-variant rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all">
+<option>Activado</option>
+<option>Desactivado</option>
+</select>
+</div>
+<div class="flex items-center justify-between">
+<div>
+<p class="text-label-md font-label-md text-on-surface">Previsualización de Cámara</p>
+<p class="text-label-sm font-label-sm text-on-surface-variant">El empleado ve su rostro antes de marcar (Face ID check).</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-outline-variant peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+</div>
+</section>
+<!-- CARD 4: Seguridad -->
+<section class="col-span-12 md:col-span-5 bg-surface-container-lowest rounded-xl border border-outline-variant custom-shadow overflow-hidden">
+<div class="bg-primary-container p-md flex items-center gap-sm">
+<span class="material-symbols-outlined text-on-primary-container">security</span>
+<h3 class="font-h3 text-on-primary-container">Seguridad</h3>
+</div>
+<div class="p-lg space-y-md">
+<div class="bg-surface-container-low rounded-xl p-md border border-outline-variant">
+<p class="text-label-sm font-label-sm text-outline-variant uppercase tracking-wider mb-sm">Dispositivo Actual</p>
+<div class="space-y-xs">
+<div class="flex justify-between">
+<span class="text-body-sm text-on-surface-variant">Token:</span>
+<span class="text-label-md font-label-md text-primary font-mono">AC-99X-2024-PQ</span>
+</div>
+<div class="flex justify-between">
+<span class="text-body-sm text-on-surface-variant">Dirección IP:</span>
+<span class="text-label-md font-label-md text-on-surface">192.168.1.45</span>
+</div>
+<div class="flex justify-between">
+<span class="text-body-sm text-on-surface-variant">Última conexión:</span>
+<span class="text-label-md font-label-md text-on-surface">Hoy, 10:45 AM</span>
+</div>
+</div>
+</div>
+<div class="pt-sm">
+<button class="w-full flex items-center justify-center gap-sm bg-error/10 hover:bg-error/20 text-error font-label-md py-sm rounded-xl transition-colors border border-error/20">
+<span class="material-symbols-outlined">restart_alt</span>
+                            Reemplazar dispositivo
+                        </button>
+<p class="text-center text-label-sm font-label-sm text-outline mt-sm">Esta acción invalidará el acceso desde este terminal inmediatamente.</p>
+</div>
+</div>
+</section>
+</div>
+</main>
+<!-- SAVE BUTTON fixed bottom right -->
+<div class="fixed bottom-gutter right-gutter z-50">
+<button class="flex items-center gap-sm bg-primary text-on-primary px-xl py-md rounded-xl shadow-lg hover:bg-primary/90 transition-all active:scale-95 group">
+<span class="material-symbols-outlined group-hover:rotate-12 transition-transform">save</span>
+<span class="font-h3">Guardar Configuración</span>
+</button>
+</div>
+</body></html>

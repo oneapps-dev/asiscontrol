@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-background": "#1a1c1e",
+                    "outline": "#74777f",
+                    "on-tertiary-fixed-variant": "#60410c",
+                    "on-tertiary-fixed": "#291800",
+                    "error": "#ba1a1a",
+                    "surface-variant": "#e3e2e6",
+                    "outline-variant": "#c4c6cf",
+                    "secondary": "#226296",
+                    "surface-container-high": "#e9e7eb",
+                    "surface-container": "#eeedf1",
+                    "surface-bright": "#faf9fc",
+                    "on-surface-variant": "#43474e",
+                    "surface-tint": "#455f87",
+                    "secondary-fixed-dim": "#9bcbff",
+                    "primary-fixed": "#d5e3ff",
+                    "on-primary-fixed": "#001c3b",
+                    "on-secondary": "#ffffff",
+                    "on-secondary-fixed": "#001d34",
+                    "surface-container-highest": "#e3e2e6",
+                    "secondary-container": "#8bc3fd",
+                    "on-secondary-fixed-variant": "#004a79",
+                    "on-tertiary-container": "#c69b5f",
+                    "inverse-surface": "#2f3033",
+                    "surface-dim": "#dad9dd",
+                    "on-tertiary": "#ffffff",
+                    "error-container": "#ffdad6",
+                    "on-secondary-container": "#005083",
+                    "surface-container-low": "#f4f3f7",
+                    "tertiary-container": "#503300",
+                    "primary": "#022448",
+                    "tertiary": "#341f00",
+                    "primary-container": "#1e3a5f",
+                    "tertiary-fixed-dim": "#edbf7f",
+                    "secondary-fixed": "#d0e4ff",
+                    "inverse-on-surface": "#f1f0f4",
+                    "inverse-primary": "#adc8f5",
+                    "on-error-container": "#93000a",
+                    "primary-fixed-dim": "#adc8f5",
+                    "surface": "#faf9fc",
+                    "on-primary": "#ffffff",
+                    "tertiary-fixed": "#ffddb2",
+                    "background": "#faf9fc",
+                    "on-primary-container": "#8aa4cf",
+                    "surface-container-lowest": "#ffffff",
+                    "on-primary-fixed-variant": "#2d486d",
+                    "on-error": "#ffffff",
+                    "on-surface": "#1a1c1e"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "base": "4px",
+                    "md": "16px",
+                    "gutter": "24px",
+                    "lg": "24px",
+                    "xl": "32px",
+                    "sm": "8px",
+                    "xs": "4px",
+                    "container-margin": "40px"
+            },
+            "fontFamily": {
+                    "data-tabular": ["Inter"],
+                    "h3": ["Inter"],
+                    "label-sm": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "label-md": ["Inter"],
+                    "h1": ["Inter"],
+                    "body-sm": ["Inter"],
+                    "body-md": ["Inter"],
+                    "h2": ["Inter"]
+            },
+            "fontSize": {
+                    "data-tabular": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "h3": ["20px", {"lineHeight": "28px", "letterSpacing": "0", "fontWeight": "600"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "letterSpacing": "0", "fontWeight": "400"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                    "h1": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-sm": ["13px", {"lineHeight": "18px", "letterSpacing": "0", "fontWeight": "400"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0", "fontWeight": "400"}],
+                    "h2": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      body {
+        background-color: #F8FBFF;
+      }
+      .custom-shadow {
+        box-shadow: 0 4px 12px rgba(30, 58, 95, 0.05);
+      }
+      .chart-bar {
+        transition: height 0.3s ease;
+      }
+    </style>
+</head>
+<body class="font-body-md text-on-surface overflow-x-hidden">
+<!-- SIDEBAR -->
+<aside class="fixed left-0 top-0 h-full w-[260px] bg-surface dark:bg-on-background shadow-sm flex flex-col py-md px-sm gap-xs z-50">
+<div class="mb-lg px-md">
+<h1 class="text-h2 font-h2 text-primary dark:text-primary-fixed-dim">AsistControl</h1>
+<p class="font-body-md text-on-surface-variant">Admin Portal</p>
+</div>
+<nav class="flex flex-col gap-xs">
+<div class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high transition-colors cursor-pointer">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-body-md">Inicio</span>
+</div>
+<div class="flex items-center gap-md px-md py-sm rounded-lg text-primary dark:text-primary-fixed-dim font-bold border-r-4 border-primary dark:border-primary-fixed-dim bg-surface-container dark:bg-primary-container/20">
+<span class="material-symbols-outlined">badge</span>
+<span class="font-body-md">Empleados</span>
+</div>
+<div class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high transition-colors cursor-pointer">
+<span class="material-symbols-outlined">history_toggle_off</span>
+<span class="font-body-md">Asistencia</span>
+</div>
+<div class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high transition-colors cursor-pointer">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-body-md">Reportes</span>
+</div>
+<div class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high transition-colors cursor-pointer">
+<span class="material-symbols-outlined">location_on</span>
+<span class="font-body-md">Sedes</span>
+</div>
+<div class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high transition-colors cursor-pointer">
+<span class="material-symbols-outlined">devices</span>
+<span class="font-body-md">Dispositivos</span>
+</div>
+<div class="mt-auto flex flex-col gap-xs pt-xl">
+<div class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high transition-colors cursor-pointer">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-body-md">Configuración</span>
+</div>
+<div class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-high transition-colors cursor-pointer">
+<span class="material-symbols-outlined">verified</span>
+<span class="font-body-md">Licencia</span>
+</div>
+</div>
+</nav>
+</aside>
+<!-- MAIN CONTENT -->
+<main class="ml-[260px] min-h-screen">
+<!-- TOP NAV BAR -->
+<header class="flex justify-between items-center h-16 px-gutter w-full sticky top-0 z-40 bg-surface-container-lowest border-b border-outline-variant shadow-sm">
+<div class="flex items-center gap-lg">
+<div class="relative w-96">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
+<input class="w-full bg-surface py-2 pl-10 pr-4 rounded-xl border border-outline-variant focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-body-md" placeholder="Buscar empleados, reportes..." type="text"/>
+</div>
+<nav class="hidden md:flex items-center gap-xl">
+<span class="text-on-surface-variant font-label-md hover:text-primary transition-colors cursor-pointer">Clientes</span>
+<span class="text-on-surface-variant font-label-md hover:text-primary transition-colors cursor-pointer">Planes</span>
+<span class="text-on-surface-variant font-label-md hover:text-primary transition-colors cursor-pointer">Pagos</span>
+<span class="text-primary font-bold border-b-2 border-primary pb-1">Métricas</span>
+<span class="text-on-surface-variant font-label-md hover:text-primary transition-colors cursor-pointer">Auditoría</span>
+</nav>
+</div>
+<div class="flex items-center gap-lg">
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary">notifications</span>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary">location_on</span>
+<div class="h-8 w-8 rounded-full bg-primary-container flex items-center justify-center text-primary-fixed font-bold text-label-sm">JD</div>
+</div>
+</header>
+<div class="p-gutter max-w-[1400px] mx-auto space-y-gutter">
+<!-- TOP SECTION (White Card) -->
+<section class="bg-surface-container-lowest rounded-xl p-lg custom-shadow flex items-center justify-between border-l-4 border-primary">
+<div class="flex items-center gap-lg">
+<img alt="Employee Avatar" class="w-16 h-16 rounded-full object-cover border-2 border-primary-container" data-alt="A professional studio portrait of a male corporate executive in his late 30s. He is wearing a sharp, tailored navy blue blazer over a clean white shirt. The background is a soft, out-of-focus modern office environment with cool blue and white tones. The lighting is diffused and professional, emphasizing a reliable and approachable persona for a SaaS platform employee profile." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDQ355iJ43ZwnNE1Zwg2fhxBAETItNeulrcNWSflBe0z-yXhRNOUpvY7w8XQmsgNCRmHhPFXnDYtMR6ws3HqcxFYL6t6U-OafOHR_qS8eiS33gwQ5xv4_N9XYtiqukwqu7J_okInEX7i0QQhmAlJBiIXK5OiCJUevhy_9bX9yWT6xU28MFeo_aCrE_0q-3rdHlcYO4I8YF4Z-blzTEF1TfyXjb72kFjP9SJR_uoupZ-sVV__3NlAMW1dMClrFnt7wiXki45J4T0WeQ"/>
+<div class="space-y-1">
+<div class="flex items-center gap-sm">
+<h2 class="font-h2 text-h2 text-primary">Javier Rodríguez</h2>
+<span class="bg-[#27AE601A] text-[#27AE60] px-3 py-1 rounded-full text-label-sm font-bold">Activo</span>
+</div>
+<p class="font-body-md text-on-surface-variant">@jrodriguez · Analista de Operaciones</p>
+<div class="flex items-center gap-md pt-1">
+<div class="flex items-center gap-xs text-body-sm text-outline">
+<span class="material-symbols-outlined text-[18px]">schedule</span>
+<span>Lun - Vie, 08:00 AM - 05:00 PM</span>
+</div>
+<div class="flex items-center gap-xs text-body-sm text-outline">
+<span class="material-symbols-outlined text-[18px]">location_on</span>
+<span>Sede Central</span>
+</div>
+</div>
+</div>
+</div>
+<button class="bg-primary text-white px-gutter py-md rounded-xl font-label-md flex items-center gap-sm hover:opacity-90 active:scale-95 transition-all">
+<span class="material-symbols-outlined">edit</span>
+                    Editar empleado
+                </button>
+</section>
+<!-- KPI ROW -->
+<section class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-md">
+<div class="bg-[#EBF4FF] p-md rounded-xl space-y-xs">
+<p class="text-label-sm text-secondary font-semibold">Días trabajados</p>
+<p class="text-h2 font-h1 text-primary">22</p>
+<p class="text-[11px] text-on-secondary-fixed-variant">Este mes</p>
+</div>
+<div class="bg-[#EBF4FF] p-md rounded-xl space-y-xs">
+<p class="text-label-sm text-secondary font-semibold">Tardanzas</p>
+<p class="text-h2 font-h1 text-error">2</p>
+<p class="text-[11px] text-error font-medium">↑ 1 vs mes anterior</p>
+</div>
+<div class="bg-[#EBF4FF] p-md rounded-xl space-y-xs">
+<p class="text-label-sm text-secondary font-semibold">Ausencias</p>
+<p class="text-h2 font-h1 text-primary">0</p>
+<p class="text-[11px] text-on-secondary-fixed-variant">Meta: 0</p>
+</div>
+<div class="bg-[#EBF4FF] p-md rounded-xl space-y-xs">
+<p class="text-label-sm text-secondary font-semibold">Horas acumuladas</p>
+<p class="text-h2 font-h1 text-primary">176.5</p>
+<p class="text-[11px] text-on-secondary-fixed-variant">Hrs extras: 4.5</p>
+</div>
+<div class="bg-[#EBF4FF] p-md rounded-xl space-y-xs">
+<p class="text-label-sm text-secondary font-semibold">Hora prom. entrada</p>
+<p class="text-h2 font-h1 text-primary">07:58</p>
+<p class="text-[11px] text-[#27AE60] font-medium">Puntualidad: 98%</p>
+</div>
+<div class="bg-[#EBF4FF] p-md rounded-xl space-y-xs">
+<p class="text-label-sm text-secondary font-semibold">Hora prom. salida</p>
+<p class="text-h2 font-h1 text-primary">17:05</p>
+<p class="text-[11px] text-on-secondary-fixed-variant">Salida puntual</p>
+</div>
+</section>
+<!-- CHARTS SECTION -->
+<section class="grid grid-cols-1 lg:grid-cols-[55%_45%] gap-gutter">
+<!-- LEFT: Bar Chart -->
+<div class="bg-surface-container-lowest p-lg rounded-xl custom-shadow border border-[#D6E4F0]">
+<div class="flex justify-between items-center mb-xl">
+<h3 class="font-h3 text-h3 text-primary">Horas por día — Mayo 2026</h3>
+<span class="material-symbols-outlined text-outline cursor-pointer">more_vert</span>
+</div>
+<div class="h-[240px] flex items-end justify-between gap-2 px-md">
+<!-- Mock bars -->
+<div class="flex flex-col items-center gap-xs flex-1">
+<div class="bg-[#D0E4FF] w-full rounded-t-lg chart-bar h-[80%] hover:bg-primary transition-colors cursor-pointer"></div>
+<span class="text-[10px] text-outline font-medium">01</span>
+</div>
+<div class="flex flex-col items-center gap-xs flex-1">
+<div class="bg-[#D0E4FF] w-full rounded-t-lg chart-bar h-[85%] hover:bg-primary transition-colors cursor-pointer"></div>
+<span class="text-[10px] text-outline font-medium">02</span>
+</div>
+<div class="flex flex-col items-center gap-xs flex-1">
+<div class="bg-[#D0E4FF] w-full rounded-t-lg chart-bar h-[75%] hover:bg-primary transition-colors cursor-pointer"></div>
+<span class="text-[10px] text-outline font-medium">03</span>
+</div>
+<div class="flex flex-col items-center gap-xs flex-1">
+<div class="bg-primary w-full rounded-t-lg chart-bar h-[90%] transition-colors cursor-pointer"></div>
+<span class="text-[10px] text-outline font-medium">04</span>
+</div>
+<div class="flex flex-col items-center gap-xs flex-1">
+<div class="bg-[#D0E4FF] w-full rounded-t-lg chart-bar h-[82%] hover:bg-primary transition-colors cursor-pointer"></div>
+<span class="text-[10px] text-outline font-medium">05</span>
+</div>
+<div class="flex flex-col items-center gap-xs flex-1">
+<div class="bg-[#D0E4FF] w-full rounded-t-lg chart-bar h-[70%] hover:bg-primary transition-colors cursor-pointer"></div>
+<span class="text-[10px] text-outline font-medium">08</span>
+</div>
+<div class="flex flex-col items-center gap-xs flex-1">
+<div class="bg-[#D0E4FF] w-full rounded-t-lg chart-bar h-[88%] hover:bg-primary transition-colors cursor-pointer"></div>
+<span class="text-[10px] text-outline font-medium">09</span>
+</div>
+<div class="flex flex-col items-center gap-xs flex-1">
+<div class="bg-[#D0E4FF] w-full rounded-t-lg chart-bar h-[85%] hover:bg-primary transition-colors cursor-pointer"></div>
+<span class="text-[10px] text-outline font-medium">10</span>
+</div>
+<div class="flex flex-col items-center gap-xs flex-1">
+<div class="bg-[#D0E4FF] w-full rounded-t-lg chart-bar h-[80%] hover:bg-primary transition-colors cursor-pointer"></div>
+<span class="text-[10px] text-outline font-medium">11</span>
+</div>
+<div class="flex flex-col items-center gap-xs flex-1">
+<div class="bg-[#D0E4FF] w-full rounded-t-lg chart-bar h-[78%] hover:bg-primary transition-colors cursor-pointer"></div>
+<span class="text-[10px] text-outline font-medium">12</span>
+</div>
+</div>
+</div>
+<!-- RIGHT: Line Chart Trend -->
+<div class="bg-surface-container-lowest p-lg rounded-xl custom-shadow border border-[#D6E4F0]">
+<div class="flex justify-between items-center mb-xl">
+<h3 class="font-h3 text-h3 text-primary">Hora de llegada — tendencia</h3>
+<div class="bg-surface p-1 rounded-lg border border-outline-variant flex">
+<button class="px-3 py-1 bg-white shadow-sm rounded-md text-[11px] font-bold text-primary">AM</button>
+<button class="px-3 py-1 text-[11px] font-medium text-outline">PM</button>
+</div>
+</div>
+<div class="relative h-[240px] w-full">
+<svg class="w-full h-full" preserveaspectratio="none" viewbox="0 0 400 200">
+<path d="M0,150 C50,140 100,160 150,145 C200,130 250,155 300,140 C350,125 400,135 400,135" fill="none" stroke="#2D6A9F" stroke-width="3"></path>
+<path d="M0,150 C50,140 100,160 150,145 C200,130 250,155 300,140 C350,125 400,135 400,135 L400,200 L0,200 Z" fill="url(#lineGradient)" opacity="0.1"></path>
+<defs>
+<lineargradient id="lineGradient" x1="0%" x2="0%" y1="0%" y2="100%">
+<stop offset="0%" style="stop-color:#2D6A9F;stop-opacity:1"></stop>
+<stop offset="100%" style="stop-color:#2D6A9F;stop-opacity:0"></stop>
+</lineargradient>
+</defs>
+<circle cx="150" cy="145" fill="#1E3A5F" r="5"></circle>
+</svg>
+<div class="absolute top-[135px] left-[160px] bg-primary text-white text-[10px] px-2 py-1 rounded shadow-lg">
+                            May 10: 07:45 AM
+                        </div>
+<div class="absolute bottom-0 w-full flex justify-between px-2 text-[10px] text-outline font-medium">
+<span>S1</span><span>S2</span><span>S3</span><span>S4</span>
+</div>
+</div>
+</div>
+</section>
+<!-- ATTENDANCE HISTORY TABLE -->
+<section class="bg-surface-container-lowest rounded-xl custom-shadow border border-[#D6E4F0] overflow-hidden">
+<div class="p-lg flex justify-between items-center bg-white border-b border-[#D6E4F0]">
+<h3 class="font-h3 text-h3 text-primary">Historial de Asistencia</h3>
+<div class="flex items-center gap-md">
+<div class="flex items-center gap-sm bg-surface-container-low px-md py-sm rounded-xl border border-outline-variant text-body-sm">
+<span class="material-symbols-outlined text-[18px] text-outline">calendar_today</span>
+<span>01 Mayo - 12 Mayo, 2026</span>
+<span class="material-symbols-outlined text-[18px] text-outline">expand_more</span>
+</div>
+<button class="bg-[#EBF4FF] text-secondary p-sm rounded-lg hover:bg-secondary/10 transition-all">
+<span class="material-symbols-outlined">filter_list</span>
+</button>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead class="bg-surface-container-low border-b border-[#D6E4F0]">
+<tr>
+<th class="px-lg py-md text-label-sm text-on-surface-variant font-bold uppercase tracking-wider">Fecha</th>
+<th class="px-lg py-md text-label-sm text-on-surface-variant font-bold uppercase tracking-wider">Entrada</th>
+<th class="px-lg py-md text-label-sm text-on-surface-variant font-bold uppercase tracking-wider">Salida</th>
+<th class="px-lg py-md text-label-sm text-on-surface-variant font-bold uppercase tracking-wider">Horas</th>
+<th class="px-lg py-md text-label-sm text-on-surface-variant font-bold uppercase tracking-wider">Sede</th>
+<th class="px-lg py-md text-label-sm text-on-surface-variant font-bold uppercase tracking-wider">Estado del día</th>
+<th class="px-lg py-md text-label-sm text-on-surface-variant font-bold uppercase tracking-wider">Evidencia</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-[#D6E4F0]">
+<!-- Row 1 -->
+<tr class="hover:bg-background transition-colors">
+<td class="px-lg py-md font-data-tabular text-on-surface">12 Mayo, 2026</td>
+<td class="px-lg py-md font-data-tabular text-on-surface">07:55 AM</td>
+<td class="px-lg py-md font-data-tabular text-on-surface">05:05 PM</td>
+<td class="px-lg py-md font-data-tabular text-on-surface">8.2 hrs</td>
+<td class="px-lg py-md font-data-tabular text-on-surface">Sede Central</td>
+<td class="px-lg py-md">
+<span class="bg-[#27AE601A] text-[#27AE60] px-3 py-1 rounded-full text-label-sm font-medium">Puntual</span>
+</td>
+<td class="px-lg py-md">
+<span class="material-symbols-outlined text-outline cursor-pointer hover:text-primary">photo_camera</span>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-background transition-colors">
+<td class="px-lg py-md font-data-tabular text-on-surface">11 Mayo, 2026</td>
+<td class="px-lg py-md font-data-tabular text-on-surface">08:05 AM</td>
+<td class="px-lg py-md font-data-tabular text-on-surface">05:15 PM</td>
+<td class="px-lg py-md font-data-tabular text-on-surface">8.1 hrs</td>
+<td class="px-lg py-md font-data-tabular text-on-surface">Sede Central</td>
+<td class="px-lg py-md">
+<span class="bg-error-container text-error px-3 py-1 rounded-full text-label-sm font-medium">Tardanza</span>
+</td>
+<td class="px-lg py-md">
+<span class="material-symbols-outlined text-outline cursor-pointer hover:text-primary">photo_camera</span>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-background transition-colors">
+<td class="px-lg py-md font-data-tabular text-on-surface">10 Mayo, 2026</td>
+<td class="px-lg py-md font-data-tabular text-on-surface">07:45 AM</td>
+<td class="px-lg py-md font-data-tabular text-on-surface">04:55 PM</td>
+<td class="px-lg py-md font-data-tabular text-on-surface">8.1 hrs</td>
+<td class="px-lg py-md font-data-tabular text-on-surface">Sede Central</td>
+<td class="px-lg py-md">
+<span class="bg-[#27AE601A] text-[#27AE60] px-3 py-1 rounded-full text-label-sm font-medium">Puntual</span>
+</td>
+<td class="px-lg py-md">
+<span class="material-symbols-outlined text-outline cursor-pointer hover:text-primary">photo_camera</span>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-background transition-colors">
+<td class="px-lg py-md font-data-tabular text-on-surface">09 Mayo, 2026</td>
+<td class="px-lg py-md font-data-tabular text-on-surface">07:58 AM</td>
+<td class="px-lg py-md font-data-tabular text-on-surface">06:30 PM</td>
+<td class="px-lg py-md font-data-tabular text-on-surface">9.5 hrs</td>
+<td class="px-lg py-md font-data-tabular text-on-surface">Sede Central</td>
+<td class="px-lg py-md">
+<span class="bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full text-label-sm font-medium">Hrs Extras</span>
+</td>
+<td class="px-lg py-md">
+<span class="material-symbols-outlined text-outline cursor-pointer hover:text-primary">photo_camera</span>
+</td>
+</tr>
+<!-- Row 5 -->
+<tr class="hover:bg-background transition-colors">
+<td class="px-lg py-md font-data-tabular text-on-surface">08 Mayo, 2026</td>
+<td class="px-lg py-md font-data-tabular text-on-surface">08:02 AM</td>
+<td class="px-lg py-md font-data-tabular text-on-surface">05:00 PM</td>
+<td class="px-lg py-md font-data-tabular text-on-surface">8.0 hrs</td>
+<td class="px-lg py-md font-data-tabular text-on-surface">Sede Central</td>
+<td class="px-lg py-md">
+<span class="bg-surface-variant text-on-surface-variant px-3 py-1 rounded-full text-label-sm font-medium">Margen</span>
+</td>
+<td class="px-lg py-md">
+<span class="material-symbols-outlined text-outline cursor-pointer hover:text-primary">photo_camera</span>
+</td>
+</tr>
+<!-- Row 6 -->
+<tr class="hover:bg-background transition-colors">
+<td class="px-lg py-md font-data-tabular text-on-surface">05 Mayo, 2026</td>
+<td class="px-lg py-md font-data-tabular text-on-surface">07:50 AM</td>
+<td class="px-lg py-md font-data-tabular text-on-surface">05:05 PM</td>
+<td class="px-lg py-md font-data-tabular text-on-surface">8.2 hrs</td>
+<td class="px-lg py-md font-data-tabular text-on-surface">Sede Norte</td>
+<td class="px-lg py-md">
+<span class="bg-[#27AE601A] text-[#27AE60] px-3 py-1 rounded-full text-label-sm font-medium">Puntual</span>
+</td>
+<td class="px-lg py-md">
+<span class="material-symbols-outlined text-outline cursor-pointer hover:text-primary">photo_camera</span>
+</td>
+</tr>
+<!-- Row 7 -->
+<tr class="hover:bg-background transition-colors">
+<td class="px-lg py-md font-data-tabular text-on-surface">04 Mayo, 2026</td>
+<td class="px-lg py-md font-data-tabular text-on-surface">08:12 AM</td>
+<td class="px-lg py-md font-data-tabular text-on-surface">05:20 PM</td>
+<td class="px-lg py-md font-data-tabular text-on-surface">8.1 hrs</td>
+<td class="px-lg py-md font-data-tabular text-on-surface">Sede Norte</td>
+<td class="px-lg py-md">
+<span class="bg-error-container text-error px-3 py-1 rounded-full text-label-sm font-medium">Tardanza</span>
+</td>
+<td class="px-lg py-md">
+<span class="material-symbols-outlined text-outline cursor-pointer hover:text-primary">photo_camera</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="px-lg py-md bg-white border-t border-[#D6E4F0] flex justify-between items-center">
+<p class="text-body-sm text-outline">Mostrando 7 de 22 registros</p>
+<div class="flex gap-xs">
+<button class="p-sm rounded-lg border border-outline-variant hover:bg-surface-container-low disabled:opacity-30" disabled="">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+<button class="px-4 py-1 rounded-lg bg-primary text-white text-label-sm">1</button>
+<button class="px-4 py-1 rounded-lg border border-outline-variant text-label-sm hover:bg-surface-container-low">2</button>
+<button class="px-4 py-1 rounded-lg border border-outline-variant text-label-sm hover:bg-surface-container-low">3</button>
+<button class="p-sm rounded-lg border border-outline-variant hover:bg-surface-container-low">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</div>
+</section>
+</div>
+</main>
+</body></html>
