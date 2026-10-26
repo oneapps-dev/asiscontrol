@@ -117,3 +117,4 @@ jobs:
           bash backend/tests/client_type_gate_smoke.sh
           bash backend/tests/site_context_smoke.sh
           bash backend/tests/structured_audit_smoke.sh
+          bash backend/tests/multi_tenant_membership_smoke.sh

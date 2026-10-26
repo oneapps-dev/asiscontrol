@@ -167,3 +167,12 @@ INSERT INTO people (tenant_id,person_type,document_type,document_number,full_nam
 SELECT t.id,'empleado','CC',CONCAT('QAEMP',t.id),'Empleado industrial ficticio QA',NOW()
 FROM tenants t WHERE t.name='QA Industria Central'
 AND NOT EXISTS (SELECT 1 FROM people p WHERE p.tenant_id=t.id AND p.document_number=CONCAT('QAEMP',t.id));
+
+-- An additional managed client permits QA of one identity authorized in two tenants.
+-- This fixture is intentionally NOT part of production migrations.
+INSERT INTO tenant_relationships(owner_tenant_id,operator_tenant_id,relationship_type,status)
+SELECT child.id,security.id,'managed_by','active'
+FROM tenants child JOIN tenants security
+ ON child.name='QA Industria Central' AND security.name='QA Seguridad Norte'
+ON DUPLICATE KEY UPDATE status='active';
+
