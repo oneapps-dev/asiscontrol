@@ -38,3 +38,12 @@ Ver ejecuciones en: https://github.com/oneapps-dev/asiscontrol/actions
 - La prueba de cuotas comerciales se ejecuta antes de crear los dos supervisores QA del test de exportaciones, para no contaminar las capacidades de prueba; no se modificaron los límites para aprobar reportes.
 - Se corrigió el manejador inalcanzable de /reports/attendance.html y se incluye una llamada HTTP en la regresión.
 
+
+## Regresiones de creación e aislamiento operacional
+
+- `legacy_created_ids_smoke.sh` comprueba en MySQL que los IDs devueltos por restricciones, parqueaderos, incidentes y turnos pertenecen al registro real, no a auditoría.
+- `site_scoped_bookings_smoke.sh` verifica que un administrador limitado a una sede pueda registrar y consultar reservas válidas, pero no operar reservas o invitados de otras sedes.
+- `site_scoped_operational_pagination_smoke.sh` genera más de 200 registros ajenos por clase (visitas, vehículos, paquetes e incidentes) y confirma que las consultas y `/bootstrap` conserven registros permitidos y oculten los ajenos.
+- El backend también aplica los filtros SQL para turnos, invitaciones y parqueaderos; sus pruebas negativas y de volumen específicas quedan pendientes.
+- El flujo de integración completo está verificado en [Actions #40382310210](https://github.com/oneapps-dev/asiscontrol/actions/runs/40382310210).
+

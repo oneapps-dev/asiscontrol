@@ -93,6 +93,23 @@ Pruebas aprobadas del bloque de reportes: [Actions #40378349135](https://github.
 
 **Esta cobertura es parcial.** Las rutas que todavía no tienen prueba positiva y negativa permanecen bajo revisión. La Fase 9 y los criterios CA-01 a CA-23 NO están cerrados.
 
+## Endurecimiento de rutas heredadas — 26 de octubre
+
+Se completó un bloque adicional de correcciones sobre los endpoints históricos. No supone el cierre total del plan:
+
+| Alcance | Implementación | Evidencia |
+|---|---|---|
+| Creación de registros | 10 endpoints capturan el ID real ANTES de guardar auditoría, evitando responder con el ID del log | `legacy_created_ids_smoke.sh` y pruebas de reservas |
+| Campos opcionales | 11 expresiones usan el valor validado/default, evitando campos NULL al crear reservas, marcar asistencia y registrar eventos | `site_scoped_bookings_smoke.sh` y regresiones |
+| Visitas, vehículos, paquetes e incidentes | Filtros SQL por cliente y sede ANTES de LIMIT tanto en listados como en bootstrap | `site_scoped_operational_pagination_smoke.sh` (220 registros ajenos por cada colección) |
+| Reservas e invitados | Autorización de sede en recursos, reservas, invitados y cambios de estado | `site_scoped_bookings_smoke.sh` |
+| Turnos, invitaciones y parqueaderos | La consulta aplica primero alcance por sede en SQL y conserva un segundo filtro defensivo | PHP lint, build, MySQL CI; falta ampliar pruebas de volumen específicas de estos tres módulos |
+
+Las validaciones anteriores no implican que el resto de rutas haya sido certificado. Los flujos offline con múltiples pestañas, importaciones, recursos descargables, reportes adicionales y rutas de mutación necesitan su propia matriz de permisos, prueba positiva y prueba negativa.
+
+**Última ejecución verde de este bloque:** [GitHub Actions #40382310210](https://github.com/oneapps-dev/asiscontrol/actions/runs/40382310210), commit `c67ad67540d2682a400e99a6b92dc942058ed370`.
+El entorno es una base MySQL 8 aislada; no se probó una base de datos histórica restaurada en BanaHosting.
+
 ## Prioridades aún pendientes
 
 1. **Cobertura de rutas heredadas**: matriz por endpoint (rol, permiso, tenant, sede, puesto, suscripción, evidencias, errores) y rehabilitación segura de las rutas provisionalmente cerradas. Inventario estático preliminar en `docs/security/route-authorization-review-2026-10-26.md` (118 pares método-ruta literales y 55 patrones dinámicos detectados; no equivalen a cobertura certificada).
