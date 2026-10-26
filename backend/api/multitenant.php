@@ -1,0 +1,224 @@
+<?php
+declare(strict_types=1);
+
+/**
+ * Multi-tenant policy. The actor remains authenticated via the existing
+ * session; a scope assignment never elevates the user's master role.
+ */
+function effective_role_permissions(int $tenantId, string $role): array
+{
+    $stmt = db()->prepare(
+        'SELECT rp.permission_code
+           FROM role_permissions rp
+           JOIN master_role_permissions mp
+             ON mp.role_code=rp.role AND mp.permission_code=rp.permission_code
+           LEFT JOIN tenant_role_restrictions tr
+             ON tr.tenant_id=rp.tenant_id AND tr.role_code=rp.role AND tr.permission_code=rp.permission_code
+          WHERE rp.tenant_id=:tenant AND rp.role=:role AND rp.granted=1
+            AND tr.permission_code IS NULL
+          ORDER BY rp.permission_code'
+    );
+    $stmt->execute(['tenant'=>$tenantId,'role'=>$role]);
+    return $stmt->fetchAll(PDO::FETCH_COLUMN);
+}
+
+function validate_role_assignment(array $actor, int $tenantId, string $role): void
+{
+    if ($role === 'superadmin' || !in_array($role, ['admin','supervisor','coordinator','guard','auditor','resident','tech_operator'], true)) {
+        json_response(['error'=>'No se puede asignar este rol desde un cliente','error_code'=>'ROLE_NOT_ASSIGNABLE'],403);
+    }
+    if (!is_platform_admin($actor)) {
+        $their = effective_role_permissions($tenantId, (string) $actor['role']);
+        $requested = effective_role_permissions($tenantId, $role);
+        if (array_diff($requested, $their)) {
+            json_response(['error'=>'El rol supera los permisos del administrador','error_code'=>'ROLE_ESCALATION'],403);
+        }
+    }
+}
+
+function scopes_for_user(int $userId, int $tenantId): array
+{
+    $stmt = db()->prepare(
+        'SELECT scope_type,scope_id FROM user_scopes
+          WHERE user_id=:user_id AND tenant_id=:tenant_id ORDER BY scope_type,scope_id'
+    );
+    $stmt->execute(['user_id'=>$userId,'tenant_id'=>$tenantId]);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+function valid_scope_resource(int $tenantId, string $type, int $id): bool
+{
+    if ($id<=0) return false;
+    if ($type==='tenant') return $tenantId===$id;
+    $map=[
+        'site'=>['sites','id'],
+        'access_point'=>['access_points','id'],
+        'unit'=>['units','id']
+    ];
+    if (!isset($map[$type])) return false;
+    [$table,$column]=$map[$type];
+    $stmt=db()->prepare("SELECT 1 FROM {$table} WHERE {$column}=:id AND tenant_id=:tenant_id LIMIT 1");
+    $stmt->execute(['id'=>$id,'tenant_id'=>$tenantId]);
+    return (bool)$stmt->fetchColumn();
+}
+
+/** Scope coverage is checked server-side; grantors cannot assign larger scopes. */
+function scope_covers(array $scopes, int $tenantId, string $type, int $id): bool
+{
+    foreach ($scopes as $scope) {
+        $ownType=(string)$scope['scope_type'];
+        $ownId=(int)$scope['scope_id'];
+        if ($ownType==='tenant' && $ownId===$tenantId) return true;
+        if ($ownType===$type && $ownId===$id) return true;
+        if ($ownType==='site' && in_array($type,['access_point','unit'],true)) {
+            $table=$type==='access_point'?'access_points':'units';
+            $stmt=db()->prepare("SELECT 1 FROM {$table} WHERE id=:id AND site_id=:site_id AND tenant_id=:tenant_id LIMIT 1");
+            $stmt->execute(['id'=>$id,'site_id'=>$ownId,'tenant_id'=>$tenantId]);
+            if ($stmt->fetchColumn()) return true;
+        }
+    }
+    return false;
+}
+
+function require_tenant_scope(string $type, int $id): array
+{
+    $actor=require_auth();
+    $tenantId=(int)$actor['tenant_id'];
+    if (!valid_scope_resource($tenantId,$type,$id)) {
+        json_response(['error'=>'Recurso fuera del cliente','error_code'=>'SCOPE_DENIED'],403);
+    }
+    if (!is_platform_admin($actor) && !scope_covers(scopes_for_user((int)$actor['id'],$tenantId),$tenantId,$type,$id)) {
+        json_response(['error'=>'Alcance insuficiente','error_code'=>'SCOPE_DENIED'],403);
+    }
+    return $actor;
+}
+
+function handle_multitenant_routes(string $method,string $path): void
+{
+    if ($method==='GET' && ($path==='/me/context' || $path==='/me/effective-permissions')) {
+        $actor=require_auth();
+        $tenantId=(int)$actor['tenant_id'];
+        $permissions=permissions_for_role($tenantId,(string)$actor['role']);
+        if ($path==='/me/effective-permissions') json_response(['data'=>['permissions'=>$permissions]]);
+        $tenant=one_row(
+            'SELECT t.id,t.name,t.status,t.parent_tenant_id,t.root_tenant_id,ct.code AS client_type
+             FROM tenants t LEFT JOIN client_types ct ON ct.id=t.client_type_id
+             WHERE t.id=:id', ['id'=>$tenantId]
+        );
+        json_response(['data'=>[
+            'tenant'=>$tenant,
+            'role'=>$actor['role'],
+            'user_id'=>(int)$actor['id'],
+            'platform_admin'=>is_platform_admin($actor),
+            'scopes'=>scopes_for_user((int)$actor['id'],$tenantId),
+            'permissions'=>$permissions
+        ]]);
+    }
+
+    if ($method==='GET' && $path==='/roles/master') {
+        require_platform_admin();
+        json_response(['data'=>list_rows(
+            'SELECT mr.code,mr.name,mr.is_operational,mp.permission_code
+             FROM master_roles mr LEFT JOIN master_role_permissions mp ON mp.role_code=mr.code
+             ORDER BY mr.code,mp.permission_code'
+        )]);
+    }
+
+    if ($method==='GET' && $path==='/platform/client-types') {
+        require_platform_admin();
+        json_response(['data'=>list_rows('SELECT id,code,name,allows_children FROM client_types ORDER BY id')]);
+    }
+
+    if ($method==='GET' && preg_match('#^/users/(\d+)/scopes$#',$path,$match)) {
+        $actor=require_permission('settings.manage');
+        $tenantId=(int)$actor['tenant_id'];
+        $target=one_row('SELECT id FROM users WHERE id=:id AND tenant_id=:tenant_id',
+            ['id'=>$match[1],'tenant_id'=>$tenantId]);
+        if (!$target) json_response(['error'=>'Usuario no encontrado'],404);
+        json_response(['data'=>scopes_for_user((int)$target['id'],$tenantId)]);
+    }
+
+    if ($method==='PUT' && preg_match('#^/users/(\d+)/scopes$#',$path,$match)) {
+        $actor=require_permission('settings.manage');
+        $tenantId=(int)$actor['tenant_id'];
+        $targetId=(int)$match[1];
+        $target=one_row('SELECT id FROM users WHERE id=:id AND tenant_id=:tenant_id',
+            ['id'=>$targetId,'tenant_id'=>$tenantId]);
+        if (!$target) json_response(['error'=>'Usuario no encontrado'],404);
+        if (is_platform_admin_target($targetId)) json_response(['error'=>'Cuenta global protegida'],403);
+        $payload=request_json();
+        $requested=$payload['scopes']??null;
+        if (!is_array($requested) || count($requested)>100) json_response(['error'=>'Lista de alcances inválida'],422);
+        $actorScopes=scopes_for_user((int)$actor['id'],$tenantId);
+        $new=[];
+        foreach ($requested as $scope) {
+            if (!is_array($scope)) json_response(['error'=>'Alcance inválido'],422);
+            $type=(string)($scope['scope_type']??'');
+            $id=filter_var($scope['scope_id']??null,FILTER_VALIDATE_INT);
+            if (!$id || !valid_scope_resource($tenantId,$type,(int)$id)) json_response(['error'=>'Recurso fuera del cliente'],403);
+            if (!is_platform_admin($actor) && !scope_covers($actorScopes,$tenantId,$type,(int)$id)) {
+                json_response(['error'=>'No puedes otorgar un alcance superior al tuyo'],403);
+            }
+            $new[$type.':'.$id]=[$type,(int)$id];
+        }
+        $pdo=db();
+        $pdo->beginTransaction();
+        try {
+            $pdo->prepare('DELETE FROM user_scopes WHERE tenant_id=:tenant AND user_id=:user')
+                ->execute(['tenant'=>$tenantId,'user'=>$targetId]);
+            $stmt=$pdo->prepare('INSERT INTO user_scopes(tenant_id,user_id,scope_type,scope_id,granted_by)
+                VALUES(:tenant,:user,:type,:id,:actor)');
+            foreach ($new as [$type,$id]) $stmt->execute(['tenant'=>$tenantId,'user'=>$targetId,
+                'type'=>$type,'id'=>$id,'actor'=>(int)$actor['id']]);
+            $pdo->commit();
+        } catch (Throwable $e) {
+            if ($pdo->inTransaction()) $pdo->rollBack();
+            throw $e;
+        }
+        platform_audit($actor,$tenantId,'alcance.actualizado','Alcances del usuario #'.$targetId,
+            ['scope_count'=>count($new)]);
+        json_response(['ok'=>true,'count'=>count($new)]);
+    }
+
+    if ($method==='POST' && preg_match('#^/users/(\d+)/role-change$#',$path,$match)) {
+        $actor=require_permission('settings.manage');
+        $tenantId=(int)$actor['tenant_id'];
+        $targetId=(int)$match[1];
+        if (is_platform_admin_target($targetId)) json_response(['error'=>'Cuenta global protegida'],403);
+        $target=one_row('SELECT id,role FROM users WHERE id=:id AND tenant_id=:tenant',
+            ['id'=>$targetId,'tenant'=>$tenantId]);
+        if (!$target) json_response(['error'=>'Usuario no encontrado'],404);
+        $payload=request_json();
+        $role=(string)($payload['role']??'');
+        validate_role_assignment($actor,$tenantId,$role);
+        db()->prepare('UPDATE users SET role=:role WHERE id=:id AND tenant_id=:tenant')
+            ->execute(['role'=>$role,'id'=>$targetId,'tenant'=>$tenantId]);
+        platform_audit($actor,$tenantId,'rol.actualizado','Cambio de rol para usuario #'.$targetId,
+            ['previous'=>$target['role'],'new'=>$role]);
+        json_response(['ok'=>true]);
+    }
+
+    // Downward-only, additive restrictions. Only CREAMOX can remove previous
+    // restrictions through a separate future audited maintenance operation.
+    if ($method==='PUT' && preg_match('#^/tenants/(\d+)/role-restrictions/(admin|supervisor|coordinator|guard|auditor|resident|tech_operator)$#',$path,$match)) {
+        $actor=require_permission('settings.manage');
+        $tenantId=(int)$match[1];
+        if ($tenantId!==(int)$actor['tenant_id']) json_response(['error'=>'Cliente fuera del alcance'],403);
+        $role=$match[2];
+        $payload=request_json();
+        if (!is_array($payload['restrict']??null) || count($payload['restrict'])>200) json_response(['error'=>'Permisos inválidos'],422);
+        $stmt=db()->prepare('INSERT IGNORE INTO tenant_role_restrictions
+            (tenant_id,role_code,permission_code,restricted_by)
+            VALUES(:tenant,:role,:permission,:actor)');
+        $ceiling=array_column(list_rows('SELECT permission_code FROM master_role_permissions WHERE role_code=:role',
+            ['role'=>$role]),'permission_code');
+        foreach (array_unique(array_map('strval',$payload['restrict'])) as $permission) {
+            if (!in_array($permission,$ceiling,true)) json_response(['error'=>'Permiso desconocido'],422);
+        }
+        foreach (array_unique(array_map('strval',$payload['restrict'])) as $permission) {
+            $stmt->execute(['tenant'=>$tenantId,'role'=>$role,'permission'=>$permission,'actor'=>$actor['id']]);
+        }
+        platform_audit($actor,$tenantId,'permisos.restringidos','Restricciones adicionales para '.$role);
+        json_response(['ok'=>true]);
+    }
+}

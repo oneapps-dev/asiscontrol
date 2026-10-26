@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require __DIR__ . '/bootstrap.php';
+require __DIR__ . '/multitenant.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
 $apiStage = 'router';
@@ -24,6 +25,7 @@ if (!in_array($method, ['GET', 'HEAD', 'OPTIONS'], true) && !$isPublicPost) {
 }
 
 try {
+    handle_multitenant_routes($method, $path);
     if ($method === 'GET' && $path === '/health') {
         $apiStage = 'health.database';
         try {
@@ -689,6 +691,7 @@ try {
             json_response(['error' => 'Rol de usuario inválido'], 422);
         }
         if (!empty($data['site_id'])) assert_owned_site((int) $data['site_id'], tenant_id());
+        validate_role_assignment(require_auth(), tenant_id(), (string)$data['role']);
         $stmt = db()->prepare(
             'INSERT INTO users (tenant_id, site_id, name, email, password_hash, role, is_active)
              VALUES (:tenant_id, :site_id, :name, :email, :password_hash, :role, :is_active)'
@@ -702,6 +705,10 @@ try {
             'role' => $data['role'],
             'is_active' => isset($data['is_active']) ? (int) (bool) $data['is_active'] : 1,
         ]);
+        $createdId=(int)db()->lastInsertId();
+        $newScope=empty($data['site_id']) ? ['type'=>'tenant','id'=>tenant_id()] : ['type'=>'site','id'=>(int)$data['site_id']];
+        db()->prepare('INSERT INTO user_scopes(tenant_id,user_id,scope_type,scope_id,granted_by) VALUES(:tenant,:user,:type,:scope_id,:actor)')
+            ->execute(['tenant'=>tenant_id(),'user'=>$createdId,'type'=>$newScope['type'],'scope_id'=>$newScope['id'],'actor'=>require_auth()['id']]);
         audit('usuario.creado', 'Usuario creado: ' . $data['email']);
         json_response(['id' => db()->lastInsertId()], 201);
     }
@@ -716,6 +723,7 @@ try {
         if (is_platform_admin_target((int) $matches[1])) json_response(['error' => 'La cuenta global solo se modifica desde CREAMOX'], 403);
         $currentUser = one_row('SELECT name, role, site_id, is_active FROM users WHERE id = :id AND tenant_id = :tenant_id', ['id' => $matches[1], 'tenant_id' => tenant_id()]);
         if (!$currentUser) json_response(['error' => 'Usuario no encontrado'], 404);
+        validate_role_assignment(require_auth(),tenant_id(),(string)($data['role']??$currentUser['role']));
         $fields = [
             'site_id' => $data['site_id'] ?? $currentUser['site_id'],
             'name' => $data['name'] ?? $currentUser['name'],
@@ -1014,7 +1022,7 @@ try {
     }
 
     if ($method === 'PUT' && preg_match('#^/permissions/(superadmin|admin|supervisor|coordinator|guard|auditor|resident|tech_operator)$#', $path, $matches)) {
-        require_role(['superadmin']);
+        require_platform_admin();
         $data = request_json();
         $permissions = is_array($data['permissions'] ?? null) ? $data['permissions'] : [];
         replace_role_permissions(tenant_id(), $matches[1], $permissions);
@@ -2935,16 +2943,11 @@ function ensure_booking_window_available(int $tenantId, int $resourceId, string 
 function permissions_for_role(int $tenantId, string $role): array
 {
     if ($role === 'superadmin') {
+        $actor=require_auth();
+        if (!is_platform_admin($actor)) json_response(['error'=>'Rol global no autorizado'],403);
         return array_column(list_rows('SELECT code FROM permissions ORDER BY code'), 'code');
     }
-
-    return array_column(list_rows(
-        'SELECT permission_code
-         FROM role_permissions
-         WHERE tenant_id = :tenant_id AND role = :role AND granted = 1
-         ORDER BY permission_code',
-        ['tenant_id' => $tenantId, 'role' => $role]
-    ), 'permission_code');
+    return effective_role_permissions($tenantId,$role);
 }
 
 function permissions_matrix(int $tenantId): array
@@ -2969,7 +2972,8 @@ function permissions_matrix(int $tenantId): array
 
 function replace_role_permissions(int $tenantId, string $role, array $permissions): void
 {
-    $validPermissions = array_column(list_rows('SELECT code FROM permissions'), 'code');
+    if ($role === 'superadmin') json_response(['error'=>'Permisos globales no modificables por tenant'],403);
+    $validPermissions = array_column(list_rows('SELECT permission_code FROM master_role_permissions WHERE role_code=:role', ['role'=>$role]), 'permission_code');
     $selected = array_values(array_intersect($validPermissions, array_map('strval', $permissions)));
     $pdo = db();
     $pdo->beginTransaction();
@@ -3805,6 +3809,8 @@ function import_csv_row(PDO $pdo, int $tenantId, string $jobType, array $data): 
                 throw new RuntimeException('Falta ' . $field);
             }
         }
+        validate_role_assignment(require_auth(), $tenantId, (string)$data['role']);
+        if (!empty($data['site_id'])) assert_owned_site((int)$data['site_id'],$tenantId);
         $password = (string) ($data['password'] ?? bin2hex(random_bytes(6)));
         $stmt = $pdo->prepare(
             'INSERT INTO users (tenant_id, site_id, name, email, password_hash, role, is_active)
@@ -3812,12 +3818,17 @@ function import_csv_row(PDO $pdo, int $tenantId, string $jobType, array $data): 
         );
         $stmt->execute([
             'tenant_id' => $tenantId,
-            'site_id' => $data['site_id'] ?: null,
+            'site_id' => $data['site_id'] ?? null,
             'name' => $data['name'],
             'email' => $data['email'],
             'password_hash' => password_hash($password, PASSWORD_DEFAULT),
             'role' => $data['role'],
         ]);
+        $newId=(int)$pdo->lastInsertId();
+        $scopeType=empty($data['site_id'])?'tenant':'site';
+        $scopeId=$scopeType==='tenant'?$tenantId:(int)$data['site_id'];
+        $pdo->prepare('INSERT INTO user_scopes (tenant_id,user_id,scope_type,scope_id,granted_by) VALUES(:tenant,:user,:type,:scope_id,:actor)')
+            ->execute(['tenant'=>$tenantId,'user'=>$newId,'type'=>$scopeType,'scope_id'=>$scopeId,'actor'=>require_auth()['id']]);
         return;
     }
 
@@ -3827,7 +3838,8 @@ function import_csv_row(PDO $pdo, int $tenantId, string $jobType, array $data): 
 function require_role(array $roles): array
 {
     $user = require_auth();
-    if (!in_array((string) $user['role'], $roles, true)) {
+    if (!in_array((string) $user['role'], $roles, true)
+        || (($user['role'] ?? '') === 'superadmin' && !is_platform_admin($user))) {
         json_response(['error' => 'No autorizado'], 403);
     }
 
@@ -3841,18 +3853,7 @@ function require_permission(string $permission): array
         return $user;
     }
 
-    $stmt = db()->prepare(
-        'SELECT COUNT(*)
-         FROM role_permissions
-         WHERE tenant_id = :tenant_id AND role = :role AND permission_code = :permission_code AND granted = 1'
-    );
-    $stmt->execute([
-        'tenant_id' => $user['tenant_id'],
-        'role' => $user['role'],
-        'permission_code' => $permission,
-    ]);
-
-    if ((int) $stmt->fetchColumn() === 0) {
+    if (!in_array($permission, permissions_for_role((int)$user['tenant_id'],(string)$user['role']),true)) {
         json_response(['error' => 'Permiso requerido: ' . $permission], 403);
     }
 
